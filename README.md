@@ -11,8 +11,8 @@
 
 ## Quick Links
 
-- 📖 **[User Guide](./docs/user-guide.md)** - Complete guide for end users
-- 🛠️ **[Developer Guide](./docs/developer-guide.md)** - API reference and integration guide
+- 📖 **[User Guide](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md)** - Complete guide for end users
+- 🛠️ **[Developer Guide](https://github.com/Matdata-eu/Yasgui/blob/main/docs/developer-guide.md)** - API reference and integration guide
 - 🚀 **[Production Environment](https://yasgui.matdata.eu/)** - Live instance
 - 📦 **[npm Package](https://www.npmjs.com/package/@matdata/yasgui)**
 - 🐳 **[Docker Hub](https://hub.docker.com/r/mathiasvda/yasgui)**
@@ -42,36 +42,36 @@ The documentation is version-tagged with the repository, ensuring consistency be
 YASGUI provides a complete SPARQL development environment with powerful features:
 
 ### ✏️ Advanced Query Editor
-- **[SPARQL Syntax Highlighting](./docs/user-guide.md#yasqe-query-editor)** - Color-coded SPARQL with error detection
-- **[Smart Autocomplete](./docs/user-guide.md#prefix-management)** - Context-aware suggestions for keywords, prefixes, and URIs
-- **[Query Formatting](./docs/user-guide.md#query-formatting)** - One-click query beautification with configurable formatters
-- **[Prefix Management](./docs/user-guide.md#prefix-management)** - Auto-capture and reuse PREFIX declarations
-- **[URI Explorer](./docs/user-guide.md#uri-explorer)** - Ctrl+Click URIs to explore connections
-- **[Keyboard Shortcuts](./docs/user-guide.md#keyboard-shortcuts)** - Efficient query development workflow
+- **[SPARQL Syntax Highlighting](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#yasqe-query-editor)** - Color-coded SPARQL with error detection
+- **[Smart Autocomplete](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#prefix-management)** - Context-aware suggestions for keywords, prefixes, and URIs
+- **[Query Formatting](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#query-formatting)** - One-click query beautification with configurable formatters
+- **[Prefix Management](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#prefix-management)** - Auto-capture and reuse PREFIX declarations
+- **[URI Explorer](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#uri-explorer)** - Ctrl+Click URIs to explore connections
+- **[Keyboard Shortcuts](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#keyboard-shortcuts)** - Efficient query development workflow
 
 ### 📊 Powerful Visualizations
-- **[Table Plugin](./docs/user-guide.md#table-plugin)** - Sortable, filterable, paginated result tables
-- **[Graph Plugin](./docs/user-guide.md#graph-plugin)** - Interactive RDF graph visualization
-- **[Geo Plugin](./docs/user-guide.md#geo-plugin)** - Geographic data on interactive maps
-- **[Response Plugin](./docs/user-guide.md#response-plugin)** - Raw response viewer with syntax highlighting
-- **[Boolean Plugin](./docs/user-guide.md#boolean-plugin)** - Visual true/false indicators for ASK queries
-- **[Error Plugin](./docs/user-guide.md#error-plugin)** - Detailed error diagnostics
+- **[Table Plugin](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#table-plugin)** - Sortable, filterable, paginated result tables
+- **[Graph Plugin](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#graph-plugin)** - Interactive RDF graph visualization
+- **[Geo Plugin](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#geo-plugin)** - Geographic data on interactive maps
+- **[Response Plugin](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#response-plugin)** - Raw response viewer with syntax highlighting
+- **[Boolean Plugin](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#boolean-plugin)** - Visual true/false indicators for ASK queries
+- **[Error Plugin](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#error-plugin)** - Detailed error diagnostics
 
 ### 🎨 Themes & Layouts
-- **[Light & Dark Themes](./docs/user-guide.md#themes)** - Seamless theme switching with persistent preferences
-- **[Flexible Layouts](./docs/user-guide.md#layout-orientation)** - Vertical or horizontal editor/results arrangement
+- **[Light & Dark Themes](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#themes)** - Seamless theme switching with persistent preferences
+- **[Flexible Layouts](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#layout-orientation)** - Vertical or horizontal editor/results arrangement
 
 ### 🔧 Expert Features
-- **[Multiple Tabs](./docs/user-guide.md#query-tabs)** - Work on multiple queries simultaneously
-- **[Endpoint Management](./docs/user-guide.md#endpoint-quick-switch)** - Quick-switch between SPARQL endpoints
-- **[Authentication Support](./docs/developer-guide.md#authentication)** - Basic Auth, Bearer Token, API Key, OAuth2
-- **[Persistent Storage](./docs/user-guide.md#query-history-and-persistence)** - Auto-save queries and preferences
-- **[URL Sharing](./docs/user-guide.md#share-queries)** - Share queries via URL parameters
-- **[Fullscreen Mode](./docs/user-guide.md#fullscreen-mode)** - Maximize editor or results viewer
-- **[Export Results](./docs/developer-guide.md#yasr-class)** - Download results in various formats
-- **[Configuration Import/Export](./docs/user-guide.md#configuration-importexport)** - Backup and restore settings
+- **[Multiple Tabs](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#query-tabs)** - Work on multiple queries simultaneously
+- **[Endpoint Management](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#endpoint-quick-switch)** - Quick-switch between SPARQL endpoints
+- **[Authentication Support](https://github.com/Matdata-eu/Yasgui/blob/main/docs/developer-guide.md#authentication)** - Basic Auth, Bearer Token, API Key, OAuth2
+- **[Persistent Storage](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#query-history-and-persistence)** - Auto-save queries and preferences
+- **[URL Sharing](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#share-queries)** - Share queries via URL parameters
+- **[Fullscreen Mode](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#fullscreen-mode)** - Maximize editor or results viewer
+- **[Export Results](https://github.com/Matdata-eu/Yasgui/blob/main/docs/developer-guide.md#yasr-class)** - Download results in various formats
+- **[Configuration Import/Export](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#configuration-importexport)** - Backup and restore settings
 
-For detailed feature documentation, see the **[User Guide](./docs/user-guide.md)**.
+For detailed feature documentation, see the **[User Guide](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md)**.
 
 ---
 
@@ -129,7 +129,7 @@ docker run -p 8080:8080 \
   mathiasvda/yasgui:latest
 ```
 
-For detailed installation instructions and usage examples, see the **[Developer Guide](./docs/developer-guide.md#installation)** and **[User Guide - Docker](./docs/user-guide.md#running-yasgui-with-docker)**.
+For detailed installation instructions and usage examples, see the **[Developer Guide](https://github.com/Matdata-eu/Yasgui/blob/main/docs/developer-guide.md#installation)** and **[User Guide - Docker](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#running-yasgui-with-docker)**.
 
 ## Quick Start
 
@@ -213,9 +213,9 @@ const yasgui = new Yasgui(document.getElementById('yasgui'), {
 });
 ```
 
-Authentication can also be configured through the UI via the Settings modal (gear icon). For detailed authentication documentation including dynamic auth and OAuth2, see the **[Developer Guide - Authentication](./docs/developer-guide.md#authentication)**.
+Authentication can also be configured through the UI via the Settings modal (gear icon). For detailed authentication documentation including dynamic auth and OAuth2, see the **[Developer Guide - Authentication](https://github.com/Matdata-eu/Yasgui/blob/main/docs/developer-guide.md#authentication)**.
 
-For framework-specific examples and advanced usage, see the **[Developer Guide](./docs/developer-guide.md#usage-examples)**.
+For framework-specific examples and advanced usage, see the **[Developer Guide](https://github.com/Matdata-eu/Yasgui/blob/main/docs/developer-guide.md#usage-examples)**.
 
 ---
 
@@ -249,7 +249,7 @@ const yasgui = new Yasgui(document.getElementById('yasgui'), {
 });
 ```
 
-For complete configuration options, see the **[Developer Guide - Configuration](./docs/developer-guide.md#configuration)**.
+For complete configuration options, see the **[Developer Guide - Configuration](https://github.com/Matdata-eu/Yasgui/blob/main/docs/developer-guide.md#configuration)**.
 
 ---
 
@@ -263,7 +263,7 @@ If you encounter CORS errors when querying remote endpoints:
 2. **Configure the endpoint** - Some endpoints support CORS with proper configuration
 3. **Server-side queries** - Execute queries server-side and display results client-side
 
-See the **[User Guide - CORS Errors](./docs/user-guide.md#cors-errors)** for detailed solutions.
+See the **[User Guide - CORS Errors](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#cors-errors)** for detailed solutions.
 
 ### Local Endpoint Access
 
@@ -276,7 +276,7 @@ docker run -p 3030:3030 stain/jena-fuseki
 
 Access at: `http://localhost:3030/dataset/sparql`
 
-For more details, see **[User Guide - Querying Local Endpoints](./docs/user-guide.md#querying-local-endpoints)**.
+For more details, see **[User Guide - Querying Local Endpoints](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md#querying-local-endpoints)**.
 
 ---
 
@@ -294,8 +294,8 @@ We welcome contributions! To get started:
 **📋 For detailed contribution guidelines, including our plugin development policy, see [CONTRIBUTING.md](./CONTRIBUTING.md).**
 
 Additional resources:
-- **[Developer Guide](./docs/developer-guide.md)** - API reference and integration guide
-- **[Plugin Development](./docs/developer-guide.md#plugin-development)** - How to create plugins
+- **[Developer Guide](https://github.com/Matdata-eu/Yasgui/blob/main/docs/developer-guide.md)** - API reference and integration guide
+- **[Plugin Development](https://github.com/Matdata-eu/Yasgui/blob/main/docs/developer-guide.md#plugin-development)** - How to create plugins
 
 ---
 
@@ -303,8 +303,8 @@ Additional resources:
 
 ### Getting Help
 
-- 📖 **[User Guide](./docs/user-guide.md)** - Comprehensive usage documentation
-- 🛠️ **[Developer Guide](./docs/developer-guide.md)** - API reference and integration
+- 📖 **[User Guide](https://github.com/Matdata-eu/Yasgui/blob/main/docs/user-guide.md)** - Comprehensive usage documentation
+- 🛠️ **[Developer Guide](https://github.com/Matdata-eu/Yasgui/blob/main/docs/developer-guide.md)** - API reference and integration
 - 🐛 **[Issue Tracker](https://github.com/Matdata-eu/Yasgui/issues)** - Report bugs or request features
 - 💬 **[Discussions](https://github.com/Matdata-eu/Yasgui/discussions)** - Ask questions and share ideas
 
