@@ -1,10 +1,9 @@
 import "./scss/yasqe.scss";
 import "./scss/buttons.scss";
 import "leaflet/dist/leaflet.css";
-import { findFirstPrefixLine } from "./prefixFold";
+import { findFirstPrefixLine as findFirstPrefixLineInDoc, foldAt, unfoldAt } from "./editor/folding";
 import { getPrefixesFromQuery, addPrefixes, removePrefixes, Prefixes } from "./prefixUtils";
 import { getPreviousNonWsToken, getNextNonWsToken, getCompleteToken } from "./tokenUtils";
-import * as sparql11Mode from "../grammar/tokenizer";
 import { Storage as YStorage } from "@matdata/yasgui-utils";
 import * as queryString from "query-string";
 import tooltip from "./tooltip";
@@ -15,7 +14,12 @@ import * as Autocompleter from "./autocompleters";
 import { merge, mergeWith, escape } from "lodash-es";
 
 import getDefaults from "./defaults";
-import CodeMirror from "./CodeMirror";
+import { EditorFacade, EditorOptions } from "./editor/facade";
+import { runMode as runTokenizer } from "./editor/tokenizerRunner";
+import type { Position, Token, TokenizerState } from "./editor/tokenizerRunner";
+import type { ExtraKeys } from "./editor/keymap";
+import type { HintFn, HintList } from "./editor/autocompletion";
+import { isCompletionActive, openCompletion, hideCompletion } from "./editor/autocompletion";
 import { YasqeAjaxConfig } from "./sparql";
 import { spfmt } from "sparql-formatter";
 import * as L from "leaflet";
@@ -34,7 +38,6 @@ export interface Yasqe {
   off(eventName: "queryAbort", handler: (instance: Yasqe, req: Request) => void): void;
   on(eventName: "queryResponse", handler: (instance: Yasqe, response: any, duration: number) => void): void;
   off(eventName: "queryResponse", handler: (instance: Yasqe, response: any, duration: number) => void): void;
-  showHint: (conf: HintConfig) => void;
   on(eventName: "error", handler: (instance: Yasqe) => void): void;
   off(eventName: "error", handler: (instance: Yasqe) => void): void;
   on(eventName: "blur", handler: (instance: Yasqe) => void): void;
@@ -53,10 +56,61 @@ export interface Yasqe {
   off(eventName: "saveManagedQuery", handler: () => void): void;
   on(eventName: "downloadRqFile", handler: () => void): void;
   off(eventName: "downloadRqFile", handler: () => void): void;
-  on(eventName: string, handler: () => void): void;
+  on(eventName: "change", handler: (instance: Yasqe, changeObj?: any) => void): void;
+  off(eventName: "change", handler: (instance: Yasqe, changeObj?: any) => void): void;
+  on(eventName: "changes", handler: (instance: Yasqe) => void): void;
+  off(eventName: "changes", handler: (instance: Yasqe) => void): void;
+  on(eventName: "cursorActivity", handler: (instance: Yasqe) => void): void;
+  off(eventName: "cursorActivity", handler: (instance: Yasqe) => void): void;
+  on(eventName: "focus", handler: (instance: Yasqe) => void): void;
+  off(eventName: "focus", handler: (instance: Yasqe) => void): void;
+  on(eventName: string, handler: (...args: any[]) => void): void;
+  off(eventName: string, handler: (...args: any[]) => void): void;
 }
 
-export class Yasqe extends CodeMirror {
+/** Editor option keys that are handed to the underlying CodeMirror 6 editor */
+const EDITOR_OPTION_KEYS: (keyof EditorOptions)[] = [
+  "mode",
+  "value",
+  "lineNumbers",
+  "lineWrapping",
+  "readOnly",
+  "tabSize",
+  "indentUnit",
+  "indentWithTabs",
+  "theme",
+  "extraKeys",
+  "tabMode",
+  "foldGutter",
+  "gutters",
+  "matchBrackets",
+  "highlightSelectionMatches",
+  "autoCloseBrackets",
+  "fixedGutter",
+  "placeholder",
+  "autofocus",
+  "viewportMargin",
+];
+
+function mergeConfig(conf: PartialConfig): Config {
+  // Use mergeWith to replace arrays instead of merging them by index
+  // This ensures that snippets: [] properly overrides default snippets
+  return mergeWith({}, Yasqe.defaults, conf, (_objValue: any, srcValue: any) => {
+    if (Array.isArray(srcValue)) {
+      return srcValue;
+    }
+  });
+}
+
+function createRootEl(parent: HTMLElement): HTMLDivElement {
+  if (!parent) throw new Error("No parent passed as argument. Dont know where to draw YASQE");
+  const rootEl = document.createElement("div");
+  rootEl.className = "yasqe";
+  parent.appendChild(rootEl);
+  return rootEl;
+}
+
+export class Yasqe extends EditorFacade {
   private static storageNamespace = "triply";
   public autocompleters: { [name: string]: Autocompleter.Completer | undefined } = {};
   private prevQueryValid = false;
@@ -84,27 +138,15 @@ export class Yasqe extends CodeMirror {
   public config: Config;
   public persistentConfig: PersistentConfig | undefined;
   constructor(parent: HTMLElement, conf: PartialConfig = {}) {
-    super();
-    if (!parent) throw new Error("No parent passed as argument. Dont know where to draw YASQE");
-    this.rootEl = document.createElement("div");
-    this.rootEl.className = "yasqe";
-    parent.appendChild(this.rootEl);
-    // Use mergeWith to replace arrays instead of merging them by index
-    // This ensures that snippets: [] properly overrides default snippets
-    this.config = mergeWith({}, Yasqe.defaults, conf, (objValue: any, srcValue: any) => {
-      if (Array.isArray(srcValue)) {
-        return srcValue;
-      }
-    });
-    //inherit codemirror props
-    const cm = (CodeMirror as any)(this.rootEl, this.config);
-    //Assign our functions to the cm object. This is needed, as some functions (like the ctrl-enter callback)
-    //get the original cm as argument, and not yasqe
-    for (const key of Object.getOwnPropertyNames(Yasqe.prototype)) {
-      cm[key] = (<any>Yasqe.prototype)[key].bind(this);
+    const config = mergeConfig(conf);
+    const rootEl = createRootEl(parent);
+    const editorOptions: EditorOptions = {};
+    for (const key of EDITOR_OPTION_KEYS) {
+      if ((config as any)[key] !== undefined) (editorOptions as any)[key] = (config as any)[key];
     }
-    //Also assign the codemirror functions to our object, so we can easily use those
-    Object.assign(this, CodeMirror.prototype, cm);
+    super(rootEl, editorOptions);
+    this.rootEl = rootEl;
+    this.config = config;
 
     //Do some post processing
     this.storage = new YStorage(Yasqe.storageNamespace);
@@ -162,21 +204,21 @@ export class Yasqe extends CodeMirror {
   private handleHashChange = () => {
     this.config.consumeShareLink?.(this);
   };
-  private handleChange() {
+  private handleChange = () => {
     this.checkSyntax();
     this.checkConstructVariables();
     this.updateQueryButton();
-  }
-  private handleBlur() {
+  };
+  private handleBlur = () => {
     this.saveQuery();
-  }
-  private handleChanges() {
+  };
+  private handleChanges = () => {
     // e.g. handle blur
     this.checkSyntax();
     this.checkConstructVariables();
     this.updateQueryButton();
-  }
-  private handleCursorActivity() {
+  };
+  private handleCursorActivity = () => {
     this.autocomplete(true);
 
     // Check if cursor is on a URI and show DESCRIBE hint
@@ -189,21 +231,33 @@ export class Yasqe extends CodeMirror {
     } else {
       this.hideNotification("uri-describe-hint");
     }
-  }
-  private handleQuery(_yasqe: Yasqe, req: Request, abortController?: AbortController) {
+  };
+  private handleQuery = (_yasqe: Yasqe, req: Request, abortController?: AbortController) => {
     this.req = req;
     this.abortController = abortController;
     this.updateQueryButton();
-  }
-  private handleQueryResponse(_yasqe: Yasqe, _response: any, duration: number) {
+  };
+  private handleQueryResponse = (_yasqe: Yasqe, _response: any, duration: number) => {
     this.lastQueryDuration = duration;
     this.req = undefined;
     this.updateQueryButton();
-  }
-  private handleQueryAbort(_yasqe: Yasqe, _req: Request) {
+  };
+  private handleQueryAbort = (_yasqe: Yasqe, _req: Request) => {
     this.req = undefined;
     this.updateQueryButton();
+  };
+
+  /**
+   * Aggregates the hints of all enabled autocompleters. Used by the CodeMirror 6 completion source.
+   */
+  protected getHintFn(): HintFn | undefined {
+    // `pendingHintFn` is set by `autocomplete()`. When the completion was started by other means (e.g. a
+    // CodeMirror `startCompletion` command), build the hint function on demand.
+    const hintFn = this.pendingHintFn ?? this.buildHintFn(false);
+    this.pendingHintFn = undefined;
+    return hintFn;
   }
+  private pendingHintFn: HintFn | undefined;
 
   private registerEventListeners() {
     /**
@@ -220,10 +274,10 @@ export class Yasqe extends CodeMirror {
   }
 
   private unregisterEventListeners() {
-    this.off("change" as any, this.handleChange);
+    this.off("change", this.handleChange);
     this.off("blur", this.handleBlur);
-    this.off("changes" as any, this.handleChanges);
-    this.off("cursorActivity" as any, this.handleCursorActivity);
+    this.off("changes", this.handleChanges);
+    this.off("cursorActivity", this.handleCursorActivity);
 
     this.off("query", this.handleQuery);
     this.off("queryResponse", this.handleQueryResponse);
@@ -232,10 +286,6 @@ export class Yasqe extends CodeMirror {
   /**
    * Generic IDE functions
    */
-  public emit(event: string, ...data: any[]) {
-    CodeMirror.signal(this, event, this, ...data);
-  }
-
   public getStorageId(getter?: Config["persistenceId"]): string | undefined {
     const persistenceId = getter || this.config.persistenceId;
     if (!persistenceId) return undefined;
@@ -1702,11 +1752,7 @@ export class Yasqe extends CodeMirror {
   public autoformat() {
     if (!this.getDoc().somethingSelected()) this.execCommand("selectAll");
     const from = this.getDoc().getCursor("start");
-
-    var to: Position = {
-      line: this.getDoc().getCursor("end").line,
-      ch: this.getDoc().getSelection().length,
-    };
+    const to: Position = this.getDoc().getCursor("end");
     var absStart = this.getDoc().indexFromPos(from);
     var absEnd = this.getDoc().indexFromPos(to);
     // Insert additional line breaks where necessary according to the
@@ -1720,7 +1766,7 @@ export class Yasqe extends CodeMirror {
       var startLine = this.getDoc().posFromIndex(absStart).line;
       var endLine = this.getDoc().posFromIndex(absStart + res.length).line;
       for (var i = startLine; i <= endLine; i++) {
-        this.indentLine(i, "smart");
+        this.indentLine(i);
       }
     });
   }
@@ -2059,20 +2105,58 @@ export class Yasqe extends CodeMirror {
   }
   public autocomplete(fromAutoShow = false) {
     if (this.getDoc().somethingSelected()) return;
-
-    for (let i in this.config.autocompleters) {
-      const autocompleter = this.autocompleters[this.config.autocompleters[i]];
-      if (!autocompleter || !autocompleter.autocomplete(fromAutoShow)) continue;
+    const hintFn = this.buildHintFn(fromAutoShow);
+    if (!hintFn) return;
+    this.pendingHintFn = hintFn;
+    openCompletion(this.view);
+  }
+  /**
+   * Collects the hint functions of all completers that are valid at the current position and aggregates
+   * them into a single hint function. Returns `undefined` when no completer applies.
+   */
+  private buildHintFn(fromAutoShow: boolean): HintFn | undefined {
+    const hintFns: HintFn[] = [];
+    for (const name of this.config.autocompleters) {
+      const autocompleter = this.autocompleters[name];
+      if (!autocompleter) continue;
+      const hintFn = autocompleter.autocomplete(fromAutoShow);
+      if (hintFn) hintFns.push(hintFn);
     }
+    if (hintFns.length === 0) return undefined;
+
+    return async (): Promise<HintList | undefined> => {
+      const results = await Promise.all(hintFns.map((fn) => fn()));
+      let aggregated: HintList | undefined;
+      for (const result of results) {
+        if (!result || !result.list || result.list.length === 0) continue;
+        if (!aggregated) {
+          aggregated = { list: [...result.list], from: result.from, to: result.to };
+        } else {
+          aggregated.list.push(...result.list);
+        }
+      }
+      return aggregated;
+    };
+  }
+  public isAutocompletionActive(): boolean {
+    return isCompletionActive(this.view.state);
+  }
+  public hideAutocompletion() {
+    hideCompletion(this.view);
   }
 
   /**
    * Prefix management
    */
   public collapsePrefixes(collapse = true) {
-    const firstPrefixLine = findFirstPrefixLine(this);
+    const firstPrefixLine = findFirstPrefixLineInDoc(this.runner, this.view.state.doc);
     if (firstPrefixLine === undefined) return; //nothing to collapse
-    this.foldCode(firstPrefixLine, (<any>CodeMirror).fold.prefix, collapse ? "fold" : "unfold");
+    const offset = this.view.state.doc.line(firstPrefixLine + 1).from;
+    if (collapse) {
+      foldAt(this.view, offset);
+    } else {
+      unfoldAt(this.view, offset);
+    }
   }
 
   public getPrefixesFromQuery(): Prefixes {
@@ -2084,15 +2168,11 @@ export class Yasqe extends CodeMirror {
   public removePrefixes(prefixes: Prefixes): void {
     return removePrefixes(this, prefixes);
   }
+  /**
+   * @deprecated CodeMirror 6 positions the autocompletion tooltip itself. Kept for API compatibility.
+   */
   public updateWidget() {
-    if (
-      (this as any).cursorCoords &&
-      (this as any).state.completionActive &&
-      (this as any).state.completionActive.widget
-    ) {
-      const newTop: string = (this as any).cursorCoords(null).bottom;
-      (this as any).state.completionActive.widget.hints.style.top = newTop + "px";
-    }
+    // no-op
   }
 
   /**
@@ -2180,6 +2260,7 @@ export class Yasqe extends CodeMirror {
       this.disableCompleter(autocompleter);
     }
     window.removeEventListener("hashchange", this.handleHashChange);
+    this.destroyEditor();
     this.rootEl.remove();
   }
 
@@ -2187,7 +2268,13 @@ export class Yasqe extends CodeMirror {
    * Statics
    */
   static Sparql = Sparql;
-  static runMode = (<any>CodeMirror).runMode;
+  /**
+   * Tokenizes the given text using the SPARQL tokenizer, calling `callback` for every token with its
+   * text and its style (`null` for whitespace/unstyled tokens). The `mode` argument is ignored and only
+   * kept for backwards compatibility with the CodeMirror 5 `runMode` signature.
+   */
+  static runMode = (text: string, _mode: any, callback: (text: string, style: string | null) => void) =>
+    runTokenizer(text, callback);
   static clearStorage() {
     const storage = new YStorage(Yasqe.storageNamespace);
     storage.removeNamespace();
@@ -2215,61 +2302,24 @@ export class Yasqe extends CodeMirror {
     if (enable && Yasqe.defaults.autocompleters.indexOf(name) < 0) Yasqe.defaults.autocompleters.push(name);
   }
 }
-(<any>Object).assign(CodeMirror.prototype, Yasqe.prototype);
 
-export type TokenizerState = sparql11Mode.State;
-export type Position = CodeMirror.Position;
-export type Token = CodeMirror.Token;
+export type { TokenizerState, Position, Token } from "./editor/tokenizerRunner";
+export type { Hint, HintList, HintFn } from "./editor/autocompletion";
+export type { EditorOptions } from "./editor/facade";
+export type { ExtraKeys } from "./editor/keymap";
 
-export interface HintList {
-  list: Hint[];
-  from: Position;
-  to: Position;
-}
-export interface Hint {
-  text: string;
-  displayText?: string;
-  className?: string;
-  render?: (el: HTMLElement, self: Hint, data: any) => void;
-  from?: Position;
-  to?: Position;
-}
-
-export type HintFn = { async?: boolean } & (() => Promise<HintList> | HintList);
+/**
+ * Autocompletion popup configuration.
+ * Most CodeMirror 5 show-hint options are no longer applicable with CodeMirror 6; the remaining ones are
+ * kept for backwards compatibility and are currently informational only.
+ */
 export interface HintConfig {
   completeOnSingleClick?: boolean;
   container?: HTMLElement;
   closeCharacters?: RegExp;
   completeSingle?: boolean;
-  // A hinting function, as specified above. It is possible to set the async property on a hinting function to true, in which case it will be called with arguments (cm, callback, ?options), and the completion interface will only be popped up when the hinting function calls the callback, passing it the object holding the completions. The hinting function can also return a promise, and the completion interface will only be popped when the promise resolves. By default, hinting only works when there is no selection. You can give a hinting function a supportsSelection property with a truthy value to indicate that it supports selections.
-  hint: HintFn;
-
-  // Whether the pop-up should be horizontally aligned with the start of the word (true, default), or with the cursor (false).
   alignWithWord?: boolean;
-  // When enabled (which is the default), the pop-up will close when the editor is unfocused.
   closeOnUnfocus?: boolean;
-  // Allows you to provide a custom key map of keys to be active when the pop-up is active. The handlers will be called with an extra argument, a handle to the completion menu, which has moveFocus(n), setFocus(n), pick(), and close() methods (see the source for details), that can be used to change the focused element, pick the current element or close the menu. Additionally menuSize() can give you access to the size of the current dropdown menu, length give you the number of available completions, and data give you full access to the completion returned by the hinting function.
-  customKeys?: any;
-
-  // Like customKeys above, but the bindings will be added to the set of default bindings, instead of replacing them.
-  extraKeys?: {
-    [key: string]: (
-      yasqe: Yasqe,
-      event: {
-        close: () => void;
-        data: {
-          from: Position;
-          to: Position;
-          list: Hint[];
-        };
-        length: number;
-        menuSize: () => void;
-        moveFocus: (movement: number) => void;
-        pick: () => void;
-        setFocus: (index: number) => void;
-      },
-    ) => void;
-  };
 }
 export interface BasicAuthConfig {
   username: string;
@@ -2317,8 +2367,9 @@ export interface Snippet {
   code: string;
   group?: string;
 }
-export interface Config extends Partial<CodeMirror.EditorConfiguration> {
+export interface Config extends Omit<EditorOptions, "extraKeys"> {
   mode: string;
+  extraKeys: ExtraKeys<Yasqe>;
   collapsePrefixesOnLoad: boolean;
   syntaxErrorCheck: boolean;
   /**
@@ -2342,11 +2393,9 @@ export interface Config extends Partial<CodeMirror.EditorConfiguration> {
   showQueryButton: boolean;
   requestConfig: RequestConfig<Yasqe> | ((yasqe: Yasqe) => RequestConfig<Yasqe>);
   pluginButtons: (() => HTMLElement[] | HTMLElement) | undefined;
-  //Addon specific addon ts defs, or missing props from codemirror conf
-  highlightSelectionMatches: { showToken?: RegExp; annotateScrollbar?: boolean };
+  highlightSelectionMatches: boolean | { showToken?: RegExp; annotateScrollbar?: boolean };
   tabMode: string;
-  foldGutter: any; //This should be of type boolean, or an object. However, setting it to any to avoid
-  //ts complaining about incorrectly extending, as the cm def only defined it has having a boolean type.
+  foldGutter: boolean | object;
   matchBrackets: boolean;
   autocompleters: string[];
   hintConfig: Partial<HintConfig>;

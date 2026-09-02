@@ -1,18 +1,79 @@
 .yasqe {
-  .CodeMirror {
+  .CodeMirror,
+  .cm-editor {
     line-height: 1.5em;
     font-size: 14px;
-    border: 1px solid var(--yasgui-border-color);
+    border: 1px solid var(--yasgui-border-color, #ddd);
+    background: var(--yasgui-bg-primary, #fff);
+    color: var(--yasgui-text-primary, #000);
+    height: 100%;
+  }
+  .cm-editor.cm-focused {
+    outline: none;
+  }
+  .cm-scroller {
+    font-family: monospace;
+    overflow: auto;
+  }
+  .cm-gutters {
+    background-color: var(--yasgui-bg-secondary, #f7f7f7);
+    border-right: 1px solid var(--yasgui-border-color, #ddd);
+    color: var(--yasgui-text-secondary, #999);
+  }
+  .cm-activeLineGutter {
+    background-color: transparent;
+  }
+
+  // Default (light) token colors, mirroring the CodeMirror 5 default theme
+  .cm-s-default {
+    span.cm-keyword {
+      color: #708;
+    }
+    span.cm-atom {
+      color: #219;
+    }
+    span.cm-number {
+      color: #164;
+    }
+    span.cm-variable-3 {
+      color: #085;
+    }
+    span.cm-string {
+      color: #a11;
+    }
+    span.cm-string-2 {
+      color: #f50;
+    }
+    span.cm-meta {
+      color: #555;
+    }
+    span.cm-comment {
+      color: #a50;
+    }
+    span.cm-punc {
+      color: inherit;
+    }
   }
 
   span.cm-error {
     border-bottom: 2px dotted red;
   }
-  .gutterErrorBar {
+  .gutterErrorBar,
+  .cm-gutter-gutterErrorBar {
     width: 4px;
   }
+  .cm-gutter-gutterConstructWarning {
+    width: 4px;
+  }
+  .gutterErrorBar .cm-gutterElement > *,
+  .cm-gutter-gutterErrorBar .cm-gutterElement > * {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
 
-  .CodeMirror-foldmarker {
+  .CodeMirror-foldmarker,
+  .cm-foldPlaceholder {
     color: #6e2500;
     text-shadow:
       #ff935e 1px 1px 2px,
@@ -21,10 +82,16 @@
       #ff935e -1px 1px 2px;
     font-size: 19px;
   }
+  .cm-foldPlaceholder {
+    background: transparent;
+    border: none;
+    padding: 0 0.2em;
+    cursor: pointer;
+  }
 }
 
 // Rainbow bracket colors for default theme
-.cm-s-default {
+.yasqe .cm-s-default {
   span.cm-bracket-level-0 {
     color: #ffd700;
   } // Gold
@@ -45,15 +112,18 @@
   } // Red for mismatched brackets
 }
 // Put these outside of yasqe as the root element can be changed
-.CodeMirror-hints.default {
+.CodeMirror-hints.default,
+.cm-tooltip.CodeMirror-hints {
   max-width: 1000px;
 }
-.CodeMirror-hints.default li {
+.CodeMirror-hints.default li,
+.cm-tooltip.CodeMirror-hints li {
   text-overflow: ellipsis;
   overflow: hidden;
 }
 @media only screen and (max-width: 1000px) {
-  .CodeMirror-hints.default {
+  .CodeMirror-hints.default,
+  .cm-tooltip.CodeMirror-hints {
     max-width: 800px;
   }
 }

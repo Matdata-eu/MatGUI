@@ -6,8 +6,6 @@
  */
 import { default as Yasqe, Config, PlainRequestConfig } from "./";
 import * as queryString from "query-string";
-import CodeMirror from "codemirror";
-//need to pass Yasqe object as argument, as the imported version might not have inherited all (e.g. `fold`) props of Codemirror yet
 export default function get() {
   const prefixCcApi = null; // null = use bundled prefix data (packages/yasqe/src/prefixes.json, refreshed each build)
   const config: Omit<Config, "requestConfig"> = {
@@ -23,11 +21,9 @@ SELECT * WHERE {
     tabMode: "indent",
     lineNumbers: true,
     lineWrapping: true,
-    foldGutter: {
-      rangeFinder: new (<any>CodeMirror).fold.combine((<any>CodeMirror).fold.brace, (<any>CodeMirror).fold.prefix),
-    },
+    foldGutter: true, // Folding of braces and prefix blocks is handled by the built-in SPARQL fold service
     collapsePrefixesOnLoad: false,
-    gutters: ["gutterErrorBar", "gutterConstructWarning", "CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+    gutters: ["gutterErrorBar", "gutterConstructWarning"],
     matchBrackets: true,
     fixedGutter: true,
     syntaxErrorCheck: true,

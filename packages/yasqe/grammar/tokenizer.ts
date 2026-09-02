@@ -1,6 +1,6 @@
-import CodeMirror from "codemirror";
+import type { StringStream, StreamParser, IndentContext } from "@codemirror/language";
 export interface State {
-  tokenize: (stream: CodeMirror.StringStream, state: State) => string;
+  tokenize: (stream: StringStream, state: State) => string;
   inLiteral: "SINGLE" | "DOUBLE" | undefined;
   errorStartPos: number | undefined;
   errorEndPos: number | undefined;
@@ -52,7 +52,54 @@ export interface Token {
   start: number;
 }
 import * as grammar from "./_tokenizer-table.js";
-export default function (config: CodeMirror.EditorConfiguration): CodeMirror.Mode<State> {
+
+export interface TokenizerConfig {
+  indentUnit?: number;
+}
+
+/**
+ * All token style names that the tokenizer can emit (the space-separated
+ * parts of the `style` strings). Exported so that the CodeMirror 6 language
+ * definition can build a token table and a highlight style for them.
+ */
+export const TOKEN_STYLES = [
+  "ws",
+  "comment",
+  "variable-3",
+  "atom",
+  "meta",
+  "number",
+  "string",
+  "string-2",
+  "punc",
+  "keyword",
+  "error",
+  "bracket",
+  "bracket-level-0",
+  "bracket-level-1",
+  "bracket-level-2",
+  "bracket-level-3",
+  "bracket-paren",
+  "bracket-mismatch",
+] as const;
+export type TokenStyle = (typeof TOKEN_STYLES)[number];
+
+export function copyState(s: State): State {
+  return {
+    ...s,
+    possibleCurrent: s.possibleCurrent.slice(),
+    possibleNext: s.possibleNext.slice(),
+    stack: s.stack.slice(),
+    variables: { ...s.variables },
+    prefixes: { ...s.prefixes },
+    constructVariables: { ...s.constructVariables },
+    whereVariables: { ...s.whereVariables },
+    pendingToken: s.pendingToken ? { ...s.pendingToken } : undefined,
+    bracketStack: s.bracketStack.map((b) => ({ ...b })),
+  };
+}
+
+export default function (config: TokenizerConfig = {}): StreamParser<State> {
   const ll1_table = grammar.table;
 
   const IRI_REF = '<[^<>"`|{}^\\\x00-\x20]*>';
@@ -324,7 +371,7 @@ export default function (config: CodeMirror.EditorConfiguration): CodeMirror.Mod
     return possibles;
   }
 
-  function tokenBase(stream: CodeMirror.StringStream, state: State) {
+  function tokenBase(stream: StringStream, state: State): string {
     // If we have a pending token from a previous split, consume it from stream and return style
     if (state.pendingToken) {
       const token = state.pendingToken;
@@ -764,7 +811,7 @@ export default function (config: CodeMirror.EditorConfiguration): CodeMirror.Mod
     //		"*[;,?[or([verbPath,verbSimple]),objectList]]": 1,
   };
 
-  function indent(state: State, textAfter: string) {
+  function indent(state: State, textAfter: string, indentUnit: number) {
     //just avoid we don't indent multi-line  literals
     if (state.inLiteral) return 0;
     if (
@@ -800,12 +847,21 @@ export default function (config: CodeMirror.EditorConfiguration): CodeMirror.Mod
           n += dn;
         }
       }
-      return n * (config.indentUnit ?? 2);
+      return n * indentUnit;
     }
   }
 
   return {
+    name: "sparql11",
     token: tokenBase,
+    copyState,
+    indent: (state: State, textAfter: string, context: IndentContext) =>
+      indent(state, textAfter, context.unit ?? config.indentUnit ?? 2),
+    languageData: {
+      commentTokens: { line: "#" },
+      indentOnInput: /^\s*[\}\]\)]$/,
+      closeBrackets: { brackets: ["(", "[", "{", "'", '"'] },
+    },
     startState: function (): State {
       return {
         tokenize: tokenBase,
@@ -839,7 +895,5 @@ export default function (config: CodeMirror.EditorConfiguration): CodeMirror.Mod
         bracketLevel: 0,
       };
     },
-    indent: indent,
-    electricChars: "}])",
   };
 }

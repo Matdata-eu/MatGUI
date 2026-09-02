@@ -24,15 +24,20 @@
     "directory": "packages/yasqe"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "^6.20.3",
+    "@codemirror/commands": "^6.11.0",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/search": "^6.7.2",
+    "@codemirror/state": "^6.7.2",
+    "@codemirror/view": "^6.43.10",
+    "@lezer/highlight": "^1.2.3",
     "@matdata/yasgui-utils": "^4.6.1",
-    "codemirror": "^5.51.0",
     "leaflet": "^1.9.4",
     "lodash-es": "^4.17.15",
     "query-string": "^6.10.1",
     "sparql-formatter": "^1.0.2"
   },
   "devDependencies": {
-    "@types/codemirror": "0.0.100",
     "@types/leaflet": "^1.9.21",
     "@types/lodash-es": "^4.17.3",
     "@types/node": "^22.5.4"
