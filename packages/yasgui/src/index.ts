@@ -22,7 +22,6 @@ import "./index.scss";
 import "./themes.scss";
 import "./github-dark-theme.scss";
 import "../../yasr/src/scss/global.scss";
-import "codemirror/theme/material-palenight.css";
 import "@matdata/yasgui-geo-plugin/dist/yasgui-compat.css";
 
 // Register plugins to Yasr

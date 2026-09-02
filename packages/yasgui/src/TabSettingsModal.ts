@@ -509,43 +509,11 @@ export default class TabSettingsModal {
       return;
     }
 
-    // Available CodeMirror themes
+    // Available editor themes. Each theme is a `cm-s-<name>` class applied to the
+    // CodeMirror 6 editor root; the styles for these ship with yasgui.
     const themes = [
       { value: "default", label: "Default" },
       { value: "github-dark", label: "GitHub Dark Default" },
-      { value: "material-palenight", label: "Material Palenight" },
-      { value: "monokai", label: "Monokai" },
-      { value: "dracula", label: "Dracula" },
-      { value: "nord", label: "Nord" },
-      { value: "solarized dark", label: "Solarized Dark" },
-      { value: "solarized light", label: "Solarized Light" },
-      { value: "twilight", label: "Twilight" },
-      { value: "material", label: "Material" },
-      { value: "cobalt", label: "Cobalt" },
-      { value: "darcula", label: "Darcula" },
-      { value: "gruvbox-dark", label: "Gruvbox Dark" },
-      { value: "oceanic-next", label: "Oceanic Next" },
-      { value: "material-darker", label: "Material Darker" },
-      { value: "blackboard", label: "Blackboard" },
-      { value: "base16-dark", label: "Base16 Dark" },
-      { value: "base16-light", label: "Base16 Light" },
-      { value: "eclipse", label: "Eclipse" },
-      { value: "elegant", label: "Elegant" },
-      { value: "idea", label: "IntelliJ IDEA" },
-      { value: "mbo", label: "MBO" },
-      { value: "neat", label: "Neat" },
-      { value: "neo", label: "Neo" },
-      { value: "night", label: "Night" },
-      { value: "paraiso-dark", label: "Paraiso Dark" },
-      { value: "paraiso-light", label: "Paraiso Light" },
-      { value: "pastel-on-dark", label: "Pastel on Dark" },
-      { value: "rubyblue", label: "Ruby Blue" },
-      { value: "the-matrix", label: "The Matrix" },
-      { value: "tomorrow-night-bright", label: "Tomorrow Night Bright" },
-      { value: "tomorrow-night-eighties", label: "Tomorrow Night 80s" },
-      { value: "vibrant-ink", label: "Vibrant Ink" },
-      { value: "xq-dark", label: "XQ Dark" },
-      { value: "xq-light", label: "XQ Light" },
     ];
 
     // Light Mode Theme Section
@@ -609,20 +577,6 @@ export default class TabSettingsModal {
     themeDarkSection.appendChild(themeDarkHelp);
     themeDarkSection.appendChild(themeDarkSelect);
     container.appendChild(themeDarkSection);
-
-    // Theme reference link
-    const themeReferenceSection = document.createElement("div");
-    addClass(themeReferenceSection, "settingsSection");
-
-    const themeReferenceLink = document.createElement("a");
-    themeReferenceLink.href = "https://codemirror.net/5/demo/theme.html";
-    themeReferenceLink.target = "_blank";
-    themeReferenceLink.rel = "noopener noreferrer";
-    themeReferenceLink.textContent = "Preview CodeMirror themes →";
-    addClass(themeReferenceLink, "settingsLink");
-
-    themeReferenceSection.appendChild(themeReferenceLink);
-    container.appendChild(themeReferenceSection);
 
     // Formatter Type Section
     const formatterSection = document.createElement("div");
