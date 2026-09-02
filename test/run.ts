@@ -59,15 +59,19 @@ describe("Yasqe", function () {
 
   async function waitForAutocompletionPopup(shouldNotHaveLength?: number): Promise<number | undefined> {
     if (shouldNotHaveLength) {
+      // CodeMirror 6 renders completions as `.cm-tooltip.CodeMirror-hints > ul > li`
       await page.waitForFunction(
-        `document.querySelector('.CodeMirror-hints').children.length !== ${shouldNotHaveLength}`,
+        `document.querySelectorAll('.CodeMirror-hints li').length !== ${shouldNotHaveLength}`,
         { timeout: 600 },
       );
     } else {
       await page.waitForSelector(`.CodeMirror-hints`, { timeout: 600 });
       await wait(20);
     }
-    return page.evaluate(() => document.querySelector(".CodeMirror-hints")?.children.length);
+    return page.evaluate(() => {
+      const items = document.querySelectorAll(".CodeMirror-hints li");
+      return items.length || undefined;
+    });
   }
 
   async function issueAutocompletionKeyCombination() {
