@@ -4,18 +4,13 @@
 import { Plugin } from "../";
 import Yasr from "../../";
 import "./index.scss";
-import CodeMirror from "codemirror";
-import "codemirror/addon/fold/foldcode.js";
-import "codemirror/addon/fold/foldgutter.js";
-import "codemirror/addon/fold/xml-fold.js";
-import "codemirror/addon/fold/brace-fold.js";
-
-import "codemirror/addon/edit/matchbrackets.js";
-import "codemirror/mode/xml/xml.js";
-
-import "codemirror/mode/javascript/javascript.js";
-import "codemirror/lib/codemirror.css";
-import "codemirror/theme/material-palenight.css";
+import { EditorState, Extension } from "@codemirror/state";
+import { EditorView, lineNumbers, highlightSpecialChars } from "@codemirror/view";
+import { foldGutter, bracketMatching, syntaxHighlighting, StreamLanguage } from "@codemirror/language";
+import { classHighlighter } from "@lezer/highlight";
+import { json } from "@codemirror/lang-json";
+import { xml } from "@codemirror/lang-xml";
+import { javascript } from "@codemirror/legacy-modes/mode/javascript";
 import { addClass, removeClass } from "@matdata/yasgui-utils";
 import { DeepReadonly } from "ts-essentials";
 
@@ -29,7 +24,7 @@ export default class Response implements Plugin<PluginConfig> {
   helpReference = "https://yasgui-doc.matdata.eu/docs/user-guide#response-plugin";
   private config: DeepReadonly<PluginConfig>;
   private overLay: HTMLDivElement | undefined;
-  private cm: CodeMirror.Editor | undefined;
+  private cm: EditorView | undefined;
   constructor(yasr: Yasr) {
     this.yasr = yasr;
     this.config = Response.defaults;
@@ -81,26 +76,51 @@ export default class Response implements Plugin<PluginConfig> {
 
     // Detect current theme from document
     const isDarkTheme = document.documentElement.getAttribute("data-theme") === "dark";
-    const cmTheme = isDarkTheme ? "material-palenight" : "default";
 
-    const codemirrorOpts: Partial<CodeMirror.EditorConfiguration> = {
-      readOnly: true,
-      lineNumbers: true,
-      lineWrapping: true,
-      foldGutter: true,
-      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-      value: value,
-      extraKeys: { Tab: false },
-      theme: cmTheme,
-    };
-    const mode = this.yasr.results?.getType();
-    if (mode === "json") {
-      codemirrorOpts.mode = { name: "javascript", json: true };
-    }
+    const extensions: Extension[] = [
+      EditorState.readOnly.of(true),
+      EditorView.editable.of(false),
+      lineNumbers(),
+      foldGutter(),
+      highlightSpecialChars(),
+      bracketMatching(),
+      EditorView.lineWrapping,
+      // Emit stable `tok-*` classes so the theme SCSS controls colors (light & dark)
+      syntaxHighlighting(classHighlighter),
+      EditorView.editorAttributes.of({ class: `CodeMirror cm-s-${isDarkTheme ? "yasgui-dark" : "default"}` }),
+    ];
+    const language = this.getLanguageExtension();
+    if (language) extensions.push(language);
 
-    this.cm = CodeMirror(this.yasr.resultsEl, codemirrorOpts);
-    // Don't show less originally we've already set the value in the codemirrorOpts
+    this.destroyEditor();
+    this.cm = new EditorView({
+      state: EditorState.create({ doc: value, extensions }),
+      parent: this.yasr.resultsEl,
+    });
+    // Don't show less originally we've already set the value in the editor state
     if (lines.length > config.maxLines) this.showLess(false);
+  }
+  private getLanguageExtension(): Extension | undefined {
+    const type = this.yasr.results?.getType();
+    if (type === "json") return json();
+    if (type === "xml") return xml();
+    const contentType = this.yasr.results?.getContentType() || "";
+    if (contentType.indexOf("json") >= 0) return json();
+    if (contentType.indexOf("xml") >= 0 || contentType.indexOf("html") >= 0) return xml();
+    if (contentType.indexOf("javascript") >= 0) return StreamLanguage.define(javascript);
+    return undefined;
+  }
+  private destroyEditor() {
+    if (this.cm) {
+      this.cm.destroy();
+      this.cm = undefined;
+    }
+    this.overLay?.remove();
+    this.overLay = undefined;
+  }
+  private setValue(value: string) {
+    if (!this.cm) return;
+    this.cm.dispatch({ changes: { from: 0, to: this.cm.state.doc.length, insert: value } });
   }
   private limitData(value: string) {
     const lines = value.split("\n");
@@ -116,7 +136,7 @@ export default class Response implements Plugin<PluginConfig> {
   showLess(setValue = true) {
     if (!this.cm) return;
     // Add overflow
-    addClass(this.cm.getWrapperElement(), "overflow");
+    addClass(this.cm.dom, "overflow");
 
     // Remove old instance
     if (this.overLay) {
@@ -157,9 +177,9 @@ export default class Response implements Plugin<PluginConfig> {
 
     overlayContent.appendChild(downloadButton);
     this.overLay.appendChild(overlayContent);
-    this.cm.getWrapperElement().appendChild(this.overLay);
+    this.cm.dom.appendChild(this.overLay);
     if (setValue) {
-      this.cm.setValue(this.limitData(this.yasr.results?.getOriginalResponseAsString() || ""));
+      this.setValue(this.limitData(this.yasr.results?.getOriginalResponseAsString() || ""));
     }
   }
   /**
@@ -167,11 +187,13 @@ export default class Response implements Plugin<PluginConfig> {
    */
   showMore() {
     if (!this.cm) return;
-    removeClass(this.cm.getWrapperElement(), "overflow");
+    removeClass(this.cm.dom, "overflow");
     this.overLay?.remove();
     this.overLay = undefined;
-    this.cm.setValue(this.yasr.results?.getOriginalResponseAsString() || "");
-    this.cm.refresh();
+    this.setValue(this.yasr.results?.getOriginalResponseAsString() || "");
+  }
+  destroy() {
+    this.destroyEditor();
   }
   public static defaults: PluginConfig = {
     maxLines: 30,

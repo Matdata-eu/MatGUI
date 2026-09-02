@@ -1,10 +1,31 @@
 .yasr {
   .yasr_results {
     position: relative;
-    .CodeMirror {
-      border: 1px solid #d1d1d1;
+    .cm-editor {
+      border: 1px solid var(--yasgui-border-color, #d1d1d1);
       margin-top: 5px;
       height: 100%;
+      position: relative;
+      background: var(--yasgui-bg-primary, #fff);
+      color: var(--yasgui-text-primary, #000);
+      font-size: 13px;
+      &.cm-focused {
+        outline: none;
+      }
+      .cm-scroller {
+        font-family: monospace;
+        line-height: 1.4;
+      }
+      .cm-gutters {
+        background: var(--yasgui-bg-secondary, #f7f7f7);
+        border-right: 1px solid var(--yasgui-border-color, #ddd);
+        color: var(--yasgui-text-secondary, #999);
+      }
+      .cm-foldPlaceholder {
+        background: var(--yasgui-bg-secondary, #eee);
+        border: 1px solid var(--yasgui-border-color, #ddd);
+        color: var(--yasgui-text-secondary, #888);
+      }
       &.overflow::before {
         background: linear-gradient(transparent 0%, #ffffffaa 75%, white 100%);
         content: "";
@@ -13,6 +34,61 @@
         z-index: 1200;
         position: absolute;
         pointer-events: none;
+      }
+      // Token colors (classHighlighter emits `tok-*` classes). Light theme:
+      .tok-string,
+      .tok-string2 {
+        color: #a11;
+      }
+      .tok-number,
+      .tok-atom,
+      .tok-bool {
+        color: #164;
+      }
+      .tok-propertyName,
+      .tok-attributeName {
+        color: #00c;
+      }
+      .tok-tagName,
+      .tok-keyword {
+        color: #170;
+      }
+      .tok-comment {
+        color: #a50;
+      }
+      .tok-punctuation,
+      .tok-angleBracket {
+        color: #555;
+      }
+      // Dark theme
+      &.cm-s-yasgui-dark {
+        &.overflow::before {
+          background: linear-gradient(transparent 0%, #1e1e1eaa 75%, var(--yasgui-bg-primary, #1e1e1e) 100%);
+        }
+        .tok-string,
+        .tok-string2 {
+          color: #ce9178;
+        }
+        .tok-number,
+        .tok-atom,
+        .tok-bool {
+          color: #b5cea8;
+        }
+        .tok-propertyName,
+        .tok-attributeName {
+          color: #9cdcfe;
+        }
+        .tok-tagName,
+        .tok-keyword {
+          color: #569cd6;
+        }
+        .tok-comment {
+          color: #6a9955;
+        }
+        .tok-punctuation,
+        .tok-angleBracket {
+          color: #d4d4d4;
+        }
       }
     }
     .overlay {
