@@ -77,7 +77,8 @@
               height: 100%;
               overflow: hidden;
 
-              .CodeMirror {
+              .CodeMirror,
+              .cm-editor {
                 flex: 1;
                 height: 100%;
               }

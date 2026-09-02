@@ -240,7 +240,8 @@
 .yasqe {
   background-color: var(--yasgui-bg-primary);
 
-  .CodeMirror {
+  .CodeMirror,
+  .cm-editor {
     background-color: var(--yasgui-bg-primary);
     color: var(--yasgui-text-primary);
   }
@@ -365,17 +366,21 @@
   }
 }
 
-// CodeMirror hints theming
-.CodeMirror-hints {
+// CodeMirror hints (autocompletion tooltip) theming.
+// yasqe gives the CodeMirror 6 autocompletion tooltip the legacy `CodeMirror-hints` class.
+.CodeMirror-hints,
+.cm-tooltip.CodeMirror-hints {
   background: var(--yasgui-bg-primary) !important;
   border-color: var(--yasgui-border-color) !important;
 }
 
-.CodeMirror-hint {
+.CodeMirror-hint,
+.CodeMirror-hints > ul > li {
   color: var(--yasgui-text-primary) !important;
 }
 
-li.CodeMirror-hint-active {
+li.CodeMirror-hint-active,
+.CodeMirror-hints > ul > li[aria-selected] {
   background: var(--yasgui-accent-color) !important;
   color: var(--yasgui-bg-primary) !important;
 }

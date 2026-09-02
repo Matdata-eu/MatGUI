@@ -1826,7 +1826,7 @@ WHERE {
   public static getDefaults(yasgui?: Yasgui): PersistedJson {
     return {
       yasqe: {
-        value: yasgui ? yasgui.config.yasqe.value : Yasgui.defaults.yasqe.value,
+        value: (yasgui ? yasgui.config.yasqe.value : Yasgui.defaults.yasqe.value) ?? "",
       },
       yasr: {
         response: undefined,
