@@ -244,7 +244,7 @@ YASGUI is built as a monorepo with four main packages, each serving a specific p
 
 #### @matdata/yasqe (SPARQL Query Editor)
 
-**Purpose**: Rich SPARQL query editor built on CodeMirror.
+**Purpose**: Rich SPARQL query editor built on CodeMirror 6.
 
 **Key Features:**
 - SPARQL syntax highlighting
@@ -257,11 +257,28 @@ YASGUI is built as a monorepo with four main packages, each serving a specific p
 - Keyboard shortcuts
 
 **Core Components:**
-- CodeMirror editor with SPARQL mode
-- SPARQL tokenizer/grammar
-- Autocomplete system (extensible)
+- CodeMirror 6 `EditorView` wrapped by a CodeMirror 5-compatible facade (`packages/yasqe/src/editor/`)
+- SPARQL tokenizer/grammar exposed as a `StreamLanguage` (`packages/yasqe/grammar/tokenizer.ts`)
+- Autocomplete system (extensible, bridged to `@codemirror/autocomplete`)
 - HTTP request handler
 - Prefix utilities
+
+**Editor architecture (CodeMirror 6):**
+
+`Yasqe` no longer extends the CodeMirror class. It owns a CodeMirror 6 `EditorView` and exposes the familiar
+CodeMirror 5-style API (`getValue`, `setValue`, `getCursor`, `setCursor`, `getTokenAt`, `getDoc`, `markText`,
+`on('change'|'cursorActivity'|...)`, `addKeyMap`, etc.) through the `EditorFacade`/`DocFacade` classes. The
+`editor/` folder contains the CM6 building blocks:
+
+- `facade.ts` / `doc.ts` – CM5-compatible editor and document API on top of `EditorView`/`EditorState`
+- `language.ts` / `tokenizerRunner.ts` – `StreamLanguage` for the SPARQL grammar emitting `cm-<style>` classes, plus `getTokenAt` emulation
+- `autocompletion.ts` – bridges Yasqe completers (`HintFn`) to `@codemirror/autocomplete`, rendering into a `.CodeMirror-hints` list
+- `gutters.ts` – line-number gutter and error/warning marker gutter
+- `folding.ts` – brace and PREFIX-block folding via a `foldService`
+- `keymap.ts` – converts CM5 key names (`Ctrl-Enter`, `Shift-Ctrl-K`, ...) to CM6 keymaps
+
+Themes are applied as `CodeMirror cm-s-<theme>` classes on the editor root, so existing `.cm-s-*` stylesheets and
+`.CodeMirror`-based selectors keep working. Token classes follow the CM5 naming (`cm-keyword`, `cm-variable-3`, ...).
 
 #### @matdata/yasr (SPARQL Results Viewer)
 
@@ -782,7 +799,7 @@ SELECT ?label WHERE {
   ?s rdfs:label ?label
 } LIMIT 10`,
   
-  theme: 'material-palenight',
+  theme: 'github-dark',
   lineNumbers: true,
   lineWrapping: false,
   showQueryButton: true,
@@ -2483,7 +2500,7 @@ yasqe.on('resize', (instance, newSize) => {
   console.log('Editor resized to:', newSize);
 });
 
-// CodeMirror events (yasqe extends CodeMirror)
+// Editor events (Yasqe wraps a CodeMirror 6 EditorView and re-emits CodeMirror 5-style events)
 yasqe.on('change', (instance, changeObj) => {
   console.log('Editor content changed');
 });
@@ -4090,7 +4107,7 @@ Releases are managed using Changesets:
 - **Issue Tracker**: [https://github.com/Matdata-eu/Yasgui/issues](https://github.com/Matdata-eu/Yasgui/issues)
 - **User Guide**: See `docs/user-guide.md`
 - **SPARQL Specification**: [https://www.w3.org/TR/sparql11-query/](https://www.w3.org/TR/sparql11-query/)
-- **CodeMirror Documentation**: [https://codemirror.net/5/](https://codemirror.net/5/)
+- **CodeMirror 6 Documentation**: [https://codemirror.net/docs/](https://codemirror.net/docs/)
 - **Table Plugin**: [https://github.com/Matdata-eu/yasgui-table-plugin](https://github.com/Matdata-eu/yasgui-table-plugin)
 - **Graph Plugin**: [https://github.com/Matdata-eu/yasgui-graph-plugin](https://github.com/Matdata-eu/yasgui-graph-plugin)
 - **Geo Plugin**: [https://github.com/Matdata-eu/yasgui-geo-plugin](https://github.com/Matdata-eu/yasgui-geo-plugin)
