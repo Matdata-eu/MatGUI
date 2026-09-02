@@ -597,7 +597,8 @@
     margin: 0;
     padding-top: 100px;
 
-    .CodeMirror-wrap {
+    .CodeMirror-wrap,
+    .cm-editor {
       padding-top: 10px;
     }
 
@@ -617,7 +618,8 @@
       }
     }
 
-    .CodeMirror {
+    .CodeMirror,
+    .cm-editor {
       height: calc(100vh - 150px) !important;
     }
   }
