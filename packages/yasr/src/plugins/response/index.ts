@@ -10,6 +10,7 @@ import { foldGutter, bracketMatching, syntaxHighlighting, StreamLanguage } from 
 import { classHighlighter } from "@lezer/highlight";
 import { json } from "@codemirror/lang-json";
 import { xml } from "@codemirror/lang-xml";
+import { turtle } from "codemirror-lang-turtle";
 import { javascript } from "@codemirror/legacy-modes/mode/javascript";
 import { addClass, removeClass } from "@matdata/yasgui-utils";
 import { DeepReadonly } from "ts-essentials";
@@ -104,6 +105,8 @@ export default class Response implements Plugin<PluginConfig> {
     const type = this.yasr.results?.getType();
     if (type === "json") return json();
     if (type === "xml") return xml();
+    if (type === "ttl") return turtle();
+    if (type === "n-triples") return turtle();
     const contentType = this.yasr.results?.getContentType() || "";
     if (contentType.indexOf("json") >= 0) return json();
     if (contentType.indexOf("xml") >= 0 || contentType.indexOf("html") >= 0) return xml();
