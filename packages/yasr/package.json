@@ -36,6 +36,7 @@
     "@lezer/highlight": "^1.2.3",
     "@matdata/yasgui-utils": "^4.6.1",
     "@matdata/yasqe": "^4.6.1",
+    "codemirror-lang-turtle": "^0.0.2",
     "colors": "^1.4.0",
     "column-resizer": "^1.4.0",
     "datatables.net": "^2.0.5",
