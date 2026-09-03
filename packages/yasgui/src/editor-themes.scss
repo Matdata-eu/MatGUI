@@ -1,0 +1,268 @@
+// Additional CodeMirror 6 editor themes for YASQE.
+//
+// Each theme is a `cm-s-<name>` class applied to the editor root element by the
+// yasqe editor facade (see packages/yasqe/src/editor/facade.ts). The `default`
+// (light) and `github-dark` themes ship elsewhere; this file adds the extra
+// themes offered in the tab settings.
+//
+// Selectors target the CodeMirror 6 DOM (`.cm-editor` / `.cm-*`). The mixin below
+// keeps the (fairly repetitive) token colouring consistent across themes.
+
+@mixin cm-theme(
+  $bg,
+  $fg,
+  $gutter-bg,
+  $gutter-fg,
+  $border,
+  $cursor,
+  $selection,
+  $active-line,
+  $keyword,
+  $atom,
+  $number,
+  $string,
+  $string-2,
+  $variable-3,
+  $meta,
+  $comment,
+  $punc,
+  $bracket
+) {
+  &.cm-editor,
+  &.CodeMirror {
+    background-color: $bg;
+    color: $fg;
+  }
+
+  .cm-gutters {
+    background: $gutter-bg;
+    border-right: 1px solid $border;
+    color: $gutter-fg;
+  }
+  .cm-gutterElement {
+    color: $gutter-fg;
+  }
+  .cm-foldGutter .cm-gutterElement {
+    color: $fg;
+  }
+  .cm-activeLine {
+    background: $active-line;
+  }
+  .cm-activeLineGutter {
+    background: $active-line;
+  }
+
+  .cm-cursor,
+  .cm-dropCursor {
+    border-left: 1px solid $cursor;
+  }
+  .cm-selectionBackground,
+  &.cm-focused .cm-selectionBackground {
+    background: $selection !important;
+  }
+  .cm-content ::selection,
+  .cm-line::selection {
+    background: $selection !important;
+  }
+
+  span.cm-keyword {
+    color: $keyword;
+  }
+  span.cm-atom {
+    color: $atom;
+  }
+  span.cm-number {
+    color: $number;
+  }
+  span.cm-string {
+    color: $string;
+  }
+  span.cm-string-2 {
+    color: $string-2;
+  }
+  span.cm-variable-3 {
+    color: $variable-3;
+  }
+  span.cm-meta {
+    color: $meta;
+  }
+  span.cm-comment {
+    color: $comment;
+    font-style: italic;
+  }
+  span.cm-punc {
+    color: $punc;
+  }
+  span.cm-bracket {
+    color: $bracket;
+  }
+  span.cm-error {
+    color: #f00;
+  }
+
+  // Rainbow brackets
+  span.cm-bracket-level-0 {
+    color: #ffd700;
+  }
+  span.cm-bracket-level-1 {
+    color: #da70d6;
+  }
+  span.cm-bracket-level-2 {
+    color: #6bb0cc;
+  }
+  span.cm-bracket-level-3 {
+    color: #439143;
+  }
+  span.cm-bracket-paren {
+    color: $punc;
+  }
+  span.cm-bracket-mismatch {
+    color: #f00;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Dark themes
+// ---------------------------------------------------------------------------
+
+.cm-s-monokai {
+  @include cm-theme(
+    $bg: #272822,
+    $fg: #f8f8f2,
+    $gutter-bg: #272822,
+    $gutter-fg: #75715e,
+    $border: #3a3b35,
+    $cursor: #f8f8f0,
+    $selection: rgba(73, 72, 62, 0.99),
+    $active-line: rgba(255, 255, 255, 0.05),
+    $keyword: #f92672,
+    $atom: #ae81ff,
+    $number: #ae81ff,
+    $string: #e6db74,
+    $string-2: #a6e22e,
+    $variable-3: #66d9ef,
+    $meta: #75715e,
+    $comment: #75715e,
+    $punc: #f8f8f2,
+    $bracket: #f8f8f2
+  );
+}
+
+.cm-s-dracula {
+  @include cm-theme(
+    $bg: #282a36,
+    $fg: #f8f8f2,
+    $gutter-bg: #282a36,
+    $gutter-fg: #6272a4,
+    $border: #3a3c4e,
+    $cursor: #f8f8f0,
+    $selection: rgba(68, 71, 90, 0.99),
+    $active-line: rgba(255, 255, 255, 0.05),
+    $keyword: #ff79c6,
+    $atom: #bd93f9,
+    $number: #bd93f9,
+    $string: #f1fa8c,
+    $string-2: #8be9fd,
+    $variable-3: #8be9fd,
+    $meta: #6272a4,
+    $comment: #6272a4,
+    $punc: #f8f8f2,
+    $bracket: #f8f8f2
+  );
+}
+
+.cm-s-material-darker {
+  @include cm-theme(
+    $bg: #212121,
+    $fg: #eeffff,
+    $gutter-bg: #212121,
+    $gutter-fg: #545454,
+    $border: #2a2a2a,
+    $cursor: #ffcc00,
+    $selection: rgba(97, 97, 97, 0.6),
+    $active-line: rgba(255, 255, 255, 0.05),
+    $keyword: #c792ea,
+    $atom: #f78c6c,
+    $number: #f78c6c,
+    $string: #c3e88d,
+    $string-2: #82aaff,
+    $variable-3: #89ddff,
+    $meta: #546e7a,
+    $comment: #546e7a,
+    $punc: #89ddff,
+    $bracket: #eeffff
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Light themes
+// ---------------------------------------------------------------------------
+
+.cm-s-solarized-light {
+  @include cm-theme(
+    $bg: #fdf6e3,
+    $fg: #657b83,
+    $gutter-bg: #eee8d5,
+    $gutter-fg: #93a1a1,
+    $border: #e6dfc6,
+    $cursor: #657b83,
+    $selection: rgba(7, 54, 66, 0.12),
+    $active-line: rgba(0, 0, 0, 0.04),
+    $keyword: #859900,
+    $atom: #d33682,
+    $number: #d33682,
+    $string: #2aa198,
+    $string-2: #6c71c4,
+    $variable-3: #268bd2,
+    $meta: #cb4b16,
+    $comment: #93a1a1,
+    $punc: #657b83,
+    $bracket: #657b83
+  );
+}
+
+.cm-s-eclipse {
+  @include cm-theme(
+    $bg: #ffffff,
+    $fg: #000000,
+    $gutter-bg: #f7f7f7,
+    $gutter-fg: #999999,
+    $border: #dddddd,
+    $cursor: #000000,
+    $selection: rgba(215, 209, 255, 0.99),
+    $active-line: rgba(0, 0, 0, 0.04),
+    $keyword: #7f0055,
+    $atom: #219,
+    $number: #164,
+    $string: #2a00ff,
+    $string-2: #f50,
+    $variable-3: #085,
+    $meta: #555,
+    $comment: #3f7f5f,
+    $punc: #000000,
+    $bracket: #000000
+  );
+}
+
+.cm-s-idea {
+  @include cm-theme(
+    $bg: #ffffff,
+    $fg: #000000,
+    $gutter-bg: #ffffff,
+    $gutter-fg: #999999,
+    $border: #dddddd,
+    $cursor: #000000,
+    $selection: rgba(163, 214, 255, 0.99),
+    $active-line: #fffae3,
+    $keyword: #000080,
+    $atom: #009695,
+    $number: #0000ff,
+    $string: #008000,
+    $string-2: #a11,
+    $variable-3: #20999d,
+    $meta: #808000,
+    $comment: #808080,
+    $punc: #000000,
+    $bracket: #000000
+  );
+}

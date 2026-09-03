@@ -512,8 +512,14 @@ export default class TabSettingsModal {
     // Available editor themes. Each theme is a `cm-s-<name>` class applied to the
     // CodeMirror 6 editor root; the styles for these ship with yasgui.
     const themes = [
-      { value: "default", label: "Default" },
+      { value: "default", label: "Default (Light)" },
+      { value: "eclipse", label: "Eclipse (Light)" },
+      { value: "idea", label: "IntelliJ IDEA (Light)" },
+      { value: "solarized-light", label: "Solarized Light" },
       { value: "github-dark", label: "GitHub Dark Default" },
+      { value: "monokai", label: "Monokai (Dark)" },
+      { value: "dracula", label: "Dracula (Dark)" },
+      { value: "material-darker", label: "Material Darker (Dark)" },
     ];
 
     // Light Mode Theme Section

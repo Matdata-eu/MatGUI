@@ -58,18 +58,44 @@
   span.cm-error {
     border-bottom: 2px dotted red;
   }
-  .gutterErrorBar,
-  .cm-gutter-gutterErrorBar {
-    width: 4px;
+  .cm-syntax-error-token {
+    color: #d32f2f;
+    text-decoration-line: underline;
+    text-decoration-style: wavy;
+    text-decoration-color: #d32f2f;
+    text-underline-offset: 2px;
   }
+  // Reserve a fixed width for the marker gutters so that adding an error/warning
+  // icon does not increase the gutter width (which would shift the whole editor).
+  .cm-gutter-gutterErrorBar,
   .cm-gutter-gutterConstructWarning {
-    width: 4px;
+    width: 16px;
   }
-  .gutterErrorBar .cm-gutterElement > *,
-  .cm-gutter-gutterErrorBar .cm-gutterElement > * {
-    display: block;
-    width: 100%;
-    height: 100%;
+  .cm-gutter-gutterErrorBar .cm-gutterElement,
+  .cm-gutter-gutterConstructWarning .cm-gutterElement {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    // Let the tooltip escape the (small) gutter element
+    overflow: visible;
+  }
+
+  // Fold gutter arrows. The fold markers (see editor/folding.ts) only carry the
+  // CodeMirror-foldgutter-open / -folded classes; provide the arrow glyphs here.
+  .cm-foldGutter .cm-gutterElement {
+    padding: 0 1px;
+    cursor: pointer;
+    color: var(--yasgui-text-secondary, #999);
+  }
+  .cm-foldMarker {
+    display: inline-block;
+    line-height: 1;
+  }
+  .CodeMirror-foldgutter-open::after {
+    content: "\25BE"; // ▾
+  }
+  .CodeMirror-foldgutter-folded::after {
+    content: "\25B8"; // ▸
   }
 
   .CodeMirror-foldmarker,
@@ -93,7 +119,7 @@
 // Rainbow bracket colors for default theme
 .yasqe .cm-s-default {
   span.cm-bracket-level-0 {
-    color: #ffd700;
+    color: #c4b878;
   } // Gold
   span.cm-bracket-level-1 {
     color: #da70d6;
@@ -105,7 +131,7 @@
     color: #439143;
   } // Pale green
   span.cm-bracket-paren {
-    color: #997;
+    color: #654;
   } // Constant color for () and []
   span.cm-bracket-mismatch {
     color: #f00;

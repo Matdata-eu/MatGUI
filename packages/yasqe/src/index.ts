@@ -1,5 +1,6 @@
 import "./scss/yasqe.scss";
 import "./scss/buttons.scss";
+import "./scss/codemirrorMods.scss";
 import "leaflet/dist/leaflet.css";
 import { findFirstPrefixLine as findFirstPrefixLineInDoc, foldAt, unfoldAt } from "./editor/folding";
 import { getPrefixesFromQuery, addPrefixes, removePrefixes, Prefixes } from "./prefixUtils";
@@ -1868,6 +1869,7 @@ export class Yasqe extends EditorFacade {
     this.queryValid = true;
 
     this.clearGutter("gutterErrorBar");
+    this.clearSyntaxErrorHighlight();
 
     var state: TokenizerState;
     for (var l = 0; l < this.getDoc().lineCount(); ++l) {
@@ -1898,6 +1900,18 @@ export class Yasqe extends EditorFacade {
           }
           //we don't want the gutter error, so return
           return;
+        }
+
+        const lineLength = this.getDoc().getLine(l).length;
+        const startCh =
+          typeof state.errorStartPos === "number"
+            ? Math.max(0, Math.min(lineLength, state.errorStartPos))
+            : Math.max(0, Math.min(lineLength, token.start));
+        const fallbackEnd = token.string ? startCh + token.string.length : startCh + 1;
+        const endCandidate = typeof state.errorEndPos === "number" ? state.errorEndPos : fallbackEnd;
+        const endCh = Math.max(startCh + 1, Math.min(lineLength, endCandidate));
+        if (endCh > startCh) {
+          this.setSyntaxErrorHighlight({ line: l, ch: startCh }, { line: l, ch: endCh });
         }
 
         // Add gutter error icon

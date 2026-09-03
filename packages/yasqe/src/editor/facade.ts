@@ -6,10 +6,12 @@
  * means the rest of the code base — autocompleters, prefix utilities, tab management —
  * keeps working without invasive rewrites, while the actual editor is CodeMirror 6.
  */
-import { Compartment, EditorState, Extension, StateEffect } from "@codemirror/state";
+import { Compartment, EditorState, Extension, StateEffect, StateField } from "@codemirror/state";
 import {
   EditorView,
   ViewUpdate,
+  Decoration,
+  DecorationSet,
   lineNumbers as lineNumbersExt,
   drawSelection,
   highlightActiveLine,
@@ -84,6 +86,28 @@ function themeClassExtension(theme: string | undefined): Extension {
   return EditorView.editorAttributes.of({ class: classes.join(" ") });
 }
 
+const syntaxErrorTokenMark = Decoration.mark({ class: "cm-syntax-error-token" });
+const setSyntaxErrorHighlightEffect = StateEffect.define<{ from: number; to: number } | null>();
+const syntaxErrorHighlightField = StateField.define<DecorationSet>({
+  create() {
+    return Decoration.none;
+  },
+  update(deco, tr) {
+    deco = deco.map(tr.changes);
+    for (const effect of tr.effects) {
+      if (!effect.is(setSyntaxErrorHighlightEffect)) continue;
+      const range = effect.value;
+      if (!range || range.to <= range.from) {
+        deco = Decoration.none;
+      } else {
+        deco = Decoration.set([syntaxErrorTokenMark.range(range.from, range.to)]);
+      }
+    }
+    return deco;
+  },
+  provide: (field) => EditorView.decorations.from(field),
+});
+
 export abstract class EditorFacade {
   public readonly view: EditorView;
   public readonly runner: TokenizerRunner;
@@ -126,6 +150,7 @@ export abstract class EditorFacade {
         sparql(),
         sparqlFolding(this.runner),
         markerGutters(),
+        syntaxErrorHighlightField,
         this.compartments.lineNumbers.of(
           options.lineNumbers === false ? [] : [lineNumbersExt(), highlightActiveLineGutter()],
         ),
@@ -388,6 +413,18 @@ export abstract class EditorFacade {
 
   public clearGutter(gutterName: GutterName) {
     clearGutter(this.view, gutterName);
+  }
+
+  /** Highlight one syntax error token range (replaces any existing syntax error highlight). */
+  public setSyntaxErrorHighlight(from: Position, to: Position) {
+    const fromOffset = posToOffset(this.view.state.doc, from);
+    const toOffset = posToOffset(this.view.state.doc, to);
+    this.view.dispatch({ effects: setSyntaxErrorHighlightEffect.of({ from: fromOffset, to: toOffset }) });
+  }
+
+  /** Clear syntax error token highlight. */
+  public clearSyntaxErrorHighlight() {
+    this.view.dispatch({ effects: setSyntaxErrorHighlightEffect.of(null) });
   }
 
   /* ------------------------------------------------------------------ */
