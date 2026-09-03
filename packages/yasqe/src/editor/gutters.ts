@@ -1,15 +1,16 @@
 /**
  * Marker gutters replacing the CodeMirror 5 `setGutterMarker` / `clearGutter` API.
  *
- * Two named gutters are supported: `gutterErrorBar` (syntax errors) and `gutterConstructWarning`
- * (undefined variables in CONSTRUCT templates). Markers are arbitrary DOM elements, exactly like
- * in CodeMirror 5, so the existing tooltip logic keeps working.
+ * Two logical marker types are supported: `gutterErrorBar` (syntax errors) and
+ * `gutterConstructWarning` (undefined variables in CONSTRUCT templates). Both are rendered
+ * in one physical gutter lane to keep gutter width minimal.
  */
 import { EditorState, StateEffect, StateField, RangeSet, Extension } from "@codemirror/state";
 import { EditorView, gutter, GutterMarker } from "@codemirror/view";
 
 export type GutterName = "gutterErrorBar" | "gutterConstructWarning";
 export const GUTTER_NAMES: GutterName[] = ["gutterErrorBar", "gutterConstructWarning"];
+const RENDER_GUTTER_NAME: GutterName = "gutterErrorBar";
 
 class ElementMarker extends GutterMarker {
   constructor(readonly element: HTMLElement) {
@@ -19,7 +20,13 @@ class ElementMarker extends GutterMarker {
     return other.element === this.element;
   }
   toDOM() {
-    return this.element;
+    // Return a fresh clone on every render. CodeMirror 6 owns (and may move/recreate) the node
+    // it gets from `toDOM`; handing out the same shared element across gutter re-renders detaches
+    // it from a previous gutter element, which later crashes with `nextSibling` of null.
+    const clone = this.element.cloneNode(true) as HTMLElement;
+    clone.onmouseover = this.element.onmouseover;
+    clone.onmouseout = this.element.onmouseout;
+    return clone;
   }
 }
 
@@ -33,7 +40,7 @@ interface SetMarkerSpec {
 const setMarkerEffect = StateEffect.define<SetMarkerSpec>();
 const clearGutterEffect = StateEffect.define<GutterName>();
 
-function createGutter(name: GutterName): { field: StateField<RangeSet<ElementMarker>>; extension: Extension } {
+function createMarkerField(name: GutterName): StateField<RangeSet<ElementMarker>> {
   const field = StateField.define<RangeSet<ElementMarker>>({
     create() {
       return RangeSet.empty;
@@ -56,15 +63,7 @@ function createGutter(name: GutterName): { field: StateField<RangeSet<ElementMar
       return markers;
     },
   });
-  const extension = [
-    field,
-    gutter({
-      class: `cm-gutter-${name} CodeMirror-${name}`,
-      markers: (view) => view.state.field(field),
-      initialSpacer: () => new ElementMarker(spacerElement()),
-    }),
-  ];
-  return { field, extension };
+  return field;
 }
 
 function spacerElement() {
@@ -74,14 +73,53 @@ function spacerElement() {
   return el;
 }
 
-// Fields are defined once so that they are shared between all editor instances
-const gutterFields = new Map<GutterName, StateField<RangeSet<ElementMarker>>>();
-const gutterExtensions: Extension[] = [];
-for (const name of GUTTER_NAMES) {
-  const { field, extension } = createGutter(name);
-  gutterFields.set(name, field);
-  gutterExtensions.push(extension);
+function mergeMarkersWithErrorPriority(
+  errorMarkers: RangeSet<ElementMarker>,
+  warningMarkers: RangeSet<ElementMarker>,
+): RangeSet<ElementMarker> {
+  const byPos = new Map<number, ElementMarker>();
+
+  const warningIter = warningMarkers.iter();
+  while (warningIter.value) {
+    byPos.set(warningIter.from, warningIter.value);
+    warningIter.next();
+  }
+
+  // Errors overwrite warnings on the same line.
+  const errorIter = errorMarkers.iter();
+  while (errorIter.value) {
+    byPos.set(errorIter.from, errorIter.value);
+    errorIter.next();
+  }
+
+  const ranges: ReturnType<ElementMarker["range"]>[] = [];
+  const sortedPos = Array.from(byPos.keys()).sort((a, b) => a - b);
+  for (const pos of sortedPos) {
+    const marker = byPos.get(pos);
+    if (marker) ranges.push(marker.range(pos));
+  }
+  return RangeSet.of(ranges, true);
 }
+
+// Fields are defined once so that they are shared between all editor instances.
+const gutterFields = new Map<GutterName, StateField<RangeSet<ElementMarker>>>();
+for (const name of GUTTER_NAMES) {
+  gutterFields.set(name, createMarkerField(name));
+}
+
+const gutterExtensions: Extension[] = [
+  gutterFields.get("gutterErrorBar")!,
+  gutterFields.get("gutterConstructWarning")!,
+  gutter({
+    class: `cm-gutter-${RENDER_GUTTER_NAME} CodeMirror-${RENDER_GUTTER_NAME}`,
+    markers: (view) =>
+      mergeMarkersWithErrorPriority(
+        view.state.field(gutterFields.get("gutterErrorBar")!),
+        view.state.field(gutterFields.get("gutterConstructWarning")!),
+      ),
+    initialSpacer: () => new ElementMarker(spacerElement()),
+  }),
+];
 
 /** Extension enabling the yasqe marker gutters */
 export function markerGutters(): Extension {

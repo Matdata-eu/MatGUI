@@ -22,6 +22,15 @@ function tokenTypeAt(runner: TokenizerRunner, doc: Text, pos: Position) {
 }
 
 /**
+ * Whether `type` denotes a real bracket/punctuation token (i.e. not a bracket character that is
+ * part of a string or comment). The tokenizer styles brackets as `bracket bracket-level-N` /
+ * `bracket bracket-paren`, so a plain `=== "punc"` check would miss `{ } ( ) [ ]`.
+ */
+function isBracketToken(type: string | null): boolean {
+  return !!type && (type === "punc" || type.split(/\s+/).some((t) => t === "punc" || t.startsWith("bracket")));
+}
+
+/**
  * Finds the fold range for a block starting with a bracket on the given line. Mirrors the
  * CodeMirror 5 `brace` range finder: the *last* opening bracket on the line is used.
  */
@@ -32,7 +41,7 @@ export function braceFoldRange(runner: TokenizerRunner, doc: Text, line: number)
   let open = "";
   for (let ch = lineText.length - 1; ch >= 0; ch--) {
     const c = lineText[ch];
-    if (pairs[c] && tokenTypeAt(runner, doc, { line, ch: ch + 1 }) === "punc") {
+    if (pairs[c] && isBracketToken(tokenTypeAt(runner, doc, { line, ch: ch + 1 }))) {
       startCh = ch;
       open = c;
       break;
@@ -50,7 +59,7 @@ export function braceFoldRange(runner: TokenizerRunner, doc: Text, line: number)
     for (; ch < text.length; ch++) {
       const c = text[ch];
       if (c !== open && c !== close) continue;
-      if (tokenTypeAt(runner, doc, { line: l, ch: ch + 1 }) !== "punc") continue;
+      if (!isBracketToken(tokenTypeAt(runner, doc, { line: l, ch: ch + 1 }))) continue;
       if (c === open) depth++;
       else if (--depth === 0) {
         if (l === line) return; // opening and closing bracket on the same line: nothing to fold

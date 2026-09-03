@@ -21,6 +21,7 @@ import QueryBrowser from "./queryManagement/QueryBrowser";
 import "./index.scss";
 import "./themes.scss";
 import "./github-dark-theme.scss";
+import "./editor-themes.scss";
 import "../../yasr/src/scss/global.scss";
 import "@matdata/yasgui-geo-plugin/dist/yasgui-compat.css";
 

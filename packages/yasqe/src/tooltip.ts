@@ -7,25 +7,28 @@
 import Yasqe from "./";
 
 export default function tooltip(_yasqe: Yasqe, parent: HTMLElement, html: string) {
-  var tooltip: HTMLDivElement;
-  parent.onmouseover = function () {
+  // Render the tooltip inside the yasqe root (so the scoped `.yasqe .yasqe_tooltip`
+  // styles apply) but position it `fixed` relative to the icon. Fixed positioning
+  // escapes the `overflow` clipping of the CodeMirror gutter/scroller, which would
+  // otherwise hide the tooltip behind the editor.
+  let tooltip: HTMLDivElement | undefined;
+  parent.onmouseover = function (this: HTMLElement) {
     if (!tooltip) {
       tooltip = document.createElement("div");
       tooltip.className = "yasqe_tooltip";
+      _yasqe.rootEl.appendChild(tooltip);
     }
-    // if ($(yasqe.getWrapperElement()).offset().top >= tooltip.offset().top) {
-    //shit, move the tooltip down. The tooltip now hovers over the top edge of the yasqe instance
-    // tooltip.css("bottom", "auto");
-    // tooltip.css("top", "26px");
-    // }
-    tooltip.style.display = "block";
     tooltip.innerHTML = html;
-    parent.appendChild(tooltip);
+    tooltip.style.display = "block";
+    // `this` is the element the handler fires on. The gutter marker is rendered as a clone of
+    // `parent`, so position relative to `this` rather than the (possibly detached) `parent`.
+    const rect = this.getBoundingClientRect();
+    tooltip.style.position = "fixed";
+    tooltip.style.left = `${rect.right + 6}px`;
+    tooltip.style.top = `${rect.top}px`;
+    tooltip.style.zIndex = "10000";
   };
   parent.onmouseout = function () {
-    if (tooltip) {
-      tooltip.style.display = "none";
-    }
-    tooltip.innerHTML = html;
+    if (tooltip) tooltip.style.display = "none";
   };
 }
