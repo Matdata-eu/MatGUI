@@ -11,7 +11,17 @@
     }
 
     .yasrWrapperEl {
-      height: 100%;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    // Let YASR shrink within the available space so its results scroll instead of
+    // overflowing the tab panel (the 400px min-height on .yasr would otherwise force
+    // the results to grow past the viewport with no scrollbar).
+    .yasr {
+      min-height: 0;
     }
 
     // Hide editor wrapper when yasr is in fullscreen

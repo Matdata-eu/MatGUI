@@ -1485,10 +1485,10 @@ export class Yasqe extends EditorFacade {
     this.horizontalResizeWrapper.addEventListener("dblclick", this.expandEditor);
     this.rootEl.appendChild(this.horizontalResizeWrapper);
   }
-  private initDrag() {
+  private initDrag = () => {
     document.documentElement.addEventListener("mousemove", this.doDrag, false);
     document.documentElement.addEventListener("mouseup", this.stopDrag, false);
-  }
+  };
   private calculateDragOffset(event: MouseEvent, rootEl: HTMLElement) {
     let parentOffset = 0;
     // offsetParent is, at the time of writing, a working draft. see https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/offsetParent
@@ -1501,10 +1501,10 @@ export class Yasqe extends EditorFacade {
     }
     return event.clientY - parentOffset - this.rootEl.offsetTop + scrollOffset;
   }
-  private doDrag(event: MouseEvent) {
+  private doDrag = (event: MouseEvent) => {
     this.getWrapperElement().style.height = this.calculateDragOffset(event, this.rootEl) + "px";
-  }
-  private stopDrag() {
+  };
+  private stopDrag = () => {
     document.documentElement.removeEventListener("mousemove", this.doDrag, false);
     document.documentElement.removeEventListener("mouseup", this.stopDrag, false);
     this.emit("resize", this.getWrapperElement().style.height);
@@ -1519,7 +1519,7 @@ export class Yasqe extends EditorFacade {
     if (this.snippetsResizeHandler) {
       this.snippetsResizeHandler();
     }
-  }
+  };
   public duplicateLine() {
     const cur = this.getDoc().getCursor();
     if (cur) {
@@ -2241,9 +2241,9 @@ export class Yasqe extends EditorFacade {
     }
   }
 
-  public expandEditor() {
+  public expandEditor = () => {
     this.setSize(null, "100%");
-  }
+  };
 
   public destroy() {
     // Abort running query
