@@ -211,11 +211,7 @@ export default class Response implements Plugin<PluginConfig> {
     if (!this.cm || !text) return;
     this.appendedContent += text;
     // Reveal the full response together with the appended DESCRIBE results.
-    removeClass(this.cm.dom, "overflow");
-    this.overLay?.remove();
-    this.overLay = undefined;
-    const base = this.yasr.results?.getOriginalResponseAsString() || "";
-    this.setValue(base + this.appendedContent);
+    this.showMore();
   }
 
   private setValue(value: string) {
