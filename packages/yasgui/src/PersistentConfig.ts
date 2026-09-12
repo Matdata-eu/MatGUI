@@ -315,6 +315,15 @@ export default class PersistentConfig {
   /**
    * Get list of disabled developer-configured endpoint buttons
    */
+  public getOrientation(): "vertical" | "horizontal" | undefined {
+    return this.persistedJson.orientation;
+  }
+
+  public setOrientation(orientation: "vertical" | "horizontal") {
+    this.persistedJson.orientation = orientation;
+    this.toStorage();
+  }
+
   public getDisabledDevButtons(): string[] {
     return this.persistedJson.disabledDevButtons || [];
   }
