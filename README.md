@@ -10,6 +10,10 @@
 
 🌐 **Try it now**: [https://matgui.matdata.eu/](https://matgui.matdata.eu/)
 
+[![GitHub release](https://img.shields.io/github/v/release/Matdata-eu/Matgui?label=stable%20release)](https://github.com/Matdata-eu/Matgui/releases)
+[![Docker Image Version](https://img.shields.io/docker/v/mathiasvda/matgui?sort=semver)](https://hub.docker.com/r/mathiasvda/matgui)
+[![CI](https://github.com/Matdata-eu/Matgui/actions/workflows/build.yml/badge.svg)](https://github.com/Matdata-eu/Matgui/actions/workflows/build.yml)
+[![Try it live](https://img.shields.io/badge/Live-matgui.matdata.eu-2ea44f?logo=globe&logoColor=white)](https://matgui.matdata.eu/)
 [![npm version](https://img.shields.io/npm/v/@matdata/yasgui)](https://www.npmjs.com/package/@matdata/yasgui)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
