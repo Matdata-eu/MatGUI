@@ -621,6 +621,9 @@ export class Tab extends EventEmitter {
     // Update global config
     this.yasgui.config.orientation = newOrientation;
 
+    // Persist orientation
+    this.yasgui.persistentConfig.setOrientation(newOrientation);
+
     // Apply to all tabs
     for (const tabId in this.yasgui._tabs) {
       const tab = this.yasgui._tabs[tabId];
