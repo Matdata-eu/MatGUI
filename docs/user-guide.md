@@ -1396,6 +1396,7 @@ Shows the raw response from the SPARQL endpoint.
 - Code folding for nested structures
 - Copy to clipboard functionality
 - Line numbers
+- **Ctrl+Click on a URI** to run a `DESCRIBE` query for that resource and append the returned triples to the response view (similar to the Graph plugin's node expansion)
 
 **Best For:**
 
@@ -1403,12 +1404,14 @@ Shows the raw response from the SPARQL endpoint.
 - Inspecting raw endpoint responses
 - Understanding response structure
 - Working with specific response formats
+- Progressively exploring a resource without leaving the raw response view
 
 **Usage:**
 
 - Execute any query
 - Select "Response" from the plugin selector
 - View raw response with syntax highlighting
+- Hold `Ctrl` (or `Cmd` on macOS) and click any URI in the response to fetch and append its `DESCRIBE` result
 
 ### Graph Plugin
 
