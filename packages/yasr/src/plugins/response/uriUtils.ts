@@ -63,5 +63,5 @@ export function extractUriAtOffset(text: string, offset: number): string | undef
  * @returns A SPARQL `DESCRIBE` query string.
  */
 export function buildDescribeQuery(uri: string): string {
-  return `DESCRIBE <${uri}>`;
+  return `CONSTRUCT { <${uri}> ?p ?o } WHERE { <${uri}> ?p ?o }`;
 }
