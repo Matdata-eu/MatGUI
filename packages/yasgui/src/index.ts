@@ -186,6 +186,12 @@ export class Yasgui extends EventEmitter {
       this.config.showSnippetsBar = persistedShowSnippetsBar;
     }
 
+    // Load persisted orientation if available
+    const persistedOrientation = this.persistentConfig.getOrientation();
+    if (persistedOrientation !== undefined) {
+      this.config.orientation = persistedOrientation;
+    }
+
     this.tabElements = new TabElements(this);
     this.tabPanelsEl = document.createElement("div");
 
