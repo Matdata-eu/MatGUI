@@ -29,7 +29,7 @@ function sanitizeUri(uri: string): string {
  * @returns The URI at that offset, or `undefined` when the offset is not on a URI.
  */
 export function extractUriAtOffset(text: string, offset: number): string | undefined {
-  if (!text || offset < 0 || offset > text.length) return undefined;
+  if (!text || offset < 0 || offset >= text.length) return undefined;
 
   let match: RegExpExecArray | null;
 
