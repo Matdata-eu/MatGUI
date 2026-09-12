@@ -43,6 +43,13 @@ export class Yasr extends EventEmitter {
   private loadingEl: HTMLDivElement | undefined;
   private isLoading: boolean = false;
 
+  // Result history
+  private static readonly MAX_HISTORY_SIZE = 20;
+  private resultHistory: { data: any; duration?: number }[] = [];
+  private historyIndex: number = -1;
+  private historyBackBtn: HTMLButtonElement | undefined;
+  private historyForwardBtn: HTMLButtonElement | undefined;
+
   // Utils
   public utils = { addScript: addScript, addCSS: addCss, sanitize: sanitize };
 
@@ -350,12 +357,56 @@ export class Yasr extends EventEmitter {
     this.drawPluginSelectors();
     this.drawResponseInfo();
     this.drawPluginElement();
+    this.drawHistoryButtons();
     this.drawDownloadIcon();
     this.drawFullscreenButton();
     if (this.loadingEl) {
       this.headerEl.appendChild(this.loadingEl);
     }
     this.drawDocumentationButton();
+  }
+
+  private drawHistoryButtons() {
+    // Guard: only create buttons once
+    if (this.historyBackBtn && this.historyForwardBtn) return;
+
+    const createBtn = (ariaLabel: string, iconClass: string, title: string): HTMLButtonElement => {
+      const btn = document.createElement("button");
+      addClass(btn, "yasr_btn", "yasr_btn_history", "btn_icon");
+      btn.setAttribute("aria-label", ariaLabel);
+      btn.title = title;
+      btn.disabled = true;
+      const icon = document.createElement("i");
+      addClass(icon, "fas", iconClass);
+      icon.setAttribute("aria-hidden", "true");
+      btn.appendChild(icon);
+      return btn;
+    };
+
+    this.historyBackBtn = createBtn("Previous result", "fa-chevron-left", "Previous result");
+    this.historyBackBtn.addEventListener("click", () => this.navigateHistory(-1));
+
+    this.historyForwardBtn = createBtn("Next result", "fa-chevron-right", "Next result");
+    this.historyForwardBtn.addEventListener("click", () => this.navigateHistory(1));
+
+    this.headerEl.appendChild(this.historyBackBtn);
+    this.headerEl.appendChild(this.historyForwardBtn);
+  }
+
+  private updateHistoryButtons() {
+    if (!this.historyBackBtn || !this.historyForwardBtn) return;
+    this.historyBackBtn.disabled = this.historyIndex <= 0;
+    this.historyForwardBtn.disabled = this.historyIndex >= this.resultHistory.length - 1;
+  }
+
+  private navigateHistory(direction: -1 | 1) {
+    const newIndex = this.historyIndex + direction;
+    if (newIndex < 0 || newIndex >= this.resultHistory.length) return;
+    this.historyIndex = newIndex;
+    const entry = this.resultHistory[this.historyIndex];
+    this.results = new Parser(entry.data, entry.duration);
+    this.draw();
+    this.updateHistoryButtons();
   }
   private downloadBtn: HTMLAnchorElement | undefined;
   private drawDownloadIcon() {
@@ -605,7 +656,17 @@ export class Yasr extends EventEmitter {
     this.hideLoading();
     this.results = new Parser(data, duration);
 
+    // Truncate any forward history and push new entry
+    this.resultHistory = this.resultHistory.slice(0, this.historyIndex + 1);
+    this.resultHistory.push({ data, duration });
+    // Cap history to avoid unbounded memory growth
+    if (this.resultHistory.length > Yasr.MAX_HISTORY_SIZE) {
+      this.resultHistory = this.resultHistory.slice(this.resultHistory.length - Yasr.MAX_HISTORY_SIZE);
+    }
+    this.historyIndex = this.resultHistory.length - 1;
+
     this.draw();
+    this.updateHistoryButtons();
 
     this.storeResponse();
   }

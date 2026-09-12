@@ -166,6 +166,16 @@
     }
   }
 
+  .yasr_btn_history {
+    border: none;
+    background: none;
+    color: var(--yasgui-button-text, #505050);
+
+    &:not([disabled]):hover {
+      color: var(--yasgui-button-hover, #337ab7);
+    }
+  }
+
   .yasr_fullscreenButton {
     border: none;
     background: none;
