@@ -1,8 +1,10 @@
-# Contributing to YASGUI
+# Contributing to MatGUI
 
-Thank you for your interest in contributing to YASGUI! We welcome contributions from the community to make YASGUI better for everyone.
+Thank you for your interest in contributing to MatGUI! We welcome contributions from the community to make MatGUI better for everyone.
 
-This document provides guidelines for contributing to YASGUI, including information about our development process, coding standards, and particularly important information about plugin development.
+This document provides guidelines for contributing to MatGUI, including information about our development process, coding standards, and particularly important information about plugin development.
+
+> **Note:** MatGUI was formerly branded *Yasgui*. The npm packages, source modules, class names and CSS classes keep their existing `yasgui`/`yasqe`/`yasr` names for backwards compatibility — only the user-facing project name changed. Keep this in mind when editing code versus user-facing text.
 
 ## Table of Contents
 
@@ -32,7 +34,7 @@ We are committed to providing a welcoming and inclusive environment. Please be r
 
 1. **Fork the Repository**
    
-   Click the "Fork" button on the [YASGUI GitHub repository](https://github.com/Matdata-eu/Yasgui) to create your own fork.
+   Click the "Fork" button on the [Matgui GitHub repository](https://github.com/Matdata-eu/Matgui) to create your own fork.
 
 2. **Clone Your Fork**
    
@@ -63,7 +65,7 @@ We are committed to providing a welcoming and inclusive environment. Please be r
    npm run dev
    ```
    
-   Visit `http://localhost:4000` to see YASGUI in action with hot module reloading.
+   Visit `http://localhost:4000` to see Matgui in action with hot module reloading.
 
 ## Plugin Development Policy
 
@@ -71,13 +73,13 @@ We are committed to providing a welcoming and inclusive environment. Please be r
 
 ### Core Philosophy: Separation of Concerns
 
-YASGUI follows a **strict plugin development policy** to maintain a clean, maintainable codebase:
+Matgui follows a **strict plugin development policy** to maintain a clean, maintainable codebase:
 
 #### 🚫 Do NOT Add New Plugins to This Repository
 
 **New plugins should be created in their own separate repositories.** This policy ensures:
 
-- **Clean codebase**: The core YASGUI repository stays focused on core functionality
+- **Clean codebase**: The core Matgui repository stays focused on core functionality
 - **Separation of concerns**: Each plugin manages its own lifecycle, tests, dependencies, and releases
 - **Independent versioning**: Plugins can be versioned and released independently
 - **Easier maintenance**: Plugin maintainers have full control over their code
@@ -351,8 +353,8 @@ When requesting a feature:
 
 - **📖 [User Guide](./docs/user-guide.md)** - Comprehensive usage documentation
 - **🛠️ [Developer Guide](./docs/developer-guide.md)** - API reference and integration guide
-- **💬 [GitHub Discussions](https://github.com/Matdata-eu/Yasgui/discussions)** - Ask questions and share ideas
-- **🐛 [Issue Tracker](https://github.com/Matdata-eu/Yasgui/issues)** - Report bugs or request features
+- **💬 [GitHub Discussions](https://github.com/Matdata-eu/Matgui/discussions)** - Ask questions and share ideas
+- **🐛 [Issue Tracker](https://github.com/Matdata-eu/Matgui/issues)** - Report bugs or request features
 
 ### Communication Guidelines
 
@@ -393,7 +395,7 @@ Yasgui/
 If you have questions about contributing, please:
 
 1. Check the [Developer Guide](./docs/developer-guide.md)
-2. Search [GitHub Discussions](https://github.com/Matdata-eu/Yasgui/discussions)
+2. Search [GitHub Discussions](https://github.com/Matdata-eu/Matgui/discussions)
 3. Open a new discussion if your question isn't answered
 
 Thank you for contributing to YASGUI! 🎉

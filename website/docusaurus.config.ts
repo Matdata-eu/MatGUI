@@ -5,8 +5,8 @@ import type * as Preset from "@docusaurus/preset-classic";
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: "YASGUI",
-  tagline: "Yet Another SPARQL GUI - A comprehensive SPARQL query interface",
+  title: "MatGUI",
+  tagline: "A modern knowledge graph and SPARQL workbench",
   favicon: "img/favicon.svg",
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -15,7 +15,7 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: "https://yasgui-docs.matdata.eu",
+  url: "https://matgui-docs.matdata.eu",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: "/",
@@ -23,7 +23,7 @@ const config: Config = {
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: "Matdata-eu", // Usually your GitHub org/user name.
-  projectName: "YasGUI", // Usually your repo name.
+  projectName: "MatGUI", // Usually your repo name.
 
   onBrokenLinks: "throw",
 
@@ -42,7 +42,7 @@ const config: Config = {
         docs: {
           sidebarPath: "./sidebars.ts",
           routeBasePath: "docs",
-          editUrl: "https://github.com/Matdata-eu/Yasgui/tree/main/website/",
+          editUrl: "https://github.com/Matdata-eu/Matgui/tree/main/website/",
         },
         blog: false, // Disable blog for now
         theme: {
@@ -59,9 +59,9 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: "YASGUI",
+      title: "MatGUI  ",
       logo: {
-        alt: "YASGUI Logo",
+        alt: "MatGUI Logo",
         src: "img/logo.svg",
       },
       items: [
@@ -72,17 +72,17 @@ const config: Config = {
           label: "Documentation",
         },
         {
-          href: "https://yasgui.matdata.eu/",
+          href: "https://matgui.matdata.eu/",
           label: "Live Demo",
           position: "left",
         },
         {
-          href: "https://github.com/Matdata-eu/Yasgui",
+          href: "https://github.com/Matdata-eu/Matgui",
           label: "GitHub",
           position: "right",
         },
         {
-          href: "https://www.npmjs.com/package/@matdata/yasgui",
+          href: "https://www.npmjs.com/package/@matdata/matgui",
           label: "npm",
           position: "right",
         },
@@ -109,7 +109,7 @@ const config: Config = {
           items: [
             {
               label: "Live Demo",
-              href: "https://yasgui.matdata.eu/",
+              href: "https://matgui.matdata.eu/",
             },
             {
               label: "npm Package",
@@ -130,12 +130,12 @@ const config: Config = {
             },
             {
               label: "Releases",
-              href: "https://github.com/Matdata-eu/Yasgui/releases",
+              href: "https://github.com/Matdata-eu/Matgui/releases",
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} YASGUI Contributors. Licensed under MIT. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} MatGUI Contributors. Licensed under MIT. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

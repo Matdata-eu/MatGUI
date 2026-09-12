@@ -1,6 +1,6 @@
 {
   "name": "@matdata/yasgui",
-  "description": "Yet Another SPARQL GUI",
+  "description": "MatGUI: a modern SPARQL query editor and results viewer for knowledge graphs and linked data (formerly Yasgui).",
   "version": "4.6.1",
   "main": "build/yasgui.min.js",
   "types": "build/ts/src/index.d.ts",
@@ -14,10 +14,10 @@
     "Semantic Web",
     "Linked Data"
   ],
-  "bugs": "https://github.com/Matdata-eu/Yasgui/issues/",
+  "bugs": "https://github.com/Matdata-eu/Matgui/issues/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Matdata-eu/Yasgui.git",
+    "url": "https://github.com/Matdata-eu/Matgui.git",
     "directory": "packages/yasgui"
   },
   "dependencies": {

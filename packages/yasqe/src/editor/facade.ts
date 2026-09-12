@@ -190,7 +190,7 @@ export abstract class EditorFacade {
       ],
     });
     this.view = new EditorView({ state, parent });
-    // Legacy back-reference (CM5 exposed `wrapper.CodeMirror`); used by Yasgui theme management
+    // Legacy back-reference (CM5 exposed `wrapper.CodeMirror`); used by Matgui theme management
     (this.view.dom as any).CodeMirror = this;
     this.doc = new DocFacade(this.view);
     this.customOptions.theme = options.theme;

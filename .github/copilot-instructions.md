@@ -1,8 +1,8 @@
-# YASGUI Copilot Instructions
+# Matgui Copilot Instructions
 
 ## Repository Overview
 
-**YASGUI (Yet Another SPARQL GUI)** is a web-based SPARQL IDE for querying RDF data. It's a TypeScript/JavaScript monorepo containing four packages that work together to provide a complete SPARQL development environment:
+**Matgui (Yet Another SPARQL GUI)** is a web-based SPARQL IDE for querying RDF data. It's a TypeScript/JavaScript monorepo containing four packages that work together to provide a complete SPARQL development environment:
 
 - **@matdata/yasgui** - Main integration package with tab management and UI (entry point)
 - **@matdata/yasqe** - SPARQL query editor built on CodeMirror

@@ -519,7 +519,7 @@ export class Yasr extends EventEmitter {
     const icon = document.createElement("i");
     addClass(icon, "fas", "fa-circle-question");
     this.documentationLink.appendChild(icon);
-    this.documentationLink.href = "https://yasgui-doc.matdata.eu/docs/user-guide";
+    this.documentationLink.href = "https://matgui-doc.matdata.eu/docs/user-guide";
     this.documentationLink.target = "_blank";
     this.documentationLink.rel = "noopener noreferrer";
     this.headerEl.appendChild(this.documentationLink); // We can do this as long as the help-element is the last item in the row
@@ -614,7 +614,7 @@ export class Yasr extends EventEmitter {
    * Execute a background SPARQL query from within a plugin.
    *
    * This delegates to the `executeQuery` callback supplied in the Yasr
-   * configuration (typically wired up by the Yasgui `Tab`).  The raw
+   * configuration (typically wired up by the Matgui `Tab`).  The raw
    * response is returned so the calling plugin can process it without
    * replacing the current result display.
    *
@@ -702,7 +702,7 @@ export interface Config {
 
   /**
    * Optional callback that allows plugins to execute a background SPARQL query.
-   * When set (e.g. by the Yasgui Tab), plugins can call `yasr.executeQuery(queryString)`
+   * When set (e.g. by the Matgui Tab), plugins can call `yasr.executeQuery(queryString)`
    * to run an arbitrary query and receive the raw response, independently of the
    * main query editor.
    *

@@ -56,7 +56,7 @@
 ### Patch Changes
 
 - d918c63: Upgrade some dependencies
-- d918c63: Add a `queryBefore` event on Yasgui and Yasqe (by @vemonet, in #16)
+- d918c63: Add a `queryBefore` event on Matgui and Yasqe (by @vemonet, in #16)
 - Updated dependencies [d918c63]
 - Updated dependencies [d918c63]
   - @zazuko/yasgui-utils@4.3.3

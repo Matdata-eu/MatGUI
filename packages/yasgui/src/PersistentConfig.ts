@@ -126,7 +126,7 @@ export default class PersistentConfig {
   }
 
   private handleLocalStorageQuotaFull(_e: any) {
-    console.warn("Localstorage quota exceeded. Clearing all YASGUI configurations");
+    console.warn("Localstorage quota exceeded. Clearing all Matgui configurations");
     PersistentConfig.clear();
   }
 

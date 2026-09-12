@@ -1,4 +1,4 @@
-# Skill: YASGUI Build-Test Workflow
+# Skill: Matgui Build-Test Workflow
 
 ## Description
 Automates the critical build-before-test workflow for YASGUI. This skill ensures tests are run with valid build output and selects the appropriate test command based on the environment and code changes.
@@ -11,7 +11,7 @@ Automates the critical build-before-test workflow for YASGUI. This skill ensures
 - When CI/CD workflow questions arise
 
 ## Problem Statement
-YASGUI has a **mandatory build-before-test requirement**. Running tests without building first will fail with:
+Matgui has a **mandatory build-before-test requirement**. Running tests without building first will fail with:
 ```
 Run "npm run build" before running a test
 ```

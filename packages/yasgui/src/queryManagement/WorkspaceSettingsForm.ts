@@ -400,7 +400,7 @@ ORDER BY ?workspace`;
         const gitHelp = document.createElement("div");
         addClass(gitHelp, "settingsHelp");
         gitHelp.textContent =
-          "Supported Git providers: GitHub, GitLab, Bitbucket Cloud, Gitea. Note: ssh:// and SCP-style remotes are only parsed to identify the repository; YASGUI uses provider HTTPS APIs (not SSH) to read/write files.";
+          "Supported Git providers: GitHub, GitLab, Bitbucket Cloud, Gitea. Note: ssh:// and SCP-style remotes are only parsed to identify the repository; Matgui uses provider HTTPS APIs (not SSH) to read/write files.";
 
         const remoteUrlInput = document.createElement("input");
         remoteUrlInput.type = "url";

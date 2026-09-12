@@ -45,7 +45,7 @@ export default class Error implements Plugin<never> {
 
     const cors = document.createElement("li");
     const firstPart = document.createElement("span");
-    firstPart.textContent = "Endpoint is not accessible from the YASGUI server and website, and the endpoint is not ";
+    firstPart.textContent = "Endpoint is not accessible from the Matgui server and website, and the endpoint is not ";
     cors.appendChild(firstPart);
     const secondPart = document.createElement("a");
     secondPart.textContent = "CORS-enabled";

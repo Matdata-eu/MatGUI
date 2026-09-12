@@ -1,6 +1,6 @@
 {
   "name": "@matdata/yasr",
-  "description": "Yet Another SPARQL Resultset GUI",
+  "description": "MatGUI results viewer: a modern SPARQL result set viewer (formerly Yasgui/YASR).",
   "version": "4.6.1",
   "main": "build/yasr.min.js",
   "types": "build/ts/src/index.d.ts",
@@ -17,10 +17,10 @@
     "Semantic Web",
     "Linked Data"
   ],
-  "bugs": "https://github.com/Matdata-eu/Yasgui/issues/",
+  "bugs": "https://github.com/Matdata-eu/Matgui/issues/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Matdata-eu/Yasgui.git",
+    "url": "https://github.com/Matdata-eu/Matgui.git",
     "directory": "packages/yasr"
   },
   "dependencies": {

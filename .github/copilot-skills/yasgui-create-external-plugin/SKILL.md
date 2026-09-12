@@ -1,16 +1,16 @@
-# Skill: Create YASGUI External Plugin
+# Skill: Create MatGUI/YasGUI External Plugin
 
 ## Description
-Scaffolds a new external YASR plugin repository with all required boilerplate, following YASGUI's strict plugin policy and interface requirements.
+Scaffolds a new external YASR plugin repository with all required boilerplate, following MatGUI's strict plugin policy and interface requirements. Any plugin developed for YasGUI should also work within MatGUI.
 
 ## When to Use
-- User wants to create a new YASR visualization plugin
-- User asks about adding plugin functionality to YASGUI
+- User wants to create a new MatGUI/YASR visualization plugin
+- User asks about adding plugin functionality to MatGUI/YASGUI
 - User mentions creating a custom result renderer
 - User references plugin examples like table-plugin or graph-plugin
 
 ## Problem Statement
-YASGUI has a **strict policy**: New plugins MUST NOT be added to the core repository. Instead, plugins must be:
+MatGUI has a **strict policy**: New plugins MUST NOT be added to the core repository. Instead, plugins must be:
 - Created in separate repositories
 - Published to npm independently
 - Implement required interface methods

@@ -5,7 +5,7 @@ import { deduplicatePrefixes } from "../../packages/yasgui/src/prefixUtils.js";
 
 const expect = chai.expect;
 
-describe("Yasgui prefix utilities", () => {
+describe("Matgui prefix utilities", () => {
   it("deduplicates the default prefix used for base IRIs", () => {
     const prefixes = [
       "PREFIX : <http://example.org/>",

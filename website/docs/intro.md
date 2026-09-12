@@ -3,20 +3,20 @@ sidebar_position: 1
 slug: /
 ---
 
-# Welcome to YASGUI Documentation
+# Welcome to Matgui Documentation
 
-**YASGUI (Yet Another SPARQL GUI)** is a powerful, user-friendly web-based interface for querying and exploring RDF data using SPARQL.
+**Matgui (Yet Another SPARQL GUI)** is a powerful, user-friendly web-based interface for querying and exploring RDF data using SPARQL.
 
 ## Quick Links
 
 - �� **[User Guide](./user-guide.md)** - Complete guide for end users
 - 🛠️ **[Developer Guide](./developer-guide.md)** - API reference and integration guide
-- 🚀 **[Live Demo](https://yasgui.matdata.eu/)** - Try YASGUI now
-- 💻 **[GitHub](https://github.com/Matdata-eu/Yasgui)** - Source code and issues
+- 🚀 **[Live Demo](https://matgui.matdata.eu/)** - Try Matgui now
+- 💻 **[GitHub](https://github.com/Matdata-eu/Matgui)** - Source code and issues
 
 ## What is YASGUI?
 
-YASGUI is a comprehensive SPARQL development environment that combines:
+Matgui is a comprehensive SPARQL development environment that combines:
 
 - **YASQE**: A rich SPARQL query editor with syntax highlighting and auto-completion
 - **YASR**: A versatile results viewer with multiple visualization plugins
@@ -30,7 +30,7 @@ YASGUI is a comprehensive SPARQL development environment that combines:
 
 If you want to **use YASGUI** to query SPARQL endpoints:
 
-1. Visit [yasgui.matdata.eu](https://yasgui.matdata.eu/)
+1. Visit [matgui.matdata.eu](https://matgui.matdata.eu/)
 2. Read the **[User Guide](./user-guide.md)** to learn all features
 3. Start querying!
 
@@ -70,10 +70,10 @@ If you want to **integrate YASGUI** into your application:
 
 ## Community
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/Matdata-eu/Yasgui/issues)
-- **Releases**: [View changelog and releases](https://github.com/Matdata-eu/Yasgui/releases)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/Matdata-eu/Matgui/issues)
+- **Releases**: [View changelog and releases](https://github.com/Matdata-eu/Matgui/releases)
 - **npm**: [View package on npm](https://www.npmjs.com/package/@matdata/yasgui)
 
 ## License
 
-YASGUI is released under the MIT License. See the [LICENSE](https://github.com/Matdata-eu/Yasgui/blob/main/LICENSE) file for details.
+Matgui is released under the MIT License. See the [LICENSE](https://github.com/Matdata-eu/Matgui/blob/main/LICENSE) file for details.

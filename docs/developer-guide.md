@@ -1,166 +1,169 @@
-# YASGUI Developer Guide
+# MatGUI Developer Guide
 
-This comprehensive guide covers everything developers need to know to integrate, customize, and extend YASGUI (Yet Another SPARQL GUI).
+This comprehensive guide covers everything developers need to know to integrate, customize, and extend MatGUI (formerly *Yasgui*).
+
+> **Backwards compatibility:** MatGUI keeps the `@matdata/yasgui`, `@matdata/yasqe` and `@matdata/yasr` package names, the `Yasgui`/`Yasqe`/`Yasr` global variables and class names, the `yasgui`/`yasqe`/`yasr` CSS classes and the existing localStorage keys unchanged. Existing integrations continue to work without code changes.
+
+> The Yasgui project has been renamed Matgui. But this is a brand rename only. The technical name still remains Yasgui for backwards compatibility. Whenever you read 'matdata' in this document, you can likely read 'yasgui' as well. Since this is a technical document for developers and since the package names are kept the same, this document still largely talks about yasgui due to the reference to the still-kept package name.
 
 ## Table of Contents
 
-- [YASGUI Developer Guide](#yasgui-developer-guide)
-  - [Table of Contents](#table-of-contents)
-  - [Architecture Overview](#architecture-overview)
-    - [Package Structure](#package-structure)
-    - [Architecture Diagram](#architecture-diagram)
-    - [Package Details](#package-details)
-      - [@matdata/yasgui-utils](#matdatayasgui-utils)
-      - [@matdata/yasqe (SPARQL Query Editor)](#matdatayasqe-sparql-query-editor)
-      - [@matdata/yasr (SPARQL Results Viewer)](#matdatayasr-sparql-results-viewer)
-      - [@matdata/yasgui (Main Package)](#matdatayasgui-main-package)
-  - [Installation](#installation)
-    - [npm](#npm)
-    - [Yarn](#yarn)
-    - [CDN](#cdn)
-    - [Source](#source)
-  - [Usage Examples](#usage-examples)
-    - [Plain HTML](#plain-html)
-    - [Node.js / ES Modules](#nodejs--es-modules)
-    - [CommonJS](#commonjs)
-    - [React](#react)
-    - [Vue](#vue)
-    - [Angular](#angular)
-    - [Using YASQE and YASR Separately](#using-yasqe-and-yasr-separately)
-  - [Configuration](#configuration)
-    - [YASGUI Configuration](#yasgui-configuration)
-      - [Example Configuration](#example-configuration)
-    - [YASQE Configuration](#yasqe-configuration)
-      - [YASQE Example](#yasqe-example)
-      - [Code Snippets](#code-snippets)
-      - [Share Configuration](#share-configuration)
-    - [YASR Configuration](#yasr-configuration)
-      - [YASR Example](#yasr-example)
-      - [Disabling Response Cache](#disabling-response-cache)
-    - [Request Configuration](#request-configuration)
-      - [Request Configuration Example](#request-configuration-example)
-    - [Authentication](#authentication)
-      - [Authentication Types](#authentication-types)
-      - [Basic Authentication](#basic-authentication)
-      - [Bearer Token Authentication](#bearer-token-authentication)
-      - [API Key Authentication](#api-key-authentication)
-      - [Managing Endpoint Configurations](#managing-endpoint-configurations)
-      - [OAuth 2.0 Provider Examples](#oauth-20-provider-examples)
-      - [Dynamic Authentication](#dynamic-authentication)
-      - [Disabling Authentication](#disabling-authentication)
-      - [TypeScript Support](#typescript-support)
-      - [Authentication Priority](#authentication-priority)
-      - [Examples](#examples)
-      - [Security Best Practices](#security-best-practices)
-    - [Endpoint Buttons Configuration](#endpoint-buttons-configuration)
-    - [Theme Configuration](#theme-configuration)
-  - [API Reference](#api-reference)
-    - [Yasgui Class](#yasgui-class)
-      - [Constructor](#constructor)
-      - [Methods](#methods)
-        - [`getTab(tabId?: string): Tab | undefined`](#gettabtabid-string-tab--undefined)
-        - [`addTab(select?: boolean, config?: PartialTabConfig): Tab`](#addtabselect-boolean-config-partialtabconfig-tab)
-        - [`selectTabId(tabId: string): void`](#selecttabidtabid-string-void)
-        - [`closeTab(tab: Tab): void`](#closetabtab-tab-void)
-        - [`getTabs(): { [tabId: string]: Tab }`](#gettabs--tabid-string-tab-)
-        - [`setTheme(theme: 'light' | 'dark'): void`](#setthemetheme-light--dark-void)
-        - [`getTheme(): 'light' | 'dark'`](#gettheme-light--dark)
-        - [`toggleTheme(): 'light' | 'dark'`](#toggletheme-light--dark)
-    - [Tab Class](#tab-class)
-      - [Methods](#methods-1)
-        - [`getName(): string`](#getname-string)
-        - [`setName(name: string): void`](#setnamename-string-void)
-        - [`getId(): string`](#getid-string)
-        - [`getYasqe(): Yasqe`](#getyasqe-yasqe)
-        - [`getYasr(): Yasr`](#getyasr-yasr)
-        - [`query(): Promise<void>`](#query-promisevoid)
-        - [`setQuery(query: string): void`](#setqueryquery-string-void)
-        - [`getQuery(): string`](#getquery-string)
-    - [Yasqe Class](#yasqe-class)
-      - [Methods](#methods-2)
-        - [`getValue(): string`](#getvalue-string)
-        - [`setValue(value: string): void`](#setvaluevalue-string-void)
-        - [`query(): Promise<any>`](#query-promiseany)
-        - [`abortQuery(): void`](#abortquery-void)
-        - [`format(): void`](#format-void)
-        - [`getPrefixes(): Prefixes`](#getprefixes-prefixes)
-        - [`addPrefixes(prefixes: Prefixes): void`](#addprefixesprefixes-prefixes-void)
-        - [`removePrefixes(): void`](#removeprefixes-void)
-    - [Yasr Class](#yasr-class)
-      - [Methods](#methods-3)
-        - [`setResponse(response: any, duration?: number): void`](#setresponseresponse-any-duration-number-void)
-        - [`draw(): void`](#draw-void)
-        - [`selectPlugin(pluginName: string): void`](#selectpluginpluginname-string-void)
-        - [`getPlugins(): { [name: string]: Plugin }`](#getplugins--name-string-plugin-)
-        - [`executeQuery(query: string, options?: PluginQueryOptions): Promise<any>`](#executequeryquery-string-options-pluginqueryoptions-promiseany)
-        - [`download(filename?: string): void`](#downloadfilename-string-void)
-  - [Events](#events)
-    - [YASGUI Events](#yasgui-events)
-    - [YASQE Events](#yasqe-events)
-    - [YASR Events](#yasr-events)
-    - [Event Example: Query Tracking](#event-example-query-tracking)
-    - [Event Example: Custom Query Logging](#event-example-custom-query-logging)
-  - [Plugin Development](#plugin-development)
-    - [Plugin Interface](#plugin-interface)
-    - [Step-by-Step Plugin Development Guide](#step-by-step-plugin-development-guide)
-      - [Step 1: Create Plugin Class](#step-1-create-plugin-class)
-      - [Step 2: Register Plugin](#step-2-register-plugin)
-      - [Step 3: Configure Plugin](#step-3-configure-plugin)
-      - [Step 4: Add Styling](#step-4-add-styling)
-    - [Plugin Example: Chart Plugin](#plugin-example-chart-plugin)
-    - [Plugin Best Practices](#plugin-best-practices)
-    - [Theme Support for Plugins](#theme-support-for-plugins)
-      - [Implementation Steps](#implementation-steps)
-    - [Distributing Your Plugin](#distributing-your-plugin)
-  - [Using the Graph Plugin](#using-the-graph-plugin)
-    - [Installation](#installation-1)
-    - [Key Features](#key-features)
-    - [Configuration Options](#configuration-options)
-    - [Color Scheme](#color-scheme)
-    - [Node Icons and Images](#node-icons-and-images)
-    - [Predicate Icons](#predicate-icons)
-    - [API Reference](#api-reference-1)
-    - [Theme Integration](#theme-integration)
-    - [Performance Considerations](#performance-considerations)
-    - [Browser Requirements](#browser-requirements)
-    - [Example Queries](#example-queries)
-    - [Troubleshooting](#troubleshooting)
-    - [Repository](#repository)
-  - [Using the Geo Plugin](#using-the-geo-plugin)
-    - [Installation](#installation-2)
-    - [Registering the Plugin](#registering-the-plugin)
-    - [Quick Configuration](#quick-configuration)
-    - [Key Features](#key-features-1)
-    - [Options Reference](#options-reference)
-    - [Convention-Based Per-Feature Bindings](#convention-based-per-feature-bindings)
-    - [Supported Geometry Types](#supported-geometry-types)
-    - [CRS and Coordinate Transformations](#crs-and-coordinate-transformations)
-    - [Drawing Spatial Filters](#drawing-spatial-filters)
-    - [Export Capabilities](#export-capabilities)
-    - [Temporal Filtering](#temporal-filtering)
-    - [Clustering and Heatmap](#clustering-and-heatmap)
-    - [Permalink Support](#permalink-support)
-    - [TypeScript Support](#typescript-support-1)
-    - [Example Queries](#example-queries-1)
-    - [Troubleshooting](#troubleshooting-1)
-    - [Repository](#repository-1)
-  - [Contributing](#contributing)
-    - [Getting Started](#getting-started)
-    - [Project Structure](#project-structure)
-    - [Development Workflow](#development-workflow)
-      - [Making Changes](#making-changes)
-      - [Building](#building)
-      - [Pull Requests](#pull-requests)
-    - [Code Guidelines](#code-guidelines)
-      - [TypeScript](#typescript)
-      - [CSS](#css)
-      - [Documentation](#documentation)
-    - [Reporting Issues](#reporting-issues)
-    - [Feature Requests](#feature-requests)
-    - [Release Process](#release-process)
-    - [Community](#community)
-    - [Code of Conduct](#code-of-conduct)
-  - [Additional Resources](#additional-resources)
+- [Table of Contents](#table-of-contents)
+- [Architecture Overview](#architecture-overview)
+  - [Package Structure](#package-structure)
+  - [Architecture Diagram](#architecture-diagram)
+  - [Package Details](#package-details)
+    - [@matdata/yasgui-utils](#matdatayasgui-utils)
+    - [@matdata/yasqe (SPARQL Query Editor)](#matdatayasqe-sparql-query-editor)
+    - [@matdata/yasr (SPARQL Results Viewer)](#matdatayasr-sparql-results-viewer)
+    - [@matdata/yasgui (Main Package)](#matdatayasgui-main-package)
+- [Installation](#installation)
+  - [npm](#npm)
+  - [Yarn](#yarn)
+  - [CDN](#cdn)
+  - [Source](#source)
+- [Usage Examples](#usage-examples)
+  - [Plain HTML](#plain-html)
+  - [Node.js / ES Modules](#nodejs--es-modules)
+  - [CommonJS](#commonjs)
+  - [React](#react)
+  - [Vue](#vue)
+  - [Angular](#angular)
+  - [Using YASQE and YASR Separately](#using-yasqe-and-yasr-separately)
+- [Configuration](#configuration)
+  - [Matgui Configuration](#matgui-configuration)
+    - [Example Configuration](#example-configuration)
+  - [YASQE Configuration](#yasqe-configuration)
+    - [YASQE Example](#yasqe-example)
+    - [Code Snippets](#code-snippets)
+    - [Share Configuration](#share-configuration)
+  - [YASR Configuration](#yasr-configuration)
+    - [YASR Example](#yasr-example)
+    - [Disabling Response Cache](#disabling-response-cache)
+  - [Request Configuration](#request-configuration)
+    - [Request Configuration Example](#request-configuration-example)
+  - [Authentication](#authentication)
+    - [Authentication Types](#authentication-types)
+    - [Basic Authentication](#basic-authentication)
+    - [Bearer Token Authentication](#bearer-token-authentication)
+    - [API Key Authentication](#api-key-authentication)
+    - [Managing Endpoint Configurations](#managing-endpoint-configurations)
+    - [OAuth 2.0 Provider Examples](#oauth-20-provider-examples)
+    - [Dynamic Authentication](#dynamic-authentication)
+    - [Disabling Authentication](#disabling-authentication)
+    - [TypeScript Support](#typescript-support)
+    - [Authentication Priority](#authentication-priority)
+    - [Examples](#examples)
+    - [Security Best Practices](#security-best-practices)
+  - [Endpoint Buttons Configuration](#endpoint-buttons-configuration)
+  - [Theme Configuration](#theme-configuration)
+- [API Reference](#api-reference)
+  - [Yasgui Class](#yasgui-class)
+    - [Constructor](#constructor)
+    - [Methods](#methods)
+      - [`getTab(tabId?: string): Tab | undefined`](#gettabtabid-string-tab--undefined)
+      - [`addTab(select?: boolean, config?: PartialTabConfig): Tab`](#addtabselect-boolean-config-partialtabconfig-tab)
+      - [`selectTabId(tabId: string): void`](#selecttabidtabid-string-void)
+      - [`closeTab(tab: Tab): void`](#closetabtab-tab-void)
+      - [`getTabs(): { [tabId: string]: Tab }`](#gettabs--tabid-string-tab-)
+      - [`setTheme(theme: 'light' | 'dark'): void`](#setthemetheme-light--dark-void)
+      - [`getTheme(): 'light' | 'dark'`](#gettheme-light--dark)
+      - [`toggleTheme(): 'light' | 'dark'`](#toggletheme-light--dark)
+  - [Tab Class](#tab-class)
+    - [Methods](#methods-1)
+      - [`getName(): string`](#getname-string)
+      - [`setName(name: string): void`](#setnamename-string-void)
+      - [`getId(): string`](#getid-string)
+      - [`getYasqe(): Yasqe`](#getyasqe-yasqe)
+      - [`getYasr(): Yasr`](#getyasr-yasr)
+      - [`query(): Promise<void>`](#query-promisevoid)
+      - [`setQuery(query: string): void`](#setqueryquery-string-void)
+      - [`getQuery(): string`](#getquery-string)
+  - [Yasqe Class](#yasqe-class)
+    - [Methods](#methods-2)
+      - [`getValue(): string`](#getvalue-string)
+      - [`setValue(value: string): void`](#setvaluevalue-string-void)
+      - [`query(): Promise<any>`](#query-promiseany)
+      - [`abortQuery(): void`](#abortquery-void)
+      - [`format(): void`](#format-void)
+      - [`getPrefixes(): Prefixes`](#getprefixes-prefixes)
+      - [`addPrefixes(prefixes: Prefixes): void`](#addprefixesprefixes-prefixes-void)
+      - [`removePrefixes(): void`](#removeprefixes-void)
+  - [Yasr Class](#yasr-class)
+    - [Methods](#methods-3)
+      - [`setResponse(response: any, duration?: number): void`](#setresponseresponse-any-duration-number-void)
+      - [`draw(): void`](#draw-void)
+      - [`selectPlugin(pluginName: string): void`](#selectpluginpluginname-string-void)
+      - [`getPlugins(): { [name: string]: Plugin }`](#getplugins--name-string-plugin-)
+      - [`executeQuery(query: string, options?: PluginQueryOptions): Promise<any>`](#executequeryquery-string-options-pluginqueryoptions-promiseany)
+      - [`download(filename?: string): void`](#downloadfilename-string-void)
+- [Events](#events)
+  - [YASGUI Events](#yasgui-events)
+  - [YASQE Events](#yasqe-events)
+  - [YASR Events](#yasr-events)
+  - [Event Example: Query Tracking](#event-example-query-tracking)
+  - [Event Example: Custom Query Logging](#event-example-custom-query-logging)
+- [Plugin Development](#plugin-development)
+  - [Plugin Interface](#plugin-interface)
+  - [Step-by-Step Plugin Development Guide](#step-by-step-plugin-development-guide)
+    - [Step 1: Create Plugin Class](#step-1-create-plugin-class)
+    - [Step 2: Register Plugin](#step-2-register-plugin)
+    - [Step 3: Configure Plugin](#step-3-configure-plugin)
+    - [Step 4: Add Styling](#step-4-add-styling)
+  - [Plugin Example: Chart Plugin](#plugin-example-chart-plugin)
+  - [Plugin Best Practices](#plugin-best-practices)
+  - [Theme Support for Plugins](#theme-support-for-plugins)
+    - [Implementation Steps](#implementation-steps)
+  - [Distributing Your Plugin](#distributing-your-plugin)
+- [Using the Graph Plugin](#using-the-graph-plugin)
+  - [Installation](#installation-1)
+  - [Key Features](#key-features)
+  - [Configuration Options](#configuration-options)
+  - [Color Scheme](#color-scheme)
+  - [Node Icons and Images](#node-icons-and-images)
+  - [Predicate Icons](#predicate-icons)
+  - [API Reference](#api-reference-1)
+  - [Theme Integration](#theme-integration)
+  - [Performance Considerations](#performance-considerations)
+  - [Browser Requirements](#browser-requirements)
+  - [Example Queries](#example-queries)
+  - [Troubleshooting](#troubleshooting)
+  - [Repository](#repository)
+- [Using the Geo Plugin](#using-the-geo-plugin)
+  - [Installation](#installation-2)
+  - [Registering the Plugin](#registering-the-plugin)
+  - [Quick Configuration](#quick-configuration)
+  - [Key Features](#key-features-1)
+  - [Options Reference](#options-reference)
+  - [Convention-Based Per-Feature Bindings](#convention-based-per-feature-bindings)
+  - [Supported Geometry Types](#supported-geometry-types)
+  - [CRS and Coordinate Transformations](#crs-and-coordinate-transformations)
+  - [Drawing Spatial Filters](#drawing-spatial-filters)
+  - [Export Capabilities](#export-capabilities)
+  - [Temporal Filtering](#temporal-filtering)
+  - [Clustering and Heatmap](#clustering-and-heatmap)
+  - [Permalink Support](#permalink-support)
+  - [TypeScript Support](#typescript-support-1)
+  - [Example Queries](#example-queries-1)
+  - [Troubleshooting](#troubleshooting-1)
+  - [Repository](#repository-1)
+- [Contributing](#contributing)
+  - [Getting Started](#getting-started)
+  - [Project Structure](#project-structure)
+  - [Development Workflow](#development-workflow)
+    - [Making Changes](#making-changes)
+    - [Building](#building)
+    - [Pull Requests](#pull-requests)
+  - [Code Guidelines](#code-guidelines)
+    - [TypeScript](#typescript)
+    - [CSS](#css)
+    - [Documentation](#documentation)
+  - [Reporting Issues](#reporting-issues)
+  - [Feature Requests](#feature-requests)
+  - [Release Process](#release-process)
+  - [Community](#community)
+  - [Code of Conduct](#code-of-conduct)
+- [Additional Resources](#additional-resources)
 
 
 ---
@@ -370,7 +373,7 @@ Include YASGUI directly from a CDN (replace `VERSION` with the desired version):
 Clone and build from source:
 
 ```bash
-git clone https://github.com/Matdata-eu/Yasgui.git
+git clone https://github.com/Matdata-eu/Matgui.git
 cd Yasgui
 npm install
 npm run build
@@ -407,7 +410,7 @@ Basic integration in a static HTML page:
 </html>
 ```
 
-> **Important:** If you want YASGUI to fill the entire page, you **must** set `height: 100%` on all parent elements, including `html` and `body`:
+> **Important:** If you want Matgui to fill the entire page, you **must** set `height: 100%` on all parent elements, including `html` and `body`:
 >
 > ```css
 > html, body {
@@ -425,7 +428,7 @@ Basic integration in a static HTML page:
 
 ### Node.js / ES Modules
 
-Using YASGUI in a Node.js application or with module bundlers:
+Using Matgui in a Node.js application or with module bundlers:
 
 ```javascript
 import Yasgui from '@matdata/yasgui';
@@ -620,7 +623,7 @@ yasqe.query();
 
 YASGUI offers extensive configuration options to customize behavior and appearance.
 
-### YASGUI Configuration
+### Matgui Configuration
 
 Complete configuration object with all available options:
 
@@ -3876,7 +3879,7 @@ We welcome contributions to YASGUI! Here's how to get involved.
 
 1. **Fork the Repository**
    ```bash
-   git clone https://github.com/Matdata-eu/Yasgui.git
+   git clone https://github.com/Matdata-eu/Matgui.git
    cd Yasgui
    ```
 
@@ -3890,7 +3893,7 @@ We welcome contributions to YASGUI! Here's how to get involved.
    npm run dev
    ```
    
-   Visit `http://localhost:5173/demo` to see YASGUI in action.
+   Visit `http://localhost:5173/demo` to see Matgui in action.
 
 4. **Make Changes**
    - Create a feature branch: `git checkout -b feature/my-feature`
@@ -4050,7 +4053,7 @@ When reporting bugs:
 
 1. **Search Existing Issues**: Check if already reported
 2. **Provide Details**:
-   - YASGUI version
+   - Matgui version
    - Browser and version
    - Steps to reproduce
    - Expected vs actual behavior
@@ -4103,8 +4106,8 @@ Releases are managed using Changesets:
 
 ## Additional Resources
 
-- **GitHub Repository**: [https://github.com/Matdata-eu/Yasgui](https://github.com/Matdata-eu/Yasgui)
-- **Issue Tracker**: [https://github.com/Matdata-eu/Yasgui/issues](https://github.com/Matdata-eu/Yasgui/issues)
+- **GitHub Repository**: [https://github.com/Matdata-eu/Yasgui](https://github.com/Matdata-eu/Matgui)
+- **Issue Tracker**: [https://github.com/Matdata-eu/Matgui/issues](https://github.com/Matdata-eu/Matgui/issues)
 - **User Guide**: See `docs/user-guide.md`
 - **SPARQL Specification**: [https://www.w3.org/TR/sparql11-query/](https://www.w3.org/TR/sparql11-query/)
 - **CodeMirror 6 Documentation**: [https://codemirror.net/docs/](https://codemirror.net/docs/)
@@ -4114,4 +4117,4 @@ Releases are managed using Changesets:
 
 ---
 
-*This developer guide is maintained as part of the YASGUI project. For user-facing documentation, see the User Guide.*
+*This developer guide is maintained as part of the Matgui project. For user-facing documentation, see the User Guide.*

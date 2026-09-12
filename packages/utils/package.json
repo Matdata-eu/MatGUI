@@ -1,16 +1,16 @@
 {
   "name": "@matdata/yasgui-utils",
   "version": "4.6.1",
-  "description": "Utils for YASGUI libs",
+  "description": "Shared utilities for MatGUI (formerly Yasgui) packages.",
   "main": "build/utils.min.js",
   "types": "build/ts/src/index.d.ts",
   "license": "MIT",
   "author": "Triply <info@triply.cc>",
   "homepage": "https://github.com/Matdata-eu/Yasgui",
-  "bugs": "https://github.com/Matdata-eu/Yasgui/issues",
+  "bugs": "https://github.com/Matdata-eu/Matgui/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Matdata-eu/Yasgui.git",
+    "url": "https://github.com/Matdata-eu/Matgui.git",
     "directory": "packages/utils"
   },
   "dependencies": {

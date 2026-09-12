@@ -25,13 +25,30 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
+      - name: Extract metadata (tags, labels) for Old Yasgui Docker
+        id: meta_old
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: ${{ vars.DOCKERHUB_REPO_OLD }}
+
+      - name: Build and push Old Yasgui Docker image
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          push: true
+          build-args: GITHUB_REF=${{ github.ref_name }}
+          tags: ${{ steps.meta_old.outputs.tags }}
+          labels: ${{ steps.meta_old.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+
+      - name: Extract metadata (tags, labels) for Matgui Docker
         id: meta
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
           images: ${{ vars.DOCKERHUB_REPO }}
 
-      - name: Build and push Docker image
+      - name: Build and push Matgui Docker image
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
         with:
           context: .

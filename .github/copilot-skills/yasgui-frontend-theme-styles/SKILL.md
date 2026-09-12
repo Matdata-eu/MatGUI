@@ -1,7 +1,9 @@
-# Skill: YASGUI Frontend Theme & Styles
+# Skill: MatGUI Frontend Theme & Styles
 
 ## Description
-Guides developers in implementing frontend styles and theme support following YASGUI's theming system, CSS conventions, and responsive design patterns.
+Guides developers in implementing frontend styles and theme support following MatGUI's theming system, CSS conventions, and responsive design patterns.
+
+> **Note:** MatGUI was formerly branded *Yasgui*, and this guidance most likely also applies to Yasgui-based projects. CSS classes and custom properties keep their `yasgui`/`--yasgui-*` names for backwards compatibility.
 
 ## When to Use
 - User is working on CSS/SCSS files
@@ -13,7 +15,7 @@ Guides developers in implementing frontend styles and theme support following YA
 - User asks about theme switching
 
 ## Problem Statement
-YASGUI has a comprehensive theming system with specific requirements:
+MatGUI has a comprehensive theming system with specific requirements:
 
 **Theme System:**
 - Dual theme support: light and dark modes
