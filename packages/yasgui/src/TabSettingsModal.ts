@@ -2203,7 +2203,7 @@ export default class TabSettingsModal {
     addClass(titleContainer, "aboutTitle");
 
     const title = document.createElement("h3");
-    title.textContent = "Matgui";
+    title.textContent = "MatGUI";
     addClass(title, "aboutMainTitle");
 
     const versionBadge = document.createElement("span");

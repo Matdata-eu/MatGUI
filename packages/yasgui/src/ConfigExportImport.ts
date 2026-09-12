@@ -328,7 +328,7 @@ export function parseFromTurtle(turtle: string): Partial<PersistedJson> {
 /**
  * Download configuration as a file
  */
-export function downloadConfigAsFile(config: PersistedJson, filename: string = "yasgui-config.ttl") {
+export function downloadConfigAsFile(config: PersistedJson, filename: string = "matgui-config.ttl") {
   const turtle = serializeToTurtle(config);
   const blob = new Blob([turtle], { type: "text/turtle;charset=utf-8" });
   const url = URL.createObjectURL(blob);

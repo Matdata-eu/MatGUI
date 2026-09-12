@@ -2,7 +2,7 @@
 
 **MatGUI** (formerly *Yasgui*) is a powerful, user-friendly workbench for querying and exploring knowledge graphs and RDF data using SPARQL. This guide will help you understand and make the most of MatGUI's features. 
 
-> The Yasgui project has been renamed Matgui. But this is a brand rename only. The technical name still remains Yasgui for backwards compatibility. Whenever you read 'matdata' in this document, you can likely read 'yasgui' as well.
+> The Yasgui project has been renamed Matgui. But this is a brand rename only. The technical name still remains Yasgui for backwards compatibility. Whenever you read 'Matgui' in this document, you can likely read 'yasgui' as well.
 
 ## Table of Contents
 
@@ -164,7 +164,7 @@ This command:
 - Seamless connection to localhost services
 - See [Querying Local Endpoints](#querying-local-endpoints) for more details
 
-**Stopping MAtGUI:**
+**Stopping MatGUI:**
 
 - Press `Ctrl+C` in the terminal where Docker is running
 - Or use: `docker stop <container-id>`

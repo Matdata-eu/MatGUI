@@ -59,7 +59,7 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: "MatGUI  ",
+      title: "MatGUI",
       logo: {
         alt: "MatGUI Logo",
         src: "img/logo.svg",
