@@ -12,27 +12,33 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: '24'
           check-latest: true
           registry-url: 'https://registry.npmjs.org'
-          cache: npm
+          package-manager-cache: false  # never use caching in release builds
 
       - name: Install dependencies
         run: npm ci
         env:
           PUPPETEER_SKIP_DOWNLOAD: 1
 
-      - name: Set version from release tag
+      - name: Update package versions from release tag
         run: |
-          TAG_VERSION="${GITHUB_REF#refs/tags/}"
-          TAG_VERSION="${TAG_VERSION#v}"
-          for dir in packages/*/; do
-            if [ -f "${dir}package.json" ]; then
-              npm version "$TAG_VERSION" --no-git-tag-version --allow-same-version --prefix "$dir"
+          TAG_VERSION=${GITHUB_REF#refs/tags/}
+          TAG_VERSION=${TAG_VERSION#v}
+          echo "Updating all packages to version $TAG_VERSION"
+          
+          # Update each package version
+          for package_dir in packages/*/; do
+            if [ -f "${package_dir}package.json" ]; then
+              echo "Updating version in ${package_dir}package.json"
+              cd "$package_dir"
+              npm version $TAG_VERSION --no-git-tag-version --allow-same-version
+              cd ../..
             fi
           done
 
