@@ -4106,8 +4106,8 @@ Releases are managed using Changesets:
 
 ## Additional Resources
 
-- **GitHub Repository**: [https://github.com/Matdata-eu/Yasgui](https://github.com/Matdata-eu/Matgui)
-- **Issue Tracker**: [https://github.com/Matdata-eu/Matgui/issues](https://github.com/Matdata-eu/Matgui/issues)
+- **GitHub Repository**: [https://github.com/Matdata-eu/MatGUI](https://github.com/Matdata-eu/MatGUI)
+- **Issue Tracker**: [https://github.com/Matdata-eu/MatGUI/issues](https://github.com/Matdata-eu/MatGUI/issues)
 - **User Guide**: See `docs/user-guide.md`
 - **SPARQL Specification**: [https://www.w3.org/TR/sparql11-query/](https://www.w3.org/TR/sparql11-query/)
 - **CodeMirror 6 Documentation**: [https://codemirror.net/docs/](https://codemirror.net/docs/)

@@ -2144,7 +2144,7 @@ If you encounter issues not covered here:
 ## Additional Resources
 
 - **SPARQL Tutorial**: [https://kvistgaard.github.io/sparql/](https://kvistgaard.github.io/sparql/)
-- **Matgui GitHub**: [https://github.com/Matdata-eu/Matgui](https://github.com/Matdata-eu/Matgui)
+- **Matgui GitHub**: [https://github.com/Matdata-eu/MatGUI](https://github.com/Matdata-eu/MatGUI)
 - **Developer Documentation**: See Developer Guide for API and integration details
 - **RDF Primer**: [https://www.w3.org/TR/rdf11-primer/](https://www.w3.org/TR/rdf11-primer/)
 - **SPARQL Specification**: [https://www.w3.org/TR/sparql11-query/](https://www.w3.org/TR/sparql11-query/)

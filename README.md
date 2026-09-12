@@ -27,7 +27,7 @@
 - 📦 **[npm Package](https://www.npmjs.com/package/@matdata/yasgui)**
 - 🐳 **[Docker Hub](https://hub.docker.com/r/mathiasvda/yasgui)**
 - 📝 **[Releases & Changelog](https://github.com/Matdata-eu/Matgui/releases)**
-- 💻 **[GitHub Repository](https://github.com/Matdata-eu/Matgui)**
+- 💻 **[GitHub Repository](https://github.com/Matdata-eu/MatGUI)**
 
 ---
 
@@ -139,7 +139,8 @@ docker run -p 8080:8080 \
   mathiasvda/yasgui:latest
 ```
 
-For detailed installation instructions and usage examples, see the **[Developer Guide](https://github.com/Matdata-eu/Matgui/blob/main/docs/developer-guide.md#installation)** and **[User Guide - Docker](https://github.com/Matdata-eu/Matgui/blob/main/docs/user-guide.md#running-matgui-with-docker)**.
+For detailed installation instructions and usage examples, see the **[Developer Guide](https://github.com/Matdata-eu/Matgui/blob/main/docs/developer-guide.md#installation)** and **[User Guide - Docker](https://github.com/Matdata-eu/Matgui/blob/main/docs/user-guide.md#running-matgui-with-docker)**.
+
 
 ## Quick Start
 

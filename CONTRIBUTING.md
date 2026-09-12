@@ -34,7 +34,7 @@ We are committed to providing a welcoming and inclusive environment. Please be r
 
 1. **Fork the Repository**
    
-   Click the "Fork" button on the [Matgui GitHub repository](https://github.com/Matdata-eu/Matgui) to create your own fork.
+   Click the "Fork" button on the [Matgui GitHub repository](https://github.com/Matdata-eu/MatGUI) to create your own fork.
 
 2. **Clone Your Fork**
    

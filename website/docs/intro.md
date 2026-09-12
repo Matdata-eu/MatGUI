@@ -12,7 +12,7 @@ slug: /
 - �� **[User Guide](./user-guide.md)** - Complete guide for end users
 - 🛠️ **[Developer Guide](./developer-guide.md)** - API reference and integration guide
 - 🚀 **[Live Demo](https://matgui.matdata.eu/)** - Try Matgui now
-- 💻 **[GitHub](https://github.com/Matdata-eu/Matgui)** - Source code and issues
+- 💻 **[GitHub](https://github.com/Matdata-eu/MatGUI)** - Source code and issues
 
 ## What is YASGUI?
 
