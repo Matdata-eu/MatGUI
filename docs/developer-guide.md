@@ -4,7 +4,7 @@ This comprehensive guide covers everything developers need to know to integrate,
 
 > **Backwards compatibility:** MatGUI keeps the `@matdata/yasgui`, `@matdata/yasqe` and `@matdata/yasr` package names, the `Yasgui`/`Yasqe`/`Yasr` global variables and class names, the `yasgui`/`yasqe`/`yasr` CSS classes and the existing localStorage keys unchanged. Existing integrations continue to work without code changes.
 
-> The Yasgui project has been renamed Matgui. But this is a brand rename only. The technical name still remains Yasgui for backwards compatibility. Whenever you read 'matdata' in this document, you can likely read 'yasgui' as well. Since this is a technical document for developers and since the package names are kept the same, this document still largely talks about yasgui due to the reference to the still-kept package name.
+> The Yasgui project has been renamed Matgui. But this is a brand rename only. The technical name still remains Yasgui for backwards compatibility. Whenever you read 'Matgui' in this document, you can likely read 'yasgui' as well. Since this is a technical document for developers and since the package names are kept the same, this document still largely talks about yasgui due to the reference to the still-kept package name.
 
 ## Table of Contents
 
