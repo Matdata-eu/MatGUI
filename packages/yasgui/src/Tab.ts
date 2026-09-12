@@ -9,6 +9,8 @@ import {
   Config as YasrConfig,
   PersistentConfig as YasrPersistentConfig,
   PluginQueryOptions as YasrPluginQueryOptions,
+  buildSubjectOfQuery,
+  buildObjectOfQuery,
 } from "@matdata/yasr";
 import { mapValues, eq, mergeWith, words, deburr, invert } from "lodash-es";
 import * as shareLink from "./linkUtils";
@@ -1564,21 +1566,15 @@ export class Tab extends EventEmitter {
       }
     }
 
-    // Construct the query
-    const constructQuery = `CONSTRUCT {   
-  ?s_left ?p_left ?target .
-  ?target ?p_right ?o_right .
-}
-WHERE {
-  BIND(<${uri}> as ?target)
-  {
-    ?s_left ?p_left ?target .
-  }
-  UNION
-  {
-    ?target ?p_right ?o_right .
-  }  
-} LIMIT 1000`;
+    // Construct the query based on whether Shift is held
+    let constructQuery: string;
+    if (event.shiftKey) {
+      // Ctrl+Shift+Click: find all triples where URI is the object
+      constructQuery = buildObjectOfQuery(uri);
+    } else {
+      // Ctrl+Click: find all triples where URI is the subject
+      constructQuery = buildSubjectOfQuery(uri);
+    }
 
     // Execute query in background without changing editor content
     // Note: void operator is intentional - errors are handled in the catch block of executeBackgroundQuery

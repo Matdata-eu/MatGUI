@@ -1,7 +1,12 @@
 import * as chai from "chai";
 import { describe, it } from "mocha";
 
-import { extractUriAtOffset, buildDescribeQuery } from "../../packages/yasr/src/plugins/response/uriUtils.js";
+import {
+  extractUriAtOffset,
+  buildSubjectOfQuery,
+  buildObjectOfQuery,
+  stripDuplicatePrefixDeclarations,
+} from "../../packages/yasr/src/plugins/response/uriUtils.js";
 
 const expect = chai.expect;
 
@@ -52,11 +57,43 @@ describe("Response plugin URI utilities", () => {
     });
   });
 
-  describe("buildDescribeQuery", () => {
-    it("wraps the URI in a DESCRIBE query", () => {
-      expect(buildDescribeQuery("http://example.org/foo")).to.equal(
+  describe("buildSubjectOfQuery", () => {
+    it("wraps the URI in a CONSTRUCT query retrieving triples where the URI is subject", () => {
+      expect(buildSubjectOfQuery("http://example.org/foo")).to.equal(
         "CONSTRUCT { <http://example.org/foo> ?p ?o } WHERE { <http://example.org/foo> ?p ?o }",
       );
+    });
+  });
+
+  describe("buildObjectOfQuery", () => {
+    it("wraps the URI in a CONSTRUCT query retrieving triples where the URI is object", () => {
+      expect(buildObjectOfQuery("http://example.org/foo")).to.equal(
+        "CONSTRUCT { ?s ?p <http://example.org/foo> } WHERE { ?s ?p <http://example.org/foo> } LIMIT 1000",
+      );
+    });
+  });
+
+  describe("stripDuplicatePrefixDeclarations", () => {
+    it("removes appended prefixes that already exist in the current view", () => {
+      const existing = "@prefix ex: <http://example.org/> .\n<http://a> <http://b> <http://c> .";
+      const appended =
+        "@prefix ex: <http://example.org/> .\n@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n<http://x> a foaf:Person .";
+      expect(stripDuplicatePrefixDeclarations(appended, existing)).to.equal(
+        "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n<http://x> a foaf:Person .",
+      );
+    });
+
+    it("deduplicates duplicate prefix labels within the appended block", () => {
+      const appended =
+        "PREFIX ex: <http://example.org/>\nPREFIX EX: <http://example.org/other/>\n<http://x> <http://p> <http://y> .";
+      expect(stripDuplicatePrefixDeclarations(appended)).to.equal(
+        "PREFIX ex: <http://example.org/>\n<http://x> <http://p> <http://y> .",
+      );
+    });
+
+    it("keeps non-prefix lines unchanged", () => {
+      const appended = "# Triples where <http://example.org/foo> is subject\n<http://s> <http://p> <http://o> .";
+      expect(stripDuplicatePrefixDeclarations(appended)).to.equal(appended);
     });
   });
 });

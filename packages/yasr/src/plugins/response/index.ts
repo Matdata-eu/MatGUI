@@ -14,7 +14,12 @@ import { turtle } from "codemirror-lang-turtle";
 import { javascript } from "@codemirror/legacy-modes/mode/javascript";
 import { addClass, removeClass } from "@matdata/yasgui-utils";
 import { DeepReadonly } from "ts-essentials";
-import { extractUriAtOffset, buildDescribeQuery } from "./uriUtils";
+import {
+  extractUriAtOffset,
+  buildSubjectOfQuery,
+  buildObjectOfQuery,
+  stripDuplicatePrefixDeclarations,
+} from "./uriUtils";
 
 export interface PluginConfig {
   maxLines: number;
@@ -27,7 +32,7 @@ export default class Response implements Plugin<PluginConfig> {
   private config: DeepReadonly<PluginConfig>;
   private overLay: HTMLDivElement | undefined;
   private cm: EditorView | undefined;
-  /** Turtle appended to the response view through Ctrl+Click DESCRIBE actions. */
+  /** Turtle appended to the response view through Ctrl+Click URI exploration actions. */
   private appendedContent = "";
   constructor(yasr: Yasr) {
     this.yasr = yasr;
@@ -130,8 +135,8 @@ export default class Response implements Plugin<PluginConfig> {
   }
 
   /**
-   * Ctrl/Cmd+Click on a URI in the response view runs a `DESCRIBE` query for that
-   * URI and appends the result to the response view (similar to the graph plugin).
+   * Ctrl/Cmd+Click on a URI runs a CONSTRUCT query for triples where the URI is the subject.
+   * Ctrl/Cmd+Shift+Click runs a CONSTRUCT query for triples where the URI is the object.
    */
   private handleMouseDown = (event: MouseEvent) => {
     if (!event.ctrlKey && !event.metaKey) return;
@@ -148,42 +153,75 @@ export default class Response implements Plugin<PluginConfig> {
 
     event.preventDefault();
     event.stopPropagation();
-    void this.describeUri(uri);
+
+    if (event.shiftKey) {
+      void this.runObjectOfQuery(uri);
+    } else {
+      void this.runSubjectOfQuery(uri);
+    }
   };
 
-  private async describeUri(uri: string) {
+  private async runSubjectOfQuery(uri: string) {
     if (!this.yasr.config.executeQuery) return;
     const cmAtStart = this.cm;
     if (!cmAtStart) return;
 
-    const query = buildDescribeQuery(uri);
+    const query = buildSubjectOfQuery(uri);
     try {
       this.yasr.showLoading();
-      const response = await this.yasr.executeQuery(query, { acceptHeader: this.getDescribeAcceptHeader() });
+      const response = await this.yasr.executeQuery(query, { acceptHeader: this.getConstructAcceptHeader() });
       if (this.cm !== cmAtStart) return;
 
       const content = this.getResponseContent(response);
       if (content) {
-        this.appendToView(`\n\n# DESCRIBE <${uri}>\n${content.trim()}\n`);
+        this.appendToView(`\n\n# Triples where <${uri}> is subject\n${content.trim()}\n`);
       } else {
-        this.appendToView(`\n\n# DESCRIBE <${uri}> returned no data\n`);
+        this.appendToView(`\n\n# Triples where <${uri}> is subject: no data\n`);
       }
     } catch (error) {
       if (this.cm !== cmAtStart) return;
 
-      console.error("DESCRIBE query failed:", error);
+      console.error("Subject-of query failed:", error);
       const message = error instanceof Error ? error.message : String(error);
-      this.appendToView(`\n\n# DESCRIBE <${uri}> failed: ${message}\n`);
+      this.appendToView(`\n\n# Triples where <${uri}> is subject failed: ${message}\n`);
+    } finally {
+      if (this.cm === cmAtStart) this.yasr.hideLoading();
+    }
+  }
+
+  private async runObjectOfQuery(uri: string) {
+    if (!this.yasr.config.executeQuery) return;
+    const cmAtStart = this.cm;
+    if (!cmAtStart) return;
+
+    const query = buildObjectOfQuery(uri);
+    try {
+      this.yasr.showLoading();
+      const response = await this.yasr.executeQuery(query, { acceptHeader: this.getConstructAcceptHeader() });
+      if (this.cm !== cmAtStart) return;
+
+      const content = this.getResponseContent(response);
+      if (content) {
+        this.appendToView(`\n\n# Triples where <${uri}> is object\n${content.trim()}\n`);
+      } else {
+        this.appendToView(`\n\n# Triples where <${uri}> is object: no data\n`);
+      }
+    } catch (error) {
+      if (this.cm !== cmAtStart) return;
+
+      console.error("Object-of query failed:", error);
+      const message = error instanceof Error ? error.message : String(error);
+      this.appendToView(`\n\n# Triples where <${uri}> is object failed: ${message}\n`);
     } finally {
       if (this.cm === cmAtStart) this.yasr.hideLoading();
     }
   }
 
   /**
-   * Pick an Accept header for the DESCRIBE request. When the current response is an
-   * RDF graph format, reuse it so the appended triples match what is already shown.
+   * Pick an Accept header for follow-up CONSTRUCT requests. When the current response
+   * is an RDF graph format, reuse it so the appended triples match what is shown.
    */
-  private getDescribeAcceptHeader(): string {
+  private getConstructAcceptHeader(): string {
     const contentType = this.yasr.results?.getContentType();
     if (contentType) {
       const lower = contentType.toLowerCase();
@@ -211,12 +249,13 @@ export default class Response implements Plugin<PluginConfig> {
   }
 
   /**
-   * Append text (a DESCRIBE result or a status message) to the response view and
-   * make sure the full content is revealed.
+   * Append text (query result or status message) to the response view and make sure
+   * the full content is revealed.
    */
   private appendToView(text: string) {
     if (!this.cm || !text) return;
-    this.appendedContent += text;
+    const existingVisibleContent = (this.yasr.results?.getOriginalResponseAsString() || "") + this.appendedContent;
+    this.appendedContent += stripDuplicatePrefixDeclarations(text, existingVisibleContent);
     // Reveal the full response together with the appended DESCRIBE results.
     this.showMore();
   }
