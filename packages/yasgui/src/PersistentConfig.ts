@@ -313,17 +313,23 @@ export default class PersistentConfig {
   }
 
   /**
-   * Get list of disabled developer-configured endpoint buttons
+   * Get the persisted layout orientation
    */
   public getOrientation(): "vertical" | "horizontal" | undefined {
     return this.persistedJson.orientation;
   }
 
+  /**
+   * Set and persist the layout orientation
+   */
   public setOrientation(orientation: "vertical" | "horizontal") {
     this.persistedJson.orientation = orientation;
     this.toStorage();
   }
 
+  /**
+   * Get list of disabled developer-configured endpoint buttons
+   */
   public getDisabledDevButtons(): string[] {
     return this.persistedJson.disabledDevButtons || [];
   }
