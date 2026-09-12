@@ -158,9 +158,15 @@ export default class Response implements Plugin<PluginConfig> {
       this.yasr.showLoading();
       const response = await this.yasr.executeQuery(query, { acceptHeader: this.getDescribeAcceptHeader() });
       const content = this.getResponseContent(response);
-      if (content) this.appendDescribeResult(uri, content);
+      if (content) {
+        this.appendToView(`\n\n# DESCRIBE <${uri}>\n${content.trim()}\n`);
+      } else {
+        this.appendToView(`\n\n# DESCRIBE <${uri}> returned no data\n`);
+      }
     } catch (error) {
       console.error("DESCRIBE query failed:", error);
+      const message = error instanceof Error ? error.message : String(error);
+      this.appendToView(`\n\n# DESCRIBE <${uri}> failed: ${message}\n`);
     } finally {
       this.yasr.hideLoading();
     }
@@ -187,19 +193,23 @@ export default class Response implements Plugin<PluginConfig> {
     return "text/turtle";
   }
 
-  private getResponseContent(response: any): string {
-    if (!response) return "";
+  private getResponseContent(response: unknown): string {
     if (typeof response === "string") return response;
-    if (typeof response.content === "string") return response.content;
-    if (typeof response.data === "string") return response.data;
+    if (response && typeof response === "object") {
+      const record = response as Record<string, unknown>;
+      if (typeof record.content === "string") return record.content;
+      if (typeof record.data === "string") return record.data;
+    }
     return "";
   }
 
-  private appendDescribeResult(uri: string, content: string) {
-    if (!this.cm) return;
-    const trimmed = content.trim();
-    if (!trimmed) return;
-    this.appendedContent += `\n\n# DESCRIBE <${uri}>\n${trimmed}\n`;
+  /**
+   * Append text (a DESCRIBE result or a status message) to the response view and
+   * make sure the full content is revealed.
+   */
+  private appendToView(text: string) {
+    if (!this.cm || !text) return;
+    this.appendedContent += text;
     // Reveal the full response together with the appended DESCRIBE results.
     removeClass(this.cm.dom, "overflow");
     this.overLay?.remove();
