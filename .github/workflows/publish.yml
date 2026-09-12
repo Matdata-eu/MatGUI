@@ -5,57 +5,48 @@ on:
     types: [published]
 
 permissions:
-    contents: read
-    id-token: write
-    
+  contents: read
+  id-token: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: '22.22.2'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: '22'
           check-latest: true
-
-      # npm 12 requires Node 22.22.2+; keep the runner on a compatible runtime.
-      - run: npm install -g npm@latest
+          registry-url: 'https://registry.npmjs.org'
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: 1
 
-      - name: Update package versions from release tag
+      - name: Set version from release tag
         run: |
-          TAG_VERSION=${GITHUB_REF#refs/tags/}
-          TAG_VERSION=${TAG_VERSION#v}
-          echo "Updating all packages to version $TAG_VERSION"
-          
-          # Update each package version
-          for package_dir in packages/*/; do
-            if [ -f "${package_dir}package.json" ]; then
-              echo "Updating version in ${package_dir}package.json"
-              cd "$package_dir"
-              npm version $TAG_VERSION --no-git-tag-version --allow-same-version
-              cd ../..
+          TAG_VERSION="${GITHUB_REF#refs/tags/}"
+          TAG_VERSION="${TAG_VERSION#v}"
+          for dir in packages/*/; do
+            if [ -f "${dir}package.json" ]; then
+              npm version "$TAG_VERSION" --no-git-tag-version --allow-same-version --prefix "$dir"
             fi
           done
 
-      - name: Build packages
+      - name: Build
         run: npm run build
 
-      - name: Copy README to all packages
+      - name: Copy README to packages
         run: |
-          echo "Copying README.md to all packages"
-          for package_dir in packages/*/; do
-            if [ -f "${package_dir}package.json" ]; then
-              echo "Copying README.md to ${package_dir}"
-              cp README.md "${package_dir}README.md"
-            fi
+          for dir in packages/*/; do
+            [ -f "${dir}package.json" ] && cp README.md "${dir}README.md"
           done
 
-      - name: Publish to npm using Changesets
+      - name: Publish to npm
         run: npx changeset publish --no-git-tag
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
