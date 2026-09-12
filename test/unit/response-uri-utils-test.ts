@@ -54,7 +54,9 @@ describe("Response plugin URI utilities", () => {
 
   describe("buildDescribeQuery", () => {
     it("wraps the URI in a DESCRIBE query", () => {
-      expect(buildDescribeQuery("http://example.org/foo")).to.equal("DESCRIBE <http://example.org/foo>");
+      expect(buildDescribeQuery("http://example.org/foo")).to.equal(
+        "CONSTRUCT { <http://example.org/foo> ?p ?o } WHERE { <http://example.org/foo> ?p ?o }",
+      );
     });
   });
 });
