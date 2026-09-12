@@ -142,7 +142,7 @@ You can run Matgui locally using Docker, which is especially useful when working
 **Running MatGUI:**
 
 ```bash
-docker run -p 8080:8080 mathiasvda/yasgui
+docker run -p 8080:8080 mathiasvda/matgui
 ```
 
 This command:
@@ -173,7 +173,7 @@ This command:
 To run on a different port (e.g., 3000):
 
 ```bash
-docker run -p 3000:8080 mathiasvda/yasgui
+docker run -p 3000:8080 mathiasvda/matgui
 ```
 
 Then access at `http://localhost:3000`
@@ -253,7 +253,7 @@ The process is similar in Chrome, Firefox, and Safari:
 If you frequently work with local endpoints, consider running Matgui locally with Docker:
 
 ```bash
-docker run -p 8080:8080 mathiasvda/yasgui
+docker run -p 8080:8080 mathiasvda/matgui
 ```
 
 Then open your browser and navigate to `http://localhost:8080`.
@@ -1906,7 +1906,7 @@ Browsers block HTTP requests to local endpoints from HTTPS pages (mixed content 
 1. **Run Matgui Locally with Docker** (Recommended):
 
    ```bash
-   docker run -p 8080:8080 mathiasvda/yasgui
+   docker run -p 8080:8080 mathiasvda/matgui
    ```
 
    - Eliminates all permission issues

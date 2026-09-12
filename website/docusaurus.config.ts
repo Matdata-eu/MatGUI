@@ -117,7 +117,7 @@ const config: Config = {
             },
             {
               label: "Docker Hub",
-              href: "https://hub.docker.com/r/mathiasvda/yasgui",
+              href: "https://hub.docker.com/r/mathiasvda/matgui",
             },
           ],
         },

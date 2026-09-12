@@ -25,7 +25,7 @@
 - 🛠️ **[Developer Guide](https://github.com/Matdata-eu/Matgui/blob/main/docs/developer-guide.md)** - API reference and integration guide
 - 🚀 **[Production Environment](https://matgui.matdata.eu/)** - Live instance
 - 📦 **[npm Package](https://www.npmjs.com/package/@matdata/yasgui)**
-- 🐳 **[Docker Hub](https://hub.docker.com/r/mathiasvda/yasgui)**
+- 🐳 **[Docker Hub](https://hub.docker.com/r/mathiasvda/matgui)**
 - 📝 **[Releases & Changelog](https://github.com/Matdata-eu/Matgui/releases)**
 - 💻 **[GitHub Repository](https://github.com/Matdata-eu/MatGUI)**
 
@@ -126,8 +126,8 @@ yarn add @matdata/yasgui
 
 **Run with default endpoint:**
 ```bash
-docker pull mathiasvda/yasgui:latest
-docker run -p 8080:8080 mathiasvda/yasgui:latest
+docker pull mathiasvda/matgui:latest
+docker run -p 8080:8080 mathiasvda/matgui:latest
 ```
 
 Access at: `http://localhost:8080`
@@ -136,7 +136,7 @@ Access at: `http://localhost:8080`
 ```bash
 docker run -p 8080:8080 \
   -e MATGUI_DEFAULT_ENDPOINT=https://your-endpoint.com/sparql \
-  mathiasvda/yasgui:latest
+  mathiasvda/matgui:latest
 ```
 
 For detailed installation instructions and usage examples, see the **[Developer Guide](https://github.com/Matdata-eu/Matgui/blob/main/docs/developer-guide.md#installation)** and **[User Guide - Docker](https://github.com/Matdata-eu/Matgui/blob/main/docs/user-guide.md#running-matgui-with-docker)**.
