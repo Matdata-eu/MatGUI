@@ -153,10 +153,15 @@ export default class Response implements Plugin<PluginConfig> {
 
   private async describeUri(uri: string) {
     if (!this.yasr.config.executeQuery) return;
+    const cmAtStart = this.cm;
+    if (!cmAtStart) return;
+
     const query = buildDescribeQuery(uri);
     try {
       this.yasr.showLoading();
       const response = await this.yasr.executeQuery(query, { acceptHeader: this.getDescribeAcceptHeader() });
+      if (this.cm !== cmAtStart) return;
+
       const content = this.getResponseContent(response);
       if (content) {
         this.appendToView(`\n\n# DESCRIBE <${uri}>\n${content.trim()}\n`);
@@ -164,11 +169,13 @@ export default class Response implements Plugin<PluginConfig> {
         this.appendToView(`\n\n# DESCRIBE <${uri}> returned no data\n`);
       }
     } catch (error) {
+      if (this.cm !== cmAtStart) return;
+
       console.error("DESCRIBE query failed:", error);
       const message = error instanceof Error ? error.message : String(error);
       this.appendToView(`\n\n# DESCRIBE <${uri}> failed: ${message}\n`);
     } finally {
-      this.yasr.hideLoading();
+      if (this.cm === cmAtStart) this.yasr.hideLoading();
     }
   }
 
