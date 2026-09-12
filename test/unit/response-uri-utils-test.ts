@@ -67,7 +67,7 @@ describe("Response plugin URI utilities", () => {
   describe("buildObjectOfQuery", () => {
     it("wraps the URI in a CONSTRUCT query retrieving triples where the URI is object", () => {
       expect(buildObjectOfQuery("http://example.org/foo")).to.equal(
-        "CONSTRUCT { ?s ?p <http://example.org/foo> } WHERE { ?s ?p <http://example.org/foo> }",
+        "CONSTRUCT { ?s ?p <http://example.org/foo> } WHERE { ?s ?p <http://example.org/foo> } LIMIT 1000",
       );
     });
   });

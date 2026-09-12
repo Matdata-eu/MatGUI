@@ -73,5 +73,5 @@ export function buildDescribeQuery(uri: string): string {
  * @returns A SPARQL `CONSTRUCT` query string.
  */
 export function buildObjectOfQuery(uri: string): string {
-  return `CONSTRUCT { ?s ?p <${uri}> } WHERE { ?s ?p <${uri}> }`;
+  return `CONSTRUCT { ?s ?p <${uri}> } WHERE { ?s ?p <${uri}> } LIMIT 1000`;
 }
