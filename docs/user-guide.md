@@ -712,19 +712,19 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>""" ;
 
 ### URI Explorer
 
-Quickly explore RDF resources by Ctrl+clicking on URIs in your query.
+Quickly explore RDF resources by Ctrl+(Shift+)clicking on URIs in your query.
 
 **How It Works:**
 
 1. Hold `Ctrl` and click any URI in the query editor
-2. Matgui automatically generates and executes a CONSTRUCT query exploring:
-   - Outgoing triples (where the URI is the subject)
-   - Incoming triples (where the URI is the object)
+2. MatGUI automatically generates and executes a CONSTRUCT query where the URI is the **subject**
 3. Results appear without modifying your original query
 4. View the resource's connections in the results viewer
 
+Alternatively, use `Ctrl`+`Shift` and click on the URI to executes a CONSTRUCT query where the URI is the **object**.
+
 **Example:**
-Ctrl+clicking on `http://dbpedia.org/resource/European_Union` automatically queries for all triples related to the European Union.
+Ctrl+clicking on `http://dbpedia.org/resource/European_Union` automatically queries for all triples where the European Union is the subject of.
 
 ### Query Tabs
 
@@ -1396,7 +1396,8 @@ Shows the raw response from the SPARQL endpoint.
 - Code folding for nested structures
 - Copy to clipboard functionality
 - Line numbers
-- **Ctrl+Click on a URI** to run a `DESCRIBE` query for that resource and append the returned triples to the response view (similar to the Graph plugin's node expansion)
+- **Ctrl+Click on a URI** executes a CONSTRUCT query where the URI is the **subject** and append the returned triples to the response view (similar to the Graph plugin's node expansion)
+- **Ctrl+Click on a URI** executes a CONSTRUCT query where the URI is the **object** and append the returned triples to the response view (similar to the Graph plugin's node expansion)
 
 **Best For:**
 
@@ -1800,17 +1801,18 @@ Master Matgui with these keyboard shortcuts for faster querying.
 
 ### Query Editor (YASQE)
 
-| Shortcut                   | Action                           |
-| -------------------------- | -------------------------------- |
-| `Ctrl+Enter` / `Cmd+Enter` | Execute query                    |
-| `Ctrl+Space`               | Trigger autocomplete             |
-| `Ctrl+S`                   | Save query to local storage      |
-| `Ctrl+Shift+F`             | Format query                     |
-| `Ctrl+/`                   | Toggle comment on selected lines |
-| `Ctrl+Shift+D`             | Duplicate current line           |
-| `Ctrl+Shift+K`             | Delete current line              |
-| `Esc`                      | Remove focus from editor         |
-| `Ctrl+Click` (on URI)      | Explore URI connections          |
+| Shortcut                    | Action                           |
+| --------------------------- | -------------------------------- |
+| `Ctrl+Enter` / `Cmd+Enter`  | Execute query                    |
+| `Ctrl+Space`                | Trigger autocomplete             |
+| `Ctrl+S`                    | Save query to local storage      |
+| `Ctrl+Shift+F`              | Format query                     |
+| `Ctrl+/`                    | Toggle comment on selected lines |
+| `Ctrl+Shift+D`              | Duplicate current line           |
+| `Ctrl+Shift+K`              | Delete current line              |
+| `Esc`                       | Remove focus from editor         |
+| `Ctrl+Click` (on URI)       | Explore outgoing URI connections |
+| `Ctrl+Shift+Click` (on URI) | Explore incoming URI connections |
 
 ### Fullscreen
 

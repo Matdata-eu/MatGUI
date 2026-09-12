@@ -1,5 +1,5 @@
 /**
- * Standalone helpers for the Response plugin's "Ctrl+Click a URI to DESCRIBE" feature.
+ * Standalone helpers for the Response plugin's Ctrl+Click URI exploration feature.
  *
  * These functions are intentionally free of any DOM or CodeMirror dependencies so
  * that they can be unit-tested in isolation.
@@ -57,12 +57,12 @@ export function extractUriAtOffset(text: string, offset: number): string | undef
 }
 
 /**
- * Build a `DESCRIBE` query for the given URI.
+ * Build a CONSTRUCT query that retrieves all triples where the given URI is the subject.
  *
- * @param uri The URI to describe.
- * @returns A SPARQL `CONSTRUCT` query string that retrieves all triples where the URI is the subject.
+ * @param uri The URI to look up as a subject.
+ * @returns A SPARQL `CONSTRUCT` query string.
  */
-export function buildDescribeQuery(uri: string): string {
+export function buildSubjectOfQuery(uri: string): string {
   return `CONSTRUCT { <${uri}> ?p ?o } WHERE { <${uri}> ?p ?o }`;
 }
 

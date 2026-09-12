@@ -3,7 +3,7 @@ import { describe, it } from "mocha";
 
 import {
   extractUriAtOffset,
-  buildDescribeQuery,
+  buildSubjectOfQuery,
   buildObjectOfQuery,
 } from "../../packages/yasr/src/plugins/response/uriUtils.js";
 
@@ -56,9 +56,9 @@ describe("Response plugin URI utilities", () => {
     });
   });
 
-  describe("buildDescribeQuery", () => {
+  describe("buildSubjectOfQuery", () => {
     it("wraps the URI in a CONSTRUCT query retrieving triples where the URI is subject", () => {
-      expect(buildDescribeQuery("http://example.org/foo")).to.equal(
+      expect(buildSubjectOfQuery("http://example.org/foo")).to.equal(
         "CONSTRUCT { <http://example.org/foo> ?p ?o } WHERE { <http://example.org/foo> ?p ?o }",
       );
     });

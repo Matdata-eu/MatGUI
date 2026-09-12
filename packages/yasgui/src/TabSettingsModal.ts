@@ -2032,7 +2032,8 @@ export default class TabSettingsModal {
           { keys: ["Ctrl+Shift+D", "Cmd+Shift+D"], description: "Duplicate current line" },
           { keys: ["Ctrl+Shift+K", "Cmd+Shift+K"], description: "Delete current line" },
           { keys: ["Esc"], description: "Remove focus from editor" },
-          { keys: ["Ctrl+Click"], description: "Explore URI connections (on URI)" },
+          { keys: ["Ctrl+Click"], description: "Find triples where URI is subject" },
+          { keys: ["Ctrl+Shift+Click"], description: "Find triples where URI is object" },
         ],
       },
       {

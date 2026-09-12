@@ -731,6 +731,6 @@ Yasr.registerPlugin("response", YasrPluginResponse.default as any);
 Yasr.registerPlugin("error", YasrPluginError.default as any);
 
 export type { Plugin, DownloadInfo } from "./plugins";
-export { buildObjectOfQuery } from "./plugins/response/uriUtils";
+export { buildSubjectOfQuery, buildObjectOfQuery } from "./plugins/response/uriUtils";
 
 export default Yasr;
