@@ -158,7 +158,7 @@ export default class QueryBrowser {
     helpButton.innerHTML = '<i class="fas fa-circle-question"></i>';
     helpButton.addEventListener("click", () => {
       window.open(
-        "https://yasgui-doc.matdata.eu/docs/user-guide#managed-queries-and-workspaces",
+        "https://matgui-doc.matdata.eu/docs/user-guide#managed-queries-and-workspaces",
         "_blank",
         "noopener,noreferrer",
       );
@@ -406,7 +406,7 @@ export default class QueryBrowser {
 
     const learnMoreLink = document.createElement("a");
     addClass(learnMoreLink, "yasgui-query-browser__empty-link");
-    learnMoreLink.href = "https://yasgui-doc.matdata.eu/docs/user-guide#managed-queries-and-workspaces";
+    learnMoreLink.href = "https://matgui-doc.matdata.eu/docs/user-guide#managed-queries-and-workspaces";
     learnMoreLink.target = "_blank";
     learnMoreLink.rel = "noopener noreferrer";
     learnMoreLink.textContent = "Learn more about workspaces";

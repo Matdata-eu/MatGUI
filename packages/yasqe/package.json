@@ -1,6 +1,6 @@
 {
   "name": "@matdata/yasqe",
-  "description": "Yet Another SPARQL Query Editor",
+  "description": "MatGUI query editor: a modern SPARQL query editor (formerly Yasgui/YASQE).",
   "version": "4.6.1",
   "main": "build/yasqe.min.js",
   "types": "build/ts/src/index.d.ts",
@@ -17,10 +17,10 @@
     "Semantic Web",
     "Linked Data"
   ],
-  "bugs": "https://github.com/Matdata-eu/Yasgui/issues/",
+  "bugs": "https://github.com/Matdata-eu/Matgui/issues/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Matdata-eu/Yasgui.git",
+    "url": "https://github.com/Matdata-eu/Matgui.git",
     "directory": "packages/yasqe"
   },
   "dependencies": {

@@ -1,82 +1,83 @@
-# YASGUI User Guide
+# MatGUI User Guide
 
-**Yet Another SPARQL GUI (YASGUI)** is a powerful, user-friendly interface for querying and exploring RDF data using SPARQL. This guide will help you understand and make the most of YASGUI's features.
+**MatGUI** (formerly *Yasgui*) is a powerful, user-friendly workbench for querying and exploring knowledge graphs and RDF data using SPARQL. This guide will help you understand and make the most of MatGUI's features. 
+
+> The Yasgui project has been renamed Matgui. But this is a brand rename only. The technical name still remains Yasgui for backwards compatibility. Whenever you read 'Matgui' in this document, you can likely read 'yasgui' as well.
 
 ## Table of Contents
 
-- [YASGUI User Guide](#yasgui-user-guide)
-  - [Table of Contents](#table-of-contents)
-  - [Introduction](#introduction)
-  - [What is SPARQL?](#what-is-sparql)
-    - [Basic Concepts](#basic-concepts)
-    - [Learning SPARQL](#learning-sparql)
-    - [Common SPARQL Query Types](#common-sparql-query-types)
-  - [Getting Started](#getting-started)
-    - [Accessing YASGUI](#accessing-yasgui)
-    - [Running YASGUI with Docker](#running-yasgui-with-docker)
-    - [Your First Query](#your-first-query)
-    - [Saving Your Work](#saving-your-work)
-    - [Querying Local Endpoints](#querying-local-endpoints)
-  - [Components Overview](#components-overview)
-    - [YASQE (Query Editor)](#yasqe-query-editor)
-    - [YASR (Results Viewer)](#yasr-results-viewer)
-    - [YASGUI (Main Interface)](#yasgui-main-interface)
-  - [Features](#features)
-    - [Themes](#themes)
-    - [Layout Orientation](#layout-orientation)
-    - [Query Formatting](#query-formatting)
-    - [CONSTRUCT Query Validation](#construct-query-validation)
-    - [Code Snippets](#code-snippets)
-    - [Fullscreen Mode](#fullscreen-mode)
-    - [Prefix Management](#prefix-management)
-    - [Endpoint Quick Switch](#endpoint-quick-switch)
-    - [Configuration Import/Export](#configuration-importexport)
-    - [URI Explorer](#uri-explorer)
-    - [Query Tabs](#query-tabs)
-    - [Settings Modal](#settings-modal)
-    - [SPARQL Endpoints Management](#sparql-endpoints-management)
-    - [Managed Queries and Workspaces](#managed-queries-and-workspaces)
-      - [Workspaces](#workspaces)
-        - [SPARQL workspaces](#sparql-workspaces)
-        - [Git based workspaces](#git-based-workspaces)
-      - [Managed queries](#managed-queries)
-    - [Query History and Persistence](#query-history-and-persistence)
-    - [Share Queries](#share-queries)
-  - [Plugins](#plugins)
-    - [Table Plugin](#table-plugin)
-    - [Boolean Plugin](#boolean-plugin)
-    - [Response Plugin](#response-plugin)
-    - [Graph Plugin](#graph-plugin)
-    - [Geo Plugin](#geo-plugin)
-    - [Error Plugin](#error-plugin)
-    - [Plugin Selection](#plugin-selection)
-  - [Keyboard Shortcuts](#keyboard-shortcuts)
-    - [Query Editor (YASQE)](#query-editor-yasqe)
-    - [Fullscreen](#fullscreen)
-    - [YASGUI Tabs](#yasgui-tabs)
-    - [General Editor](#general-editor)
-    - [Results Viewer (YASR)](#results-viewer-yasr)
-  - [Troubleshooting](#troubleshooting)
-    - [Common Issues and Solutions](#common-issues-and-solutions)
-      - [Query Not Executing](#query-not-executing)
-      - [CORS Errors](#cors-errors)
-      - [Local Endpoint Issues](#local-endpoint-issues)
-      - [Virtuoso Preflight Authentication Issues](#virtuoso-preflight-authentication-issues)
-      - [Slow Queries](#slow-queries)
-      - [Results Not Displaying Correctly](#results-not-displaying-correctly)
-      - [Autocomplete Not Working](#autocomplete-not-working)
-      - [Lost Queries](#lost-queries)
-      - [Theme/Layout Not Saving](#themelayout-not-saving)
-      - [Formatting Issues](#formatting-issues)
-    - [Getting Help](#getting-help)
-    - [Best Practices](#best-practices)
-  - [Additional Resources](#additional-resources)
+- [Table of Contents](#table-of-contents)
+- [Introduction](#introduction)
+- [What is SPARQL?](#what-is-sparql)
+  - [Basic Concepts](#basic-concepts)
+  - [Learning SPARQL](#learning-sparql)
+  - [Common SPARQL Query Types](#common-sparql-query-types)
+- [Getting Started](#getting-started)
+  - [Accessing MatGUI](#accessing-matgui)
+  - [Running Matgui with Docker](#running-matgui-with-docker)
+  - [Your First Query](#your-first-query)
+  - [Saving Your Work](#saving-your-work)
+  - [Querying Local Endpoints](#querying-local-endpoints)
+- [Components Overview](#components-overview)
+  - [YASQE (Query Editor)](#yasqe-query-editor)
+  - [YASR (Results Viewer)](#yasr-results-viewer)
+  - [YASGUI (Main Interface)](#yasgui-main-interface)
+- [Features](#features)
+  - [Themes](#themes)
+  - [Layout Orientation](#layout-orientation)
+  - [Query Formatting](#query-formatting)
+  - [CONSTRUCT Query Validation](#construct-query-validation)
+  - [Code Snippets](#code-snippets)
+  - [Fullscreen Mode](#fullscreen-mode)
+  - [Prefix Management](#prefix-management)
+  - [Endpoint Quick Switch](#endpoint-quick-switch)
+  - [Configuration Import/Export](#configuration-importexport)
+  - [URI Explorer](#uri-explorer)
+  - [Query Tabs](#query-tabs)
+  - [Settings Modal](#settings-modal)
+  - [SPARQL Endpoints Management](#sparql-endpoints-management)
+  - [Managed Queries and Workspaces](#managed-queries-and-workspaces)
+    - [Workspaces](#workspaces)
+      - [SPARQL workspaces](#sparql-workspaces)
+      - [Git based workspaces](#git-based-workspaces)
+    - [Managed queries](#managed-queries)
+  - [Query History and Persistence](#query-history-and-persistence)
+  - [Share Queries](#share-queries)
+- [Plugins](#plugins)
+  - [Table Plugin](#table-plugin)
+  - [Boolean Plugin](#boolean-plugin)
+  - [Response Plugin](#response-plugin)
+  - [Graph Plugin](#graph-plugin)
+  - [Geo Plugin](#geo-plugin)
+  - [Error Plugin](#error-plugin)
+  - [Plugin Selection](#plugin-selection)
+- [Keyboard Shortcuts](#keyboard-shortcuts)
+  - [Query Editor (YASQE)](#query-editor-yasqe)
+  - [Fullscreen](#fullscreen)
+  - [Matgui Tabs](#matgui-tabs)
+  - [General Editor](#general-editor)
+  - [Results Viewer (YASR)](#results-viewer-yasr)
+- [Troubleshooting](#troubleshooting)
+  - [Common Issues and Solutions](#common-issues-and-solutions)
+    - [Query Not Executing](#query-not-executing)
+    - [CORS Errors](#cors-errors)
+    - [Local Endpoint Issues](#local-endpoint-issues)
+    - [Virtuoso Preflight Authentication Issues](#virtuoso-preflight-authentication-issues)
+    - [Slow Queries](#slow-queries)
+    - [Results Not Displaying Correctly](#results-not-displaying-correctly)
+    - [Autocomplete Not Working](#autocomplete-not-working)
+    - [Lost Queries](#lost-queries)
+    - [Theme/Layout Not Saving](#themelayout-not-saving)
+    - [Formatting Issues](#formatting-issues)
+  - [Getting Help](#getting-help)
+  - [Best Practices](#best-practices)
+- [Additional Resources](#additional-resources)
 
 ---
 
 ## Introduction
 
-YASGUI is a comprehensive SPARQL query interface that combines a powerful query editor (YASQE) with a versatile results viewer (YASR). Whether you're new to SPARQL or an experienced user, YASGUI provides an intuitive interface for working with semantic data.
+Matgui is a comprehensive SPARQL query interface that combines a powerful query editor (YASQE) with a versatile results viewer (YASR). Whether you're new to SPARQL or an experienced user, Matgui provides an intuitive interface for working with semantic data.
 
 **Key Benefits:**
 
@@ -123,13 +124,13 @@ This excellent resource covers:
 
 ## Getting Started
 
-### Accessing YASGUI
+### Accessing MatGUI
 
-YASGUI is available at: **[https://yasgui.matdata.eu/](https://yasgui.matdata.eu/)**
+Matgui is available at: **[https://matgui.matdata.eu/](https://matgui.matdata.eu/)**
 
-### Running YASGUI with Docker
+### Running Matgui with Docker
 
-You can run YASGUI locally using Docker, which is especially useful when working with local SPARQL endpoints.
+You can run Matgui locally using Docker, which is especially useful when working with local SPARQL endpoints.
 
 **Why Use Docker?**
 
@@ -138,7 +139,7 @@ You can run YASGUI locally using Docker, which is especially useful when working
 - Self-contained environment with all dependencies included
 - Easy to set up and run
 
-**Running YASGUI:**
+**Running MatGUI:**
 
 ```bash
 docker run -p 8080:8080 mathiasvda/yasgui
@@ -146,24 +147,24 @@ docker run -p 8080:8080 mathiasvda/yasgui
 
 This command:
 
-- Downloads the YASGUI Docker image (first run only)
-- Starts YASGUI on port 8080
+- Downloads the Matgui Docker image (first run only)
+- Starts Matgui on port 8080
 - Makes it accessible at `http://localhost:8080`
 
-**Accessing YASGUI:**
+**Accessing MatGUI:**
 
 - Open your browser and navigate to: `http://localhost:8080`
-- YASGUI will load and be ready to use
+- Matgui will load and be ready to use
 - You can now query local endpoints without browser permission prompts
 
 **Benefits for Local Endpoints:**
 
-- Both YASGUI and your local endpoint use HTTP (no mixed content issues)
+- Both Matgui and your local endpoint use HTTP (no mixed content issues)
 - No browser security prompts
 - Seamless connection to localhost services
 - See [Querying Local Endpoints](#querying-local-endpoints) for more details
 
-**Stopping YASGUI:**
+**Stopping MatGUI:**
 
 - Press `Ctrl+C` in the terminal where Docker is running
 - Or use: `docker stop <container-id>`
@@ -196,7 +197,7 @@ LIMIT 10
 
 ### Saving Your Work
 
-YASGUI automatically saves:
+Matgui automatically saves:
 
 - Your queries in local storage
 - Tab configurations
@@ -206,7 +207,7 @@ Your work persists across browser sessions on the same device.
 
 ### Querying Local Endpoints
 
-YASGUI can query SPARQL endpoints running on your local machine (e.g., Apache Jena Fuseki, GraphDB). However, browsers require special permission to access local servers from web applications.
+Matgui can query SPARQL endpoints running on your local machine (e.g., Apache Jena Fuseki, GraphDB). However, browsers require special permission to access local servers from web applications.
 
 **Steps to Query Local Endpoints:**
 
@@ -222,7 +223,7 @@ YASGUI can query SPARQL endpoints running on your local machine (e.g., Apache Je
 
    ![Permission request dialog](img/local_endpoint_msedge_permission_request.png)
    - Click **"Allow"** to grant permission
-   - The permission applies for the domain on which you run yasgui (for example https://yasgui.matdata.eu/)
+   - The permission applies for the domain on which you run Matgui (for example https://matgui.matdata.eu/)
 
 4. **If You Blocked the Request**: You can change the permission later
 
@@ -249,7 +250,7 @@ The process is similar in Chrome, Firefox, and Safari:
 
 **Alternative: Use Docker to Avoid Permission Issues**
 
-If you frequently work with local endpoints, consider running YASGUI locally with Docker:
+If you frequently work with local endpoints, consider running Matgui locally with Docker:
 
 ```bash
 docker run -p 8080:8080 mathiasvda/yasgui
@@ -257,11 +258,11 @@ docker run -p 8080:8080 mathiasvda/yasgui
 
 Then open your browser and navigate to `http://localhost:8080`.
 
-This eliminates browser permission prompts since both YASGUI and your local endpoint use HTTP. See [Running YASGUI with Docker](#running-yasgui-with-docker) for details.
+This eliminates browser permission prompts since both Matgui and your local endpoint use HTTP. See [Running Matgui with Docker](#running-matgui-with-docker) for details.
 
 **Important Notes:**
 
-- Permission is required because YASGUI is served over HTTPS while your local endpoint uses HTTP
+- Permission is required because Matgui is served over HTTPS while your local endpoint uses HTTP
 - This is a browser security feature to protect against mixed content attacks
 - You'll need to grant permission once and it should apply for all browser session (when you don't clear cache & settings)
 - Consider using HTTPS for your local endpoint for automatic permission
@@ -277,7 +278,7 @@ This eliminates browser permission prompts since both YASGUI and your local endp
 
 ## Components Overview
 
-YASGUI consists of three main components working together:
+Matgui consists of three main components working together:
 
 ### YASQE (Query Editor)
 
@@ -323,7 +324,7 @@ The container that brings YASQE and YASR together with additional functionality.
 
 ### Themes
 
-YASGUI supports both light and dark themes, allowing you to customize the appearance of the SPARQL IDE according to your preferences.
+MatGUI supports both light and dark themes, allowing you to customize the appearance of the SPARQL IDE according to your preferences.
 
 **Features:**
 
@@ -378,7 +379,7 @@ Your theme preferences are stored separately for light and dark modes, so switch
 
 **System Theme Detection:**
 
-If you haven't manually selected a theme, YASGUI will:
+If you haven't manually selected a theme, MatGUI will:
 
 1. Check your system's color scheme preference
 2. Apply dark theme if your system prefers dark mode
@@ -387,7 +388,7 @@ If you haven't manually selected a theme, YASGUI will:
 
 ### Layout Orientation
 
-YASGUI offers two layout options to optimize screen space:
+MAtGUI offers two layout options to optimize screen space:
 
 **Vertical Layout (Default):**
 
@@ -418,7 +419,7 @@ Keep your SPARQL queries clean and readable with automatic formatting.
 - Keyboard shortcut: `Shift+Ctrl+F`
 - Choice of formatting engines:
   - **sparql-formatter** (default): Standards-compliant, modern formatter
-  - **Legacy formatter**: Original YASGUI formatter
+  - **Legacy formatter**: Original MatGUI formatter
 - Auto-format on query execution (configurable in Settings)
 
 **How to Format:**
@@ -436,7 +437,7 @@ Keep your SPARQL queries clean and readable with automatic formatting.
 
 ### CONSTRUCT Query Validation
 
-YASGUI helps you write correct CONSTRUCT queries by detecting undefined variables.
+MatGUI helps you write correct CONSTRUCT queries by detecting undefined variables.
 
 **Feature:**
 
@@ -446,7 +447,7 @@ YASGUI helps you write correct CONSTRUCT queries by detecting undefined variable
 - Does not prevent query execution (informational only)
 
 **How It Works:**
-When you write a CONSTRUCT query, YASGUI analyzes the variables:
+When you write a CONSTRUCT query, MAtGUI analyzes the variables:
 
 ```sparql
 PREFIX ex: <http://example.org/>
@@ -542,12 +543,12 @@ Simplify query writing with reusable prefix declarations.
 **Features:**
 
 - **Saved Prefixes**: Define commonly-used prefixes once, reuse everywhere
-- **Auto-capture**: YASGUI automatically captures new prefixes from your queries
+- **Auto-capture**: MatGUI automatically captures new prefixes from your queries
 - **PREFIX Button**: Insert saved prefixes into your query with one click
-- **Prefix Autocomplete**: Type a prefix (e.g., `PREFIX foaf:`) and YASGUI suggests the full URI from prefix.cc
+- **Prefix Autocomplete**: Type a prefix (e.g., `PREFIX foaf:`) and MatGUI suggests the full URI from prefix.cc
 
 **Default Prefixes:**
-YASGUI includes standard prefixes like:
+MatGUI includes standard prefixes like:
 
 - `rdf:` - RDF vocabulary
 - `rdfs:` - RDF Schema
@@ -559,7 +560,7 @@ YASGUI includes standard prefixes like:
 3. Enable/disable auto-capture in Settings
 
 **Auto-completion:**
-When typing a prefix declaration, YASGUI queries [prefix.cc](https://prefix.cc) to suggest standard URIs:
+When typing a prefix declaration, Matgui queries [prefix.cc](https://prefix.cc) to suggest standard URIs:
 
 ```sparql
 PREFIX foaf: <  # Auto-suggests http://xmlns.com/foaf/0.1/
@@ -580,7 +581,7 @@ The endpoint quick switch buttons feature allows you to quickly switch between d
 
 **Developer-Configured Endpoint Buttons:**
 
-If the developer has configured endpoint buttons when initializing YASGUI, you can manage them through the Settings interface:
+If the developer has configured endpoint buttons when initializing MatGUI, you can manage them through the Settings interface:
 
 1. Click the Settings button (⚙) in the control bar
 2. Navigate to the "Endpoints" tab
@@ -626,7 +627,7 @@ When the control bar is too narrow to display all endpoint buttons (e.g., when r
 
 ### Configuration Import/Export
 
-Backup, share, and migrate your YASGUI configuration using RDF Turtle format. This feature allows you to export all your settings, tabs, queries, and preferences, then import them on another device or browser.
+Backup, share, and migrate your Matgui configuration using RDF Turtle format. This feature allows you to export all your settings, tabs, queries, and preferences, then import them on another device or browser.
 
 **Features:**
 
@@ -639,7 +640,7 @@ Backup, share, and migrate your YASGUI configuration using RDF Turtle format. Th
 
 **Configuration Ontology:**
 
-YASGUI uses a custom RDF ontology to represent configuration:
+Matgui uses a custom RDF ontology to represent configuration:
 
 - Namespace: `https://yasgui.matdata.eu/ontology#`
 - Classes: `Configuration`, `Tab`
@@ -660,7 +661,7 @@ YASGUI uses a custom RDF ontology to represent configuration:
 2. Navigate to the "Import/Export" tab
 3. Choose export method:
    - **📋 Copy to Clipboard**: Copies configuration as RDF Turtle text
-   - **💾 Download as File**: Downloads as `yasgui-config.ttl`
+   - **💾 Download as File**: Downloads as `matgui-config.ttl`
 4. Share the file or clipboard content with others, or save it for backup
 
 **How to Import Configuration:**
@@ -716,7 +717,7 @@ Quickly explore RDF resources by Ctrl+clicking on URIs in your query.
 **How It Works:**
 
 1. Hold `Ctrl` and click any URI in the query editor
-2. YASGUI automatically generates and executes a CONSTRUCT query exploring:
+2. Matgui automatically generates and executes a CONSTRUCT query exploring:
    - Outgoing triples (where the URI is the subject)
    - Incoming triples (where the URI is the object)
 3. Results appear without modifying your original query
@@ -798,7 +799,7 @@ All settings are saved automatically to local storage.
 
 ### SPARQL Endpoints Management
 
-YASGUI automatically tracks all SPARQL endpoints you access and lets you manage them from a single location.
+MatGUI automatically tracks all SPARQL endpoints you access and lets you manage them from a single location.
 
 **Accessing the Endpoints Manager:**
 
@@ -834,7 +835,7 @@ The SPARQL Endpoints table shows:
 
 **Configuring Authentication:**
 
-YASGUI supports multiple authentication methods for endpoints that require credentials.
+Matgui supports multiple authentication methods for endpoints that require credentials.
 
 1. **Find your endpoint** in the SPARQL Endpoints table
 2. **Click "Configure"** in the Authentication column
@@ -880,7 +881,7 @@ _OAuth 2.0:_
 
 - **Credentials are stored in browser localStorage**: Your authentication credentials are stored locally in your browser
 - **Only use with HTTPS endpoints**: Never send credentials to HTTP endpoints as they will be transmitted in plain text
-- **Be cautious on shared computers**: Clear your browser data when using YASGUI on shared or public computers
+- **Be cautious on shared computers**: Clear your browser data when using Matgui on shared or public computers
 - **OAuth 2.0 tokens**: Access tokens are automatically refreshed when expired (if refresh token is available)
 - **Token security**: OAuth 2.0 uses secure PKCE flow (Proof Key for Code Exchange) for enhanced security
 
@@ -896,7 +897,7 @@ When authentication is configured:
 
 For **Basic Authentication**:
 
-1. YASGUI encodes your credentials using Base64 encoding
+1. Matgui encodes your credentials using Base64 encoding
 2. Adds an `Authorization` header with the format: `Basic <encoded-credentials>`
 3. Sends this header with every SPARQL query request to that endpoint
 
@@ -925,7 +926,7 @@ For **OAuth 2.0**:
 **OAuth 2.0 Provider Examples:**
 
 **⚠️ Important Prerequisite:**
-Before using OAuth 2.0, the OAuth administrator must register the redirect URI (callback URL) in the OAuth provider's configuration. By default, YASGUI uses the current page URL as the redirect URI. For example, if YASGUI is hosted at `https://yasgui.example.com/`, this URL must be added to the allowed redirect URIs in your OAuth application settings.
+Before using OAuth 2.0, the OAuth administrator must register the redirect URI (callback URL) in the OAuth provider's configuration. By default, Matgui uses the current page URL as the redirect URI. For example, if Matgui is hosted at `https://matgui.example.com/`, this URL must be added to the allowed redirect URIs in your OAuth application settings.
 
 _Microsoft Azure (Entra ID):_
 
@@ -933,7 +934,7 @@ _Microsoft Azure (Entra ID):_
 - Token Endpoint: `https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token`
 - Scope: `api://your-app-id/.default` or `openid profile`
 - Note: Your app must be registered in Azure AD with public client flow enabled
-- **Redirect URI Registration**: Add your YASGUI URL to "Redirect URIs" in Azure AD app registration
+- **Redirect URI Registration**: Add your Matgui URL to "Redirect URIs" in Azure AD app registration
 
 _AWS Cognito:_
 
@@ -941,7 +942,7 @@ _AWS Cognito:_
 - Token Endpoint: `https://your-domain.auth.region.amazoncognito.com/oauth2/token`
 - Scope: `openid profile` (adjust as needed)
 - Note: Enable "Authorization code grant" flow in your app client settings
-- **Redirect URI Registration**: Add your YASGUI URL to "Allowed callback URLs" in Cognito app client settings
+- **Redirect URI Registration**: Add your Matgui URL to "Allowed callback URLs" in Cognito app client settings
 
 _Keycloak:_
 
@@ -949,11 +950,11 @@ _Keycloak:_
 - Token Endpoint: `https://your-keycloak-domain.com/realms/{realm-name}/protocol/openid-connect/token`
 - Scope: `openid profile` (adjust based on client configuration)
 - Note: Client should have "Standard Flow" enabled and "Access Type" set to "public"
-- **Redirect URI Registration**: Add your YASGUI URL to "Valid Redirect URIs" in Keycloak client configuration
+- **Redirect URI Registration**: Add your Matgui URL to "Valid Redirect URIs" in Keycloak client configuration
 
 ### Managed Queries and Workspaces
 
-YASGUI can be configured with **managed queries and workspaces**, which provide a shared, versioned store for SPARQL queries (for example in Git or in an RDF store). A managed query is a saved query stored in a workspace. A workspace can be linked to a Git repository or SPARQL endpoint, is set up by the user, and is required before queries can be saved.
+Matgui can be configured with **managed queries and workspaces**, which provide a shared, versioned store for SPARQL queries (for example in Git or in an RDF store). A managed query is a saved query stored in a workspace. A workspace can be linked to a Git repository or SPARQL endpoint, is set up by the user, and is required before queries can be saved.
 
 **Purpose and Use Cases:**
 
@@ -966,7 +967,7 @@ This feature is designed for **power users** who want to:
 
 **Not for new user onboarding:** This is not primarily intended as a way to distribute sample queries to help new users get started with an endpoint. If you need to provide example queries for onboarding, consider:
 
-- Using the developer configuration to embed queries in your YASGUI instance
+- Using the developer configuration to embed queries in your Matgui instance
 - Using the snippets functionality for quick templates
 - Implementing a custom wrapper that loads example queries programmatically
 
@@ -987,7 +988,7 @@ Note: the recommended type of workspace is SPARQL. It is more feature rich (allo
 
 - **SPARQL endpoint**: which endpoint to use for reading/writing the workspace data. This is selected from your configured endpoints (including any auth headers you set up for that endpoint).
 - **Workspace IRI**: the IRI that identifies the workspace in the RDF store (the `yasgui:Workspace` / SKOS concept scheme).
-  - After selecting an endpoint, YASGUI **automatically queries** the endpoint to discover existing workspaces. Any workspaces found will appear in a dropdown menu for easy selection.
+  - After selecting an endpoint, Matgui **automatically queries** the endpoint to discover existing workspaces. Any workspaces found will appear in a dropdown menu for easy selection.
   - You can **select an existing workspace** from the dropdown to reuse already-stored managed queries and collaborate with others using the same workspace.
   - Or choose **"➕ Enter new workspace IRI"** from the dropdown to create a fresh workspace. This reveals a text field where you can enter a custom IRI for your new workspace.
   - If the query for existing workspaces fails (e.g., due to permissions), the dropdown will show "Failed to load workspaces" and you can still enter a new workspace IRI manually.
@@ -995,7 +996,7 @@ Note: the recommended type of workspace is SPARQL. It is more feature rich (allo
 
 **URI minting strategy:**
 
-In SPARQL-based workspaces, YASGUI assigns **immutable identifiers** (URIs) to managed queries and their versions.
+In SPARQL-based workspaces, Matgui assigns **immutable identifiers** (URIs) to managed queries and their versions.
 This is important because users can rename queries (and query names can change over time), but the **identity** of a managed query should remain stable.
 
 - Managed query URI: `<workspaceIri>_mq_<uuid>`
@@ -1008,7 +1009,7 @@ Notes:
 - Renaming a query changes its `rdfs:label`, not its URI.
 - Versions are immutable snapshots linked via `dcterms:isVersionOf`.
 
-**Vocabulary and Ontology:** SPARQL workspaces use RDF vocabularies including SPIN/SP (for representing SPARQL queries), DCTERMS (for versioning via `dcterms:isVersionOf`), RDFS (for labels and descriptions), SKOS (for workspace organization), and custom YASGUI predicates for workspace-specific metadata. For implementation details and example data, see the [example workspace data in Turtle format](https://github.com/Matdata-eu/Yasgui/blob/main/specs/001-query-management/manual-input/example-data.ttl) and the [full specification](https://github.com/Matdata-eu/Yasgui/tree/main/specs/001-query-management). To see how the data is structured in practice, save a few queries with versions in a SPARQL workspace, then query the endpoint to examine the RDF triples.
+**Vocabulary and Ontology:** SPARQL workspaces use RDF vocabularies including SPIN/SP (for representing SPARQL queries), DCTERMS (for versioning via `dcterms:isVersionOf`), RDFS (for labels and descriptions), SKOS (for workspace organization), and custom Matgui predicates for workspace-specific metadata. For implementation details and example data, see the [example workspace data in Turtle format](https://github.com/Matdata-eu/Matgui/blob/main/specs/001-query-management/manual-input/example-data.ttl) and the [full specification](https://github.com/Matdata-eu/Matgui/tree/main/specs/001-query-management). To see how the data is structured in practice, save a few queries with versions in a SPARQL workspace, then query the endpoint to examine the RDF triples.
 
 **Example Workspace Data:**
 
@@ -1087,7 +1088,7 @@ If you want a quick local SPARQL endpoint to test with, you can run a Fuseki ser
 docker run -p 3030:3030 mathiasvda/apache-jena-fuseki-geosparql
 ```
 
-Then configure YASGUI to use the endpoint URL:
+Then configure Matgui to use the endpoint URL:
 
 `http://localhost:3030/ds/`
 
@@ -1109,7 +1110,7 @@ Currently GitHub and GitLab have been thoroughly tested; Bitbucket Cloud and Git
 Git workspaces are implemented via the providers' **HTTPS REST APIs**.
 
 - The `remoteUrl` can be `https://...`, `ssh://...`, or SCP-style (e.g. `git@host:org/repo.git`).
-- **Important:** SSH/SCP-like remotes are **only parsed** to identify `host` + `owner/repo`. YASGUI does **not** implement Git-over-SSH; all reads/writes still happen through the provider's HTTPS API.
+- **Important:** SSH/SCP-like remotes are **only parsed** to identify `host` + `owner/repo`. Matgui does **not** implement Git-over-SSH; all reads/writes still happen through the provider's HTTPS API.
 
 **Configuration fields:**
 
@@ -1193,7 +1194,7 @@ The token must have access to the specific repository you're configuring as a wo
 
 ### Query History and Persistence
 
-YASGUI automatically saves your work locally.
+Matgui automatically saves your work locally.
 
 **What's Saved:**
 
@@ -1227,9 +1228,9 @@ YASQE provides a share button (when `createShareableLink` is configured) that of
 
 **How to Share:**
 
-YASGUI supports URL-based query sharing:
+Matgui supports URL-based query sharing:
 
-1. Craft your query in YASGUI
+1. Craft your query in MatGUI
 2. Click the share button (sharing icon in the top-right corner)
 3. Select your preferred format
 4. The content is automatically copied to your clipboard
@@ -1314,7 +1315,7 @@ Displays SELECT query results in an interactive, high-performance table with adv
 - **Tooltips**: Hover over any cell to view full content
 - **Copy to Clipboard**: Export as Markdown, CSV, or TSV (tab-delimited) with visual notifications
 - **CSV Download**: Integrated with YASR's download interface
-- **Dynamic Theming**: Automatically adapts to YASGUI light/dark theme changes
+- **Dynamic Theming**: Automatically adapts to Matgui light/dark theme changes
 - **Customizable Display**:
   - **URI Display**: Toggle between full URIs and prefixed abbreviations (e.g., `foaf:name`)
   - **Datatypes**: Show/hide datatype annotations on literals (e.g., `"42"^^xsd:integer`)
@@ -1738,7 +1739,7 @@ The plugin handles coordinate reference systems automatically:
 
 **More Information:**
 
-Visit the [Yasgui Geo Plugin repository](https://github.com/Matdata-eu/yasgui-geo-plugin/) for full documentation.
+Visit the [Matgui Geo Plugin repository](https://github.com/Matdata-eu/yasgui-geo-plugin/) for full documentation.
 
 ### Error Plugin
 
@@ -1776,7 +1777,7 @@ Displays error messages and diagnostic information when queries fail.
 ### Plugin Selection
 
 **Automatic Selection:**
-YASGUI automatically selects the most appropriate plugin based on:
+Matgui automatically selects the most appropriate plugin based on:
 
 - Query type (SELECT, CONSTRUCT, ASK, DESCRIBE)
 - Response content type
@@ -1792,7 +1793,7 @@ YASGUI automatically selects the most appropriate plugin based on:
 
 ## Keyboard Shortcuts
 
-Master YASGUI with these keyboard shortcuts for faster querying.
+Master Matgui with these keyboard shortcuts for faster querying.
 
 ### Query Editor (YASQE)
 
@@ -1817,11 +1818,11 @@ Master YASGUI with these keyboard shortcuts for faster querying.
 | `F9`     | Switch between YASQE and YASR fullscreen |
 | `Esc`    | Exit fullscreen mode                     |
 
-### YASGUI Tabs
+### Matgui Tabs
 
 | Shortcut                                 | Action                                        |
 | ---------------------------------------- | --------------------------------------------- |
-| `Ctrl+Alt+Tab` / `Cmd+Alt+Tab`           | Switch to previously used YASGUI tab          |
+| `Ctrl+Alt+Tab` / `Cmd+Alt+Tab`           | Switch to previously used Matgui tab          |
 | `Ctrl+Alt+Shift+Tab` / `Cmd+Alt+Shift+Tab` | Switch to next tab in recently used order   |
 
 ### General Editor
@@ -1873,7 +1874,7 @@ Navigation and interaction depend on the active plugin. Most plugins support:
 **Symptoms:**
 
 - Error message about "Cross-Origin Request Blocked"
-- Query works in other tools but not in YASGUI
+- Query works in other tools but not in MatGUI
 
 **Explanation:**
 CORS (Cross-Origin Resource Sharing) is a browser security feature. Some SPARQL endpoints don't allow browser-based queries from different domains.
@@ -1882,7 +1883,7 @@ CORS (Cross-Origin Resource Sharing) is a browser security feature. Some SPARQL 
 
 1. **Check Endpoint CORS Policy**: Contact the endpoint administrator
 2. **Use CORS Proxy**: Setup a local hosted CORS proxy (see (#virtuoso-preflight-authentication-issues)) or a remote one (google it)
-3. **Use Desktop/Server Version**: Run YASGUI locally or server-side where CORS doesn't apply
+3. **Use Desktop/Server Version**: Run Matgui locally or server-side where CORS doesn't apply
 4. **Server-Side Proxy**: Query through a backend service
 5. **Virtuoso-Specific Issues**: If using Virtuoso 07.20.3242 or earlier with authentication, see [Virtuoso Preflight Authentication Issues](#virtuoso-preflight-authentication-issues)
 
@@ -1899,15 +1900,15 @@ Browsers block HTTP requests to local endpoints from HTTPS pages (mixed content 
 
 **Solutions:**
 
-1. **Run YASGUI Locally with Docker** (Recommended):
+1. **Run Matgui Locally with Docker** (Recommended):
 
    ```bash
    docker run -p 8080:8080 mathiasvda/yasgui
    ```
 
    - Eliminates all permission issues
-   - Both YASGUI and local endpoint use HTTP
-   - See [Running YASGUI with Docker](#running-yasgui-with-docker) for details
+   - Both Matgui and local endpoint use HTTP
+   - See [Running Matgui with Docker](#running-matgui-with-docker) for details
 
 2. **Grant Browser Permission**:
    - Click "Allow" when the browser prompts for permission
@@ -1968,7 +1969,7 @@ Run a simple proxy server that handles CORS and authentication correctly:
 
    The proxy runs on port 8080 by default.
 
-3. **Configure YASGUI endpoint:**
+3. **Configure Matgui endpoint:**
    - For **local Virtuoso** (running on your machine):
      ```
      http://localhost:8080/proxy/http://host.docker.internal:8890/sparql-auth
@@ -1990,7 +1991,7 @@ If you control the web server in front of Virtuoso, configure it to return 200 O
 
 **Why This Happens:**
 
-When YASGUI sends an authenticated request from a browser:
+When Matgui sends an authenticated request from a browser:
 
 1. Browser detects cross-origin request with custom headers (Authorization)
 2. Browser sends preflight OPTIONS request (without credentials)
@@ -2041,7 +2042,7 @@ The proxy solves this by:
 1. **Try Different Plugin**: Switch between Table, Response, and other plugins
 2. **Check Response Plugin**: View raw response to verify data structure
 3. **Check Data Format**: Ensure query returns expected format for the plugin
-4. **Clear Cache**: Clear browser cache and reload YASGUI
+4. **Clear Cache**: Clear browser cache and reload MatGUI
 5. **Check Browser Compatibility**: Use a modern browser (Chrome, Firefox, Safari, Edge)
 
 #### Autocomplete Not Working
@@ -2073,7 +2074,7 @@ The proxy solves this by:
 3. **Check Storage Limits**: Browser might have cleared old data
 4. **Export Important Queries**: Save critical queries externally
 5. **Use Bookmarks**: Bookmark queries as URLs for safekeeping
-6. **Same browser**: Use the same browser and profile to access YASGUI
+6. **Same browser**: Use the same browser and profile to access MAtGUI
 
 #### Theme/Layout Not Saving
 
@@ -2107,15 +2108,15 @@ The proxy solves this by:
 
 If you encounter issues not covered here:
 
-1. **Check GitHub Issues**: Visit [YASGUI Issues](https://github.com/Matdata-eu/Yasgui/issues)
+1. **Check GitHub Issues**: Visit [Matgui Issues](https://github.com/Matdata-eu/Matgui/issues)
 2. **Search Existing Issues**: Your problem might already be reported
 3. **Create New Issue**: Provide:
-   - YASGUI version
+   - Matgui version
    - Browser and version
    - Steps to reproduce
    - Error messages
    - Example query (if applicable)
-4. **Community Support**: Engage with the YASGUI community
+4. **Community Support**: Engage with the Matgui community
 
 ### Best Practices
 
@@ -2125,7 +2126,7 @@ If you encounter issues not covered here:
 - Test complex queries incrementally
 - Save important queries outside the browser
 - Use meaningful tab names
-- Keep YASGUI updated (if self-hosted)
+- Keep Matgui updated (if self-hosted)
 - Monitor endpoint status pages
 - Use appropriate query types (SELECT vs CONSTRUCT)
 
@@ -2143,11 +2144,11 @@ If you encounter issues not covered here:
 ## Additional Resources
 
 - **SPARQL Tutorial**: [https://kvistgaard.github.io/sparql/](https://kvistgaard.github.io/sparql/)
-- **YASGUI GitHub**: [https://github.com/Matdata-eu/Yasgui](https://github.com/Matdata-eu/Yasgui)
+- **Matgui GitHub**: [https://github.com/Matdata-eu/MatGUI](https://github.com/Matdata-eu/MatGUI)
 - **Developer Documentation**: See Developer Guide for API and integration details
 - **RDF Primer**: [https://www.w3.org/TR/rdf11-primer/](https://www.w3.org/TR/rdf11-primer/)
 - **SPARQL Specification**: [https://www.w3.org/TR/sparql11-query/](https://www.w3.org/TR/sparql11-query/)
 
 ---
 
-_This user guide is maintained as part of the YASGUI project. For technical implementation details, see the Developer Guide._
+_This user guide is maintained as part of the Matgui project. For technical implementation details, see the Developer Guide._

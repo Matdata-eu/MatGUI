@@ -30,7 +30,7 @@ function syncThemeWithBody() {
   document.body.setAttribute("data-theme", theme);
 }
 
-// YASGUI is loaded via CDN in index.html and available as a global variable
+// Matgui is loaded via CDN in index.html and available as a global variable
 if (typeof Yasgui !== "undefined") {
   const yasgui = new Yasgui(document.getElementById("yasgui"), {
     // Set the SPARQL endpoint

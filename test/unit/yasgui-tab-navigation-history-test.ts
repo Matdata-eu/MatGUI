@@ -5,7 +5,7 @@ import { getRecentlyUsedTabId, moveTabIdToFront, removeTabId } from "../../packa
 
 const expect = chai.expect;
 
-describe("Yasgui tab navigation history", () => {
+describe("Matgui tab navigation history", () => {
   it("moves selected tab to the front of recent history", () => {
     expect(moveTabIdToFront(["tab-1", "tab-2", "tab-3"], "tab-2")).to.deep.equal(["tab-2", "tab-1", "tab-3"]);
   });

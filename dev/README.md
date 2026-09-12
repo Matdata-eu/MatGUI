@@ -1,6 +1,6 @@
 # Development Environment
 
-This folder contains the development setup for Yasgui using Vite.
+This folder contains the development setup for Matgui using Vite.
 
 ## Quick Start
 
@@ -26,7 +26,7 @@ You can open a debug page in your IDE or in your browser.
 ### Dev Pages
 
 - `index.html` - Landing page with links to all components
-- `yasgui.html` - Full Yasgui SPARQL IDE
+- `yasgui.html` - Full Matgui SPARQL IDE
 - `yasqe.html` - SPARQL Query Editor only
 - `yasr.html` - SPARQL Results Viewer with query editor
 

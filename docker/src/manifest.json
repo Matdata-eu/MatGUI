@@ -1,6 +1,6 @@
 {
-  "short_name": "Yasgui",
-  "name": "Yet Another SPARQL GUI",
+  "short_name": "Matgui",
+  "name": "Matgui - A modern knowledge graph and SPARQL workbench",
   "icons": [
     {
       "src": "favicon.png",

@@ -1,7 +1,9 @@
-# Skill: YASGUI Test Strategy Advisor
+# Skill: MatGUI Test Strategy Advisor
 
 ## Description
-Recommends the appropriate testing approach for code changes and generates test scaffolding following YASGUI's patterns. Helps developers choose between unit tests and E2E tests, and provides templates.
+Recommends the appropriate testing approach for code changes and generates test scaffolding following MatGUI's patterns. Helps developers choose between unit tests and E2E tests, and provides templates.
+
+> **Note:** MatGUI was formerly branded *Yasgui*, and this guidance most likely also applies to Yasgui-based projects. Source folders, packages and CSS classes still use the `yasgui`/`yasqe`/`yasr` names.
 
 ## When to Use
 - User adds new functionality and needs tests
@@ -11,7 +13,7 @@ Recommends the appropriate testing approach for code changes and generates test 
 - User modified code and needs to validate it
 
 ## Problem Statement
-YASGUI has **two distinct test types** with different characteristics:
+MatGUI has **two distinct test types** with different characteristics:
 
 ### Unit Tests
 - **Location:** `test/unit/*-test.ts`

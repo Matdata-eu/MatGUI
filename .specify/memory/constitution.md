@@ -21,9 +21,9 @@ Templates requiring updates:
 - ⚠️ .specify/templates/commands/*.md (directory not present in this repo)
 -->
 
-# YASGUI Constitution
+# Matgui Constitution
 
-This constitution defines non-negotiable standards for YASGUI (Yet Another SPARQL GUI): a TypeScript
+This constitution defines non-negotiable standards for Matgui (Yet Another SPARQL GUI): a TypeScript
 monorepo SPARQL IDE composed of `@matdata/yasgui`, `@matdata/yasqe`, `@matdata/yasr`, and
 `@matdata/yasgui-utils`.
 
@@ -143,7 +143,7 @@ User experience MUST remain consistent across packages and interactions.
 - Use virtualization/progressive rendering for large result sets (> 1000 rows).
 - Error messages MUST be clear and actionable; avoid internal jargon where possible.
 
-Rationale: YASGUI is an IDE-like UI; perceived performance and consistency drive usability.
+Rationale: Matgui is an IDE-like UI; perceived performance and consistency drive usability.
 
 ### 12. Theme System Consistency (MEDIUM)
 Themes are implemented via CSS custom properties.
@@ -162,7 +162,7 @@ Documentation and releases MUST remain coherent.
 - UI changes SHOULD include screenshots in PR descriptions.
 - Version coordination uses Changesets; packages are versioned together.
 
-Rationale: YASGUI is consumed by developers and end users; docs are part of the product.
+Rationale: Matgui is consumed by developers and end users; docs are part of the product.
 
 ### 14. Commit Conventions (HIGH)
 Commits MUST follow conventional commits.

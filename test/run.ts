@@ -237,7 +237,7 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#> select
         },
       );
       //Note from Laurens: This is an invalid test. We should not expect a popup here (this is the property-autocompleter).
-      //Reason: we didn't configure yasgui to auto-show the lov property completions
+      //Reason: we didn't configure Matgui to auto-show the lov property completions
       //Leaving it here as it doesn't warrant a new issue yet.
       await waitForAutocompletionPopup();
     });

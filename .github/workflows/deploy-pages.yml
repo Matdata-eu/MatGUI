@@ -34,8 +34,8 @@ jobs:
       - name: Disable AppArmor
         run: echo 0 | sudo tee /proc/sys/kernel/apparmor_restrict_unprivileged_userns
 
-      # Build YASGUI application
-      - name: Install YASGUI dependencies
+      # Build Matgui application
+      - name: Install Matgui dependencies
         run: npm ci
 
       - name: Build YASGUI
@@ -61,7 +61,7 @@ jobs:
           mkdir -p deployment
           # Copy Docusaurus documentation to root
           cp -r website/build/* deployment/
-          # Copy YASGUI build to /dev/main subdirectory
+          # Copy Matgui build to /dev/main subdirectory
           mkdir -p deployment/dev/main
           cp -r build/* deployment/dev/main/
 

@@ -1,11 +1,11 @@
 /**
  * Export/Import Configuration Module
- * Handles serialization and deserialization of YASGUI configuration to/from RDF Turtle format
+ * Handles serialization and deserialization of Matgui configuration to/from RDF Turtle format
  */
 
 import { PersistedJson } from "./PersistentConfig";
 
-// YASGUI Configuration Ontology
+// Matgui Configuration Ontology
 export const YASGUI_NS = "https://yasgui.matdata.eu/ontology#";
 export const RDF_NS = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 export const RDFS_NS = "http://www.w3.org/2000/01/rdf-schema#";
@@ -328,7 +328,7 @@ export function parseFromTurtle(turtle: string): Partial<PersistedJson> {
 /**
  * Download configuration as a file
  */
-export function downloadConfigAsFile(config: PersistedJson, filename: string = "yasgui-config.ttl") {
+export function downloadConfigAsFile(config: PersistedJson, filename: string = "matgui-config.ttl") {
   const turtle = serializeToTurtle(config);
   const blob = new Blob([turtle], { type: "text/turtle;charset=utf-8" });
   const url = URL.createObjectURL(blob);

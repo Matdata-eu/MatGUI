@@ -22,7 +22,7 @@ export default class Response implements Plugin<PluginConfig> {
   private yasr: Yasr;
   label = "Response";
   priority = 2;
-  helpReference = "https://yasgui-doc.matdata.eu/docs/user-guide#response-plugin";
+  helpReference = "https://matgui-doc.matdata.eu/docs/user-guide#response-plugin";
   private config: DeepReadonly<PluginConfig>;
   private overLay: HTMLDivElement | undefined;
   private cm: EditorView | undefined;

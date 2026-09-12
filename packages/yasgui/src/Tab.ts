@@ -380,7 +380,7 @@ export class Tab extends EventEmitter {
 
     // We group controlbar and Yasqe, so that users can easily .appendChild() to the .editorwrapper div
     // to add a div that goes alongside the controlbar and editor, while YASR still goes full width
-    // Useful for adding an infos div that goes alongside the editor without needing to rebuild the whole Yasgui class
+    // Useful for adding an infos div that goes alongside the editor without needing to rebuild the whole Matgui class
     const editorWrapper = document.createElement("div");
     editorWrapper.className = "editorwrapper";
     this.editorWrapperEl = editorWrapper;
@@ -1246,7 +1246,7 @@ export class Tab extends EventEmitter {
   }
 
   /**
-   * The Yasgui configuration object may contain a custom request config
+   * The Matgui configuration object may contain a custom request config
    * This request config object can contain getter functions, or plain json
    * The plain json data is stored in persisted config, and editable via the
    * tab pane.
@@ -1283,7 +1283,7 @@ export class Tab extends EventEmitter {
       value: this.persistentJson.yasqe.value,
       editorHeight: this.persistentJson.yasqe.editorHeight ? this.persistentJson.yasqe.editorHeight : undefined,
       persistenceId: null, //yasgui handles persistent storing
-      consumeShareLink: null, //not handled by this tab, but by parent yasgui instance
+      consumeShareLink: null, //not handled by this tab, but by parent Matgui instance
       createShareableLink: () => this.getShareableLink(),
       // Use global showSnippetsBar setting if it exists
       showSnippetsBar: this.yasgui.config.showSnippetsBar !== false,
@@ -1659,7 +1659,7 @@ WHERE {
     if (!this.yasrWrapperEl) throw new Error("Wrapper for yasr does not exist");
 
     const yasrConf: Partial<YasrConfig> = {
-      persistenceId: null, //yasgui handles persistent storing
+      persistenceId: null, //Matgui handles persistent storing
       prefixes: (yasr) => {
         // Prefixes defined in YASR's config
         const prefixesFromYasrConf =
@@ -1875,7 +1875,7 @@ function getCorsErrorRenderer(tab: Tab) {
           tab.getEndpoint(),
         )}</a>) from an HTTP<strong>S</strong> website (<a href="${safeEndpoint(window.location.href)}">${safeEndpoint(
           window.location.href,
-        )}</a>).<br>This can be blocked in modern browsers, see <a target="_blank" rel="noopener noreferrer" href="https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy">https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy</a>. See also <a href="https://yasgui-doc.matdata.eu/docs/user-guide#querying-local-endpoints">the YasGUI documentation</a> for possible workarounds.`;
+        )}</a>).<br>This can be blocked in modern browsers, see <a target="_blank" rel="noopener noreferrer" href="https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy">https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy</a>. See also <a href="https://matgui-doc.matdata.eu/docs/user-guide#querying-local-endpoints">the Matgui documentation</a> for possible workarounds.`;
         errorEl.appendChild(errorSpan);
         return errorEl;
       }

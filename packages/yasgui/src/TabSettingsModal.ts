@@ -1877,7 +1877,7 @@ export default class TabSettingsModal {
 
     const exportHelp = document.createElement("div");
     exportHelp.textContent =
-      "Export your YASGUI configuration in RDF Turtle format. This includes tabs, queries, endpoints, and preferences.";
+      "Export your Matgui configuration in RDF Turtle format. This includes tabs, queries, endpoints, and preferences.";
     addClass(exportHelp, "settingsHelp");
 
     const exportButtonsContainer = document.createElement("div");
@@ -2045,15 +2045,15 @@ export default class TabSettingsModal {
         ],
       },
       {
-        category: "YASGUI Tabs",
+        category: "Matgui Tabs",
         shortcuts: [
           {
             keys: ["Ctrl+Alt+Tab", "Cmd+Alt+Tab"],
-            description: "Switch to previously used YASGUI tab",
+            description: "Switch to previously used Matgui tab",
           },
           {
             keys: ["Ctrl+Alt+Shift+Tab", "Cmd+Alt+Shift+Tab"],
-            description: "Switch to next YASGUI tab in recently used order",
+            description: "Switch to next Matgui tab in recently used order",
           },
         ],
       },
@@ -2198,12 +2198,12 @@ export default class TabSettingsModal {
     const aboutSection = document.createElement("div");
     addClass(aboutSection, "settingsSection", "aboutSection");
 
-    // YASGUI Title and Version
+    // Matgui Title and Version
     const titleContainer = document.createElement("div");
     addClass(titleContainer, "aboutTitle");
 
     const title = document.createElement("h3");
-    title.textContent = "YASGUI";
+    title.textContent = "MatGUI";
     addClass(title, "aboutMainTitle");
 
     const versionBadge = document.createElement("span");
@@ -2216,7 +2216,7 @@ export default class TabSettingsModal {
 
     // Subtitle
     const subtitle = document.createElement("p");
-    subtitle.textContent = "Yet Another SPARQL GUI";
+    subtitle.textContent = "A modern knowledge graph and SPARQL workbench";
     addClass(subtitle, "aboutSubtitle");
     aboutSection.appendChild(subtitle);
 
@@ -2227,7 +2227,7 @@ export default class TabSettingsModal {
     // Documentation Link
     const docsLink = this.createAboutLink(
       "📚 Documentation",
-      "https://yasgui-doc.matdata.eu/docs/",
+      "https://matgui-doc.matdata.eu/docs/",
       "View the complete documentation and guides",
     );
     linksSection.appendChild(docsLink);
@@ -2235,7 +2235,7 @@ export default class TabSettingsModal {
     // Release Notes Link
     const releasesLink = this.createAboutLink(
       "📝 Release Notes",
-      "https://github.com/Matdata-eu/Yasgui/releases",
+      "https://github.com/Matdata-eu/Matgui/releases",
       "See what's new in the latest releases",
     );
     linksSection.appendChild(releasesLink);
@@ -2243,7 +2243,7 @@ export default class TabSettingsModal {
     // Issues/Support Link
     const issuesLink = this.createAboutLink(
       "🐛 Report Issues & Get Support",
-      "https://github.com/Matdata-eu/Yasgui/issues",
+      "https://github.com/Matdata-eu/Matgui/issues",
       "Report bugs, request features, or ask for help",
     );
     linksSection.appendChild(issuesLink);
@@ -2255,7 +2255,7 @@ export default class TabSettingsModal {
     addClass(footerInfo, "aboutFooter");
 
     const paragraph1 = document.createElement("p");
-    paragraph1.textContent = "YASGUI is an open-source project maintained by ";
+    paragraph1.textContent = "MatGUI is an open-source project maintained by ";
     const matdataLink = document.createElement("a");
     matdataLink.href = "https://matdata.eu";
     matdataLink.target = "_blank";

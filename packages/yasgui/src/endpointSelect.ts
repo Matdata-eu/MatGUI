@@ -7,9 +7,9 @@ import parse from "autosuggest-highlight/parse";
 import DOMPurify from "dompurify";
 
 //Export this here instead of from our custom-types folder of autocomplete-js
-//as this interface is exported via the yasgui config. The custom typings are
-//not exported as part of the yasgui typings, so we'd get typing errors.
-//instead, include this interface in the yasgui typings itself by defining it here
+//as this interface is exported via the Matgui config. The custom typings are
+//not exported as part of the Matgui typings, so we'd get typing errors.
+//instead, include this interface in the Matgui typings itself by defining it here
 interface AutocompleteItem<T> {
   index: number; //index of suggestion in array of suggestions
   value: T; //suggestion object
