@@ -48,5 +48,4 @@ jobs:
       - name: Publish to npm
         run: npx changeset publish --no-git-tag
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
