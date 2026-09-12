@@ -14,7 +14,12 @@ import { turtle } from "codemirror-lang-turtle";
 import { javascript } from "@codemirror/legacy-modes/mode/javascript";
 import { addClass, removeClass } from "@matdata/yasgui-utils";
 import { DeepReadonly } from "ts-essentials";
-import { extractUriAtOffset, buildSubjectOfQuery, buildObjectOfQuery } from "./uriUtils";
+import {
+  extractUriAtOffset,
+  buildSubjectOfQuery,
+  buildObjectOfQuery,
+  stripDuplicatePrefixDeclarations,
+} from "./uriUtils";
 
 export interface PluginConfig {
   maxLines: number;
@@ -27,7 +32,7 @@ export default class Response implements Plugin<PluginConfig> {
   private config: DeepReadonly<PluginConfig>;
   private overLay: HTMLDivElement | undefined;
   private cm: EditorView | undefined;
-  /** Turtle appended to the response view through Ctrl+Click DESCRIBE actions. */
+  /** Turtle appended to the response view through Ctrl+Click URI exploration actions. */
   private appendedContent = "";
   constructor(yasr: Yasr) {
     this.yasr = yasr;
@@ -213,8 +218,8 @@ export default class Response implements Plugin<PluginConfig> {
   }
 
   /**
-   * Pick an Accept header for the DESCRIBE request. When the current response is an
-   * RDF graph format, reuse it so the appended triples match what is already shown.
+   * Pick an Accept header for follow-up CONSTRUCT requests. When the current response
+   * is an RDF graph format, reuse it so the appended triples match what is shown.
    */
   private getConstructAcceptHeader(): string {
     const contentType = this.yasr.results?.getContentType();
@@ -244,12 +249,13 @@ export default class Response implements Plugin<PluginConfig> {
   }
 
   /**
-   * Append text (a DESCRIBE result or a status message) to the response view and
-   * make sure the full content is revealed.
+   * Append text (query result or status message) to the response view and make sure
+   * the full content is revealed.
    */
   private appendToView(text: string) {
     if (!this.cm || !text) return;
-    this.appendedContent += text;
+    const existingVisibleContent = (this.yasr.results?.getOriginalResponseAsString() || "") + this.appendedContent;
+    this.appendedContent += stripDuplicatePrefixDeclarations(text, existingVisibleContent);
     // Reveal the full response together with the appended DESCRIBE results.
     this.showMore();
   }

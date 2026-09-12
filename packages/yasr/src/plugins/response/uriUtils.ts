@@ -9,6 +9,8 @@
 const ANGLE_IRI_RE = /<([^<>\s"{}|\\^`]+)>/g;
 // Matches bare or quoted URIs as they appear in JSON / XML / CSV responses, e.g. `"http://example.org/foo"`
 const BARE_URI_RE = /(?:https?|urn|ftp|mailto):[^\s<>"'`{}|\\^[\]]+/g;
+// Matches Turtle/SPARQL prefix declarations such as `@prefix ex: <...> .` and `PREFIX ex: <...>`.
+const PREFIX_DECL_RE = /^\s*(?:@prefix|PREFIX)\s+(\w*):\s*<[^>]+>\s*\.?\s*$/i;
 
 /**
  * Remove trailing punctuation that is commonly adjacent to a URI in a serialized
@@ -74,4 +76,42 @@ export function buildSubjectOfQuery(uri: string): string {
  */
 export function buildObjectOfQuery(uri: string): string {
   return `CONSTRUCT { ?s ?p <${uri}> } WHERE { ?s ?p <${uri}> } LIMIT 1000`;
+}
+
+/**
+ * Remove duplicate prefix declarations from a text block.
+ *
+ * Prefixes are considered duplicates by label (case-insensitive), and can be
+ * deduplicated against already-rendered content in the response viewer.
+ */
+export function stripDuplicatePrefixDeclarations(text: string, existingText = ""): string {
+  if (!text) return text;
+
+  const seenLabels = new Set<string>();
+  const addSeenLabels = (source: string) => {
+    for (const line of source.split("\n")) {
+      const match = line.match(PREFIX_DECL_RE);
+      if (!match) continue;
+      seenLabels.add(match[1].toLowerCase());
+    }
+  };
+
+  addSeenLabels(existingText);
+
+  const deduplicatedLines: string[] = [];
+  for (const line of text.split("\n")) {
+    const match = line.match(PREFIX_DECL_RE);
+    if (!match) {
+      deduplicatedLines.push(line);
+      continue;
+    }
+
+    const label = match[1].toLowerCase();
+    if (seenLabels.has(label)) continue;
+
+    seenLabels.add(label);
+    deduplicatedLines.push(line);
+  }
+
+  return deduplicatedLines.join("\n");
 }
