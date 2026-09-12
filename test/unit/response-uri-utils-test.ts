@@ -1,7 +1,11 @@
 import * as chai from "chai";
 import { describe, it } from "mocha";
 
-import { extractUriAtOffset, buildDescribeQuery } from "../../packages/yasr/src/plugins/response/uriUtils.js";
+import {
+  extractUriAtOffset,
+  buildDescribeQuery,
+  buildObjectOfQuery,
+} from "../../packages/yasr/src/plugins/response/uriUtils.js";
 
 const expect = chai.expect;
 
@@ -53,8 +57,18 @@ describe("Response plugin URI utilities", () => {
   });
 
   describe("buildDescribeQuery", () => {
-    it("wraps the URI in a DESCRIBE query", () => {
-      expect(buildDescribeQuery("http://example.org/foo")).to.equal("DESCRIBE <http://example.org/foo>");
+    it("wraps the URI in a CONSTRUCT query retrieving triples where the URI is subject", () => {
+      expect(buildDescribeQuery("http://example.org/foo")).to.equal(
+        "CONSTRUCT { <http://example.org/foo> ?p ?o } WHERE { <http://example.org/foo> ?p ?o }",
+      );
+    });
+  });
+
+  describe("buildObjectOfQuery", () => {
+    it("wraps the URI in a CONSTRUCT query retrieving triples where the URI is object", () => {
+      expect(buildObjectOfQuery("http://example.org/foo")).to.equal(
+        "CONSTRUCT { ?s ?p <http://example.org/foo> } WHERE { ?s ?p <http://example.org/foo> }",
+      );
     });
   });
 });

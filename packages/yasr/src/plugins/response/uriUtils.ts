@@ -60,8 +60,18 @@ export function extractUriAtOffset(text: string, offset: number): string | undef
  * Build a `DESCRIBE` query for the given URI.
  *
  * @param uri The URI to describe.
- * @returns A SPARQL `DESCRIBE` query string.
+ * @returns A SPARQL `CONSTRUCT` query string that retrieves all triples where the URI is the subject.
  */
 export function buildDescribeQuery(uri: string): string {
   return `CONSTRUCT { <${uri}> ?p ?o } WHERE { <${uri}> ?p ?o }`;
+}
+
+/**
+ * Build a CONSTRUCT query that retrieves all triples where the given URI is the object.
+ *
+ * @param uri The URI to look up as an object.
+ * @returns A SPARQL `CONSTRUCT` query string.
+ */
+export function buildObjectOfQuery(uri: string): string {
+  return `CONSTRUCT { ?s ?p <${uri}> } WHERE { ?s ?p <${uri}> }`;
 }

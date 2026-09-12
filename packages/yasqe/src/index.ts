@@ -228,7 +228,10 @@ export class Yasqe extends EditorFacade {
 
     if (token && token.type === "variable-3") {
       // Token type "variable-3" represents URIs (IRI_REF)
-      this.showNotification("uri-describe-hint", "Hold CTRL - left mouse click on URI to DESCRIBE");
+      this.showNotification(
+        "uri-describe-hint",
+        "CTRL+click: find triples where URI is subject or object. CTRL+SHIFT+click: find triples where URI is object.",
+      );
     } else {
       this.hideNotification("uri-describe-hint");
     }
