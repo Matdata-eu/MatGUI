@@ -14,6 +14,7 @@ import { turtle } from "codemirror-lang-turtle";
 import { javascript } from "@codemirror/legacy-modes/mode/javascript";
 import { addClass, removeClass } from "@matdata/yasgui-utils";
 import { DeepReadonly } from "ts-essentials";
+import { extractUriAtOffset, buildDescribeQuery } from "./uriUtils";
 
 export interface PluginConfig {
   maxLines: number;
@@ -26,6 +27,8 @@ export default class Response implements Plugin<PluginConfig> {
   private config: DeepReadonly<PluginConfig>;
   private overLay: HTMLDivElement | undefined;
   private cm: EditorView | undefined;
+  /** Turtle appended to the response view through Ctrl+Click DESCRIBE actions. */
+  private appendedContent = "";
   constructor(yasr: Yasr) {
     this.yasr = yasr;
     this.config = Response.defaults;
@@ -94,10 +97,13 @@ export default class Response implements Plugin<PluginConfig> {
     if (language) extensions.push(language);
 
     this.destroyEditor();
+    // A fresh response replaces any DESCRIBE results appended to the previous one.
+    this.appendedContent = "";
     this.cm = new EditorView({
       state: EditorState.create({ doc: value, extensions }),
       parent: this.yasr.resultsEl,
     });
+    this.cm.dom.addEventListener("mousedown", this.handleMouseDown);
     // Don't show less originally we've already set the value in the editor state
     if (lines.length > config.maxLines) this.showLess(false);
   }
@@ -115,12 +121,106 @@ export default class Response implements Plugin<PluginConfig> {
   }
   private destroyEditor() {
     if (this.cm) {
+      this.cm.dom.removeEventListener("mousedown", this.handleMouseDown);
       this.cm.destroy();
       this.cm = undefined;
     }
     this.overLay?.remove();
     this.overLay = undefined;
   }
+
+  /**
+   * Ctrl/Cmd+Click on a URI in the response view runs a `DESCRIBE` query for that
+   * URI and appends the result to the response view (similar to the graph plugin).
+   */
+  private handleMouseDown = (event: MouseEvent) => {
+    if (!event.ctrlKey && !event.metaKey) return;
+    if (event.button !== 0) return;
+    if (!this.cm) return;
+    // Only act when the host application wired up a query executor.
+    if (!this.yasr.config.executeQuery) return;
+
+    const pos = this.cm.posAtCoords({ x: event.clientX, y: event.clientY });
+    if (pos === null) return;
+
+    const uri = extractUriAtOffset(this.cm.state.doc.toString(), pos);
+    if (!uri) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    void this.describeUri(uri);
+  };
+
+  private async describeUri(uri: string) {
+    if (!this.yasr.config.executeQuery) return;
+    const cmAtStart = this.cm;
+    if (!cmAtStart) return;
+
+    const query = buildDescribeQuery(uri);
+    try {
+      this.yasr.showLoading();
+      const response = await this.yasr.executeQuery(query, { acceptHeader: this.getDescribeAcceptHeader() });
+      if (this.cm !== cmAtStart) return;
+
+      const content = this.getResponseContent(response);
+      if (content) {
+        this.appendToView(`\n\n# DESCRIBE <${uri}>\n${content.trim()}\n`);
+      } else {
+        this.appendToView(`\n\n# DESCRIBE <${uri}> returned no data\n`);
+      }
+    } catch (error) {
+      if (this.cm !== cmAtStart) return;
+
+      console.error("DESCRIBE query failed:", error);
+      const message = error instanceof Error ? error.message : String(error);
+      this.appendToView(`\n\n# DESCRIBE <${uri}> failed: ${message}\n`);
+    } finally {
+      if (this.cm === cmAtStart) this.yasr.hideLoading();
+    }
+  }
+
+  /**
+   * Pick an Accept header for the DESCRIBE request. When the current response is an
+   * RDF graph format, reuse it so the appended triples match what is already shown.
+   */
+  private getDescribeAcceptHeader(): string {
+    const contentType = this.yasr.results?.getContentType();
+    if (contentType) {
+      const lower = contentType.toLowerCase();
+      if (
+        lower.includes("turtle") ||
+        lower.includes("trig") ||
+        lower.includes("triple") ||
+        lower.includes("quad") ||
+        lower.includes("rdf")
+      ) {
+        return contentType.split(";")[0].trim();
+      }
+    }
+    return "text/turtle";
+  }
+
+  private getResponseContent(response: unknown): string {
+    if (typeof response === "string") return response;
+    if (response && typeof response === "object") {
+      const record = response as Record<string, unknown>;
+      if (typeof record.content === "string") return record.content;
+      if (typeof record.data === "string") return record.data;
+    }
+    return "";
+  }
+
+  /**
+   * Append text (a DESCRIBE result or a status message) to the response view and
+   * make sure the full content is revealed.
+   */
+  private appendToView(text: string) {
+    if (!this.cm || !text) return;
+    this.appendedContent += text;
+    // Reveal the full response together with the appended DESCRIBE results.
+    this.showMore();
+  }
+
   private setValue(value: string) {
     if (!this.cm) return;
     this.cm.dispatch({ changes: { from: 0, to: this.cm.state.doc.length, insert: value } });
@@ -193,7 +293,7 @@ export default class Response implements Plugin<PluginConfig> {
     removeClass(this.cm.dom, "overflow");
     this.overLay?.remove();
     this.overLay = undefined;
-    this.setValue(this.yasr.results?.getOriginalResponseAsString() || "");
+    this.setValue((this.yasr.results?.getOriginalResponseAsString() || "") + this.appendedContent);
   }
   destroy() {
     this.destroyEditor();
