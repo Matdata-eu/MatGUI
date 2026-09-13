@@ -147,6 +147,12 @@ This comprehensive guide covers everything developers need to know to integrate,
   - [Example Queries](#example-queries-1)
   - [Troubleshooting](#troubleshooting-1)
   - [Repository](#repository-1)
+- [Using the Table Plugin](#using-the-table-plugin)
+  - [Installation](#installation-3)
+  - [Key Features](#key-features-2)
+  - [Configuration Options](#configuration-options-1)
+  - [Event API](#event-api)
+  - [More Information](#more-information)
 - [Contributing](#contributing)
   - [Getting Started](#getting-started)
   - [Project Structure](#project-structure)
@@ -4101,6 +4107,108 @@ Releases are managed using Changesets:
 - Welcome newcomers
 - Focus on constructive feedback
 - Follow GitHub's Community Guidelines
+
+---
+
+## Using the Table Plugin
+
+The Table Plugin is a high-performance YASR plugin for rendering SPARQL SELECT results as an interactive table. It is included with Matgui and activates automatically for SELECT queries.
+
+### Installation
+
+The Table Plugin ships with `@matdata/yasgui`. If you are building a standalone integration, install it from npm:
+
+```bash
+npm install @matdata/yasgui-table-plugin
+```
+
+```javascript
+import Yasgui from '@matdata/yasgui';
+import TablePlugin from '@matdata/yasgui-table-plugin';
+
+Yasgui.Yasr.registerPlugin('Table', TablePlugin);
+```
+
+### Key Features
+
+- **Virtual Scrolling** - Efficiently handles 10,000+ rows
+- **Search & Filter** - Real-time search with highlighted matches
+- **Sortable & Resizable Columns** - Click headers to sort, drag borders to resize
+- **Cell Selection** - Select cells or ranges and copy with `Ctrl+C`
+- **Export** - Copy the full table as Markdown, CSV, or TSV; integrated with YASR's CSV download
+- **Dynamic Themes** - Adapts automatically to Matgui light/dark themes
+- **Smart Formatters** - Auto-render columns by variable name suffix:
+  - `*stars` → star ratings (0–5)
+  - `*percent` → progress bars (0–100%)
+  - `*image` → images from a URL binding
+  - `*color` / `*colour` → color swatches
+  - `*description` → wrapping text block
+- **Decimal Places** - Configure fixed fraction digits for `xsd:float`, `xsd:double`, and `xsd:decimal` literals via the Display dropdown or `displayConfig.decimalPlaces`
+- **DESCRIBE Resource** - `Ctrl+click` (or `Cmd+click`) any URI, or right-click it and choose **Describe resource**, to run a background `DESCRIBE <uri>` query in a modal; choose **Describe resource (new query)** to replace the YASQE editor query
+- **URI Link Prefix** - Toolbar control to set a custom URL prefix for all URI links
+- **Quick Reference** - Toolbar help icon with a feature and keyboard-shortcut reference card
+
+### Configuration Options
+
+```javascript
+const yasgui = new Yasgui(document.getElementById('yasgui'), {
+  yasr: {
+    pluginsOptions: {
+      table: {
+        displayConfig: {
+          uriDisplayMode: 'abbreviated',   // 'full' or 'abbreviated'
+          showDatatypes: true,             // Show datatype annotations
+          ellipsisMode: true,              // Truncate long cell content
+          smartFormatters: true,           // Apply suffix-based formatters
+          decimalPlaces: 2,                // Fraction digits for float/double/decimal (omit for raw values)
+        },
+        persistenceEnabled: true,          // Save user preferences
+        exportFormats: ['tsv', 'csv', 'markdown'],
+
+        // Developer adapter: transform a URI into a custom href
+        uriHrefAdapter: (uri) => `https://browser.example.org/?uri=${encodeURIComponent(uri)}`,
+
+        // Developer adapter: transform an entire binding set before rendering
+        bindingSetAdapter: (bindingSet) => bindingSet,
+      }
+    }
+  }
+});
+```
+
+### Event API
+
+```javascript
+const tablePlugin = yasgui.getTab().yasr.plugins.table;
+
+tablePlugin.on('search', (data) => {
+  console.log(`Filtered to ${data.filteredCount} of ${data.totalCount} rows`);
+});
+
+tablePlugin.on('columnSort', (data) => {
+  console.log(`Sorted by ${data.column} ${data.dir}`);
+});
+
+tablePlugin.on('selectionChange', (data) => {
+  console.log('Selection:', data.range);
+});
+
+tablePlugin.on('copy', (data) => {
+  console.log(`Copied as ${data.format}`);
+});
+
+tablePlugin.on('linkPrefixChange', (data) => {
+  console.log(`Link prefix set to: ${data.prefix}`);
+});
+
+tablePlugin.on('describeQuery', (data) => {
+  console.log(`DESCRIBE ${data.uri}: ${data.success ? data.triples + ' triples' : 'failed'}`);
+});
+```
+
+### More Information
+
+See the [Table Plugin Repository](https://github.com/Matdata-eu/yasgui-table-plugin) for the full README, specification, and API reference.
 
 ---
 

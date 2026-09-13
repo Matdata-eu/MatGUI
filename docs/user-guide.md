@@ -1321,19 +1321,26 @@ Displays SELECT query results in an interactive, high-performance table with adv
   - **Datatypes**: Show/hide datatype annotations on literals (e.g., `"42"^^xsd:integer`)
   - **Ellipsis Mode**: Truncate long cell content with "..." (hover for tooltip or click for modal)
   - **Fit Controls**: Fit table to data width or window width
+- **Smart Formatters**: Auto-render columns based on variable name suffixes — `stars` (star ratings), `percent` (progress bars), `image` (images), `color`/`colour` (color swatches), and `description` (wrapping text)
+- **Decimal Places**: Configure a fixed number of fraction digits for `xsd:float`, `xsd:double`, and `xsd:decimal` literals, or leave unset to show raw values
+- **DESCRIBE Resource**: Ctrl+click (or Cmd+click on macOS) any URI, or right-click it and choose **Describe resource**, to run a background `DESCRIBE <uri>` query and view the triples in a modal; choose **Describe resource (new query)** to replace the editor query instead
 
 **Controls:**
 
 - **Search**: Text field to filter rows in real-time with highlighted matches
-- **URI Display**: Toggle between abbreviated (prefix:localName) and full URI display
-- **Datatypes**: Toggle visibility of datatype annotations on literal values
-- **Ellipsis**: Toggle content truncation for long values (hover shows tooltip)
+- **Display**: Dropdown with display options:
+  - **URI Display**: Toggle between abbreviated (prefix:localName) and full URI display
+  - **Datatypes**: Toggle visibility of datatype annotations on literal values
+  - **Ellipsis**: Toggle content truncation for long values (hover shows tooltip)
+  - **Smart Formatters**: Toggle convention-based rendering for columns ending in `stars`, `percent`, `image`, `color`/`colour`, or `description`
+  - **Decimal Places**: Set a fixed number of fraction digits for `xsd:float`, `xsd:double`, and `xsd:decimal` values (empty = raw value)
 - **Fit to Data**: Resize columns to show all content without truncation
 - **Fit to Window**: Resize columns proportionally to fill viewport width
 - **Copy as Markdown**: Copy entire table in Markdown format with visual confirmation
 - **Copy as CSV**: Copy entire table as comma-separated values with visual confirmation
 - **Copy as TSV**: Copy entire table as tab-delimited values with visual confirmation
 - **Download CSV**: Access via YASR's download button for CSV file export
+- **URI Context Menu**: Right-click any URI to open, describe in a modal, or describe as a new query
 
 **Best For:**
 
@@ -1353,7 +1360,9 @@ Displays SELECT query results in an interactive, high-performance table with adv
 - Click and drag to select cell ranges, then Ctrl+C to copy
 - Use copy buttons to export entire table in different formats
 - Use fit controls to optimize column widths
-- Toggle URI/datatype/ellipsis controls to customize view
+- Open the **Display** dropdown to toggle URI mode, datatypes, ellipsis, smart formatters, and set decimal places
+- Use columns named with smart-formatter suffixes (e.g., `ratingStars`, `completionPercent`) for automatic visual formatting
+- Ctrl+click (or Cmd+click) any URI to run a background DESCRIBE query, or right-click the URI for more options
 - Use YASR's download button for CSV file export
 - Preferences (column widths, sort state, display options) are saved to localStorage
 
