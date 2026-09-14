@@ -1705,6 +1705,8 @@ export class Tab extends EventEmitter {
     }
 
     this.yasr = new Yasr(this.yasrWrapperEl, yasrConf, this.persistentJson.yasr.response);
+    // Expose the tab reference so plugins (e.g. table plugin) can reach yasqe
+    (this.yasr as any).tab = this;
 
     //populate our own persistent config
     this.persistentJson.yasr.settings = this.yasr.getPersistentConfig();
