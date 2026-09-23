@@ -117,7 +117,6 @@ export default class Response implements Plugin<PluginConfig> {
     if (type === "json") return json();
     if (type === "xml") return xml();
     if (type === "ttl") return turtle();
-    if (type === "n-triples") return turtle();
     const contentType = this.yasr.results?.getContentType() || "";
     if (contentType.indexOf("json") >= 0) return json();
     if (contentType.indexOf("xml") >= 0 || contentType.indexOf("html") >= 0) return xml();
