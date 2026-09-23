@@ -2,8 +2,21 @@
   "name": "@matdata/yasgui-utils",
   "version": "4.6.1",
   "description": "Shared utilities for MatGUI (formerly Yasgui) packages.",
-  "main": "build/utils.min.js",
+  "main": "build/utils.cjs",
+  "module": "build/utils.mjs",
+  "unpkg": "build/utils.min.js",
+  "jsdelivr": "build/utils.min.js",
   "types": "build/ts/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./build/ts/src/index.d.ts",
+      "import": "./build/utils.mjs",
+      "require": "./build/utils.cjs",
+      "default": "./build/utils.mjs"
+    },
+    "./build/*": "./build/*",
+    "./package.json": "./package.json"
+  },
   "license": "MIT",
   "author": "Triply <info@triply.cc>",
   "homepage": "https://github.com/Matdata-eu/Yasgui",

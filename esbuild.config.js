@@ -93,8 +93,41 @@ const commonConfig = {
   },
 };
 
+// Rename the CSS output emitted by a build to the canonical `<name>.min.css`.
+function extractCss(result, name) {
+  if (!result.metafile) return;
+  const cssOutput = Object.keys(result.metafile.outputs).find((o) => o.endsWith(".css"));
+  if (!cssOutput || !fs.existsSync(cssOutput)) return;
+
+  const targetCss = `build/${name}.min.css`;
+  const sourceMap = `${cssOutput}.map`;
+  const targetMap = `${targetCss}.map`;
+
+  if (cssOutput !== targetCss) {
+    fs.renameSync(cssOutput, targetCss);
+    if (fs.existsSync(sourceMap)) fs.renameSync(sourceMap, targetMap);
+
+    // Keep the sourcemap reference consistent with the renamed file.
+    const css = fs.readFileSync(targetCss, "utf8");
+    const updated = css.replace(/sourceMappingURL=.*?\*\//, `sourceMappingURL=${path.basename(targetMap)} */`);
+    if (updated !== css) fs.writeFileSync(targetCss, updated);
+  }
+}
+
+// Remove the CSS (and its sourcemap) emitted by a build. The ESM/CJS bundles
+// import the same styles as the IIFE build, so a single `<name>.min.css` is kept.
+function removeExtraCss(result) {
+  if (!result.metafile) return;
+  for (const output of Object.keys(result.metafile.outputs)) {
+    if (output.endsWith(".css") || output.endsWith(".css.map")) {
+      if (fs.existsSync(output)) fs.rmSync(output);
+    }
+  }
+}
+
 async function buildPackage(name, entryPoint, globalName) {
-  const result = await esbuild.build({
+  // IIFE build: exposes a browser global (e.g. `window.Yasgui`) for <script> usage.
+  const iifeResult = await esbuild.build({
     ...commonConfig,
     entryPoints: [entryPoint],
     outfile: `build/${name}.min.js`,
@@ -107,15 +140,31 @@ async function buildPackage(name, entryPoint, globalName) {
       js: `if (typeof ${globalName} !== 'undefined' && ${globalName}?.default) { ${globalName} = ${globalName}.default; }`,
     },
   });
+  extractCss(iifeResult, name);
 
-  // Extract CSS if any was bundled
-  if (result.metafile) {
-    const outputs = Object.keys(result.metafile.outputs);
-    const cssOutput = outputs.find((o) => o.endsWith(".css"));
-    if (cssOutput && fs.existsSync(cssOutput)) {
-      fs.renameSync(cssOutput, `build/${name}.min.css`);
-    }
-  }
+  // ESM build: consumed by bundlers (vite/webpack/esbuild) and Node via `import`.
+  // Uses the `.mjs` extension so it is always treated as an ES module.
+  const esmResult = await esbuild.build({
+    ...commonConfig,
+    entryPoints: [entryPoint],
+    outfile: `build/${name}.mjs`,
+    format: "esm",
+    platform: "browser",
+    metafile: true,
+  });
+  removeExtraCss(esmResult);
+
+  // CJS build: consumed by Node's `require`. Uses the `.cjs` extension so it is
+  // always treated as CommonJS regardless of the nearest package.json `type`.
+  const cjsResult = await esbuild.build({
+    ...commonConfig,
+    entryPoints: [entryPoint],
+    outfile: `build/${name}.cjs`,
+    format: "cjs",
+    platform: "browser",
+    metafile: true,
+  });
+  removeExtraCss(cjsResult);
 }
 
 async function buildTypeDeclarations() {

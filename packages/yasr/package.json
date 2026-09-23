@@ -2,13 +2,27 @@
   "name": "@matdata/yasr",
   "description": "MatGUI results viewer: a modern SPARQL result set viewer (formerly Yasgui/YASR).",
   "version": "4.6.1",
-  "main": "build/yasr.min.js",
+  "main": "build/yasr.cjs",
+  "module": "build/yasr.mjs",
+  "unpkg": "build/yasr.min.js",
+  "jsdelivr": "build/yasr.min.js",
   "types": "build/ts/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./build/ts/src/index.d.ts",
+      "import": "./build/yasr.mjs",
+      "require": "./build/yasr.cjs",
+      "default": "./build/yasr.mjs"
+    },
+    "./build/yasr.min.css": "./build/yasr.min.css",
+    "./build/*": "./build/*",
+    "./package.json": "./package.json"
+  },
   "license": "MIT",
   "author": "Triply <info@triply.cc>",
   "homepage": "https://github.com/Matdata-eu/Yasgui",
   "engines": {
-    "node": ">= 8"
+    "node": ">= 12"
   },
   "keywords": [
     "JavaScript",

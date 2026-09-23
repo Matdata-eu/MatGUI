@@ -2,8 +2,22 @@
   "name": "@matdata/yasgui",
   "description": "MatGUI: a modern SPARQL query editor and results viewer for knowledge graphs and linked data (formerly Yasgui).",
   "version": "4.6.1",
-  "main": "build/yasgui.min.js",
+  "main": "build/yasgui.cjs",
+  "module": "build/yasgui.mjs",
+  "unpkg": "build/yasgui.min.js",
+  "jsdelivr": "build/yasgui.min.js",
   "types": "build/ts/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./build/ts/src/index.d.ts",
+      "import": "./build/yasgui.mjs",
+      "require": "./build/yasgui.cjs",
+      "default": "./build/yasgui.mjs"
+    },
+    "./build/yasgui.min.css": "./build/yasgui.min.css",
+    "./build/*": "./build/*",
+    "./package.json": "./package.json"
+  },
   "license": "MIT",
   "author": "Triply <info@triply.cc>",
   "homepage": "https://github.com/Matdata-eu/Yasgui",
