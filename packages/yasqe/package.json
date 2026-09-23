@@ -2,8 +2,22 @@
   "name": "@matdata/yasqe",
   "description": "MatGUI query editor: a modern SPARQL query editor (formerly Yasgui/YASQE).",
   "version": "4.6.1",
-  "main": "build/yasqe.min.js",
+  "main": "build/yasqe.cjs",
+  "module": "build/yasqe.mjs",
+  "unpkg": "build/yasqe.min.js",
+  "jsdelivr": "build/yasqe.min.js",
   "types": "build/ts/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./build/ts/src/index.d.ts",
+      "import": "./build/yasqe.mjs",
+      "require": "./build/yasqe.cjs",
+      "default": "./build/yasqe.mjs"
+    },
+    "./build/yasqe.min.css": "./build/yasqe.min.css",
+    "./build/*": "./build/*",
+    "./package.json": "./package.json"
+  },
   "license": "MIT",
   "author": "Triply <info@triply.cc>",
   "homepage": "https://github.com/Matdata-eu/Yasgui",

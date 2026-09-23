@@ -452,7 +452,7 @@ const yasgui = new Yasgui(document.getElementById('yasgui'), {
 ### CommonJS
 
 ```javascript
-const Yasgui = require('@matdata/yasgui');
+const Yasgui = require('@matdata/yasgui').default;
 require('@matdata/yasgui/build/yasgui.min.css');
 
 const yasgui = new Yasgui(document.getElementById('yasgui'));
