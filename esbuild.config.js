@@ -97,8 +97,20 @@ const commonConfig = {
 function extractCss(result, name) {
   if (!result.metafile) return;
   const cssOutput = Object.keys(result.metafile.outputs).find((o) => o.endsWith(".css"));
-  if (cssOutput && fs.existsSync(cssOutput)) {
-    fs.renameSync(cssOutput, `build/${name}.min.css`);
+  if (!cssOutput || !fs.existsSync(cssOutput)) return;
+
+  const targetCss = `build/${name}.min.css`;
+  const sourceMap = `${cssOutput}.map`;
+  const targetMap = `${targetCss}.map`;
+
+  if (cssOutput !== targetCss) {
+    fs.renameSync(cssOutput, targetCss);
+    if (fs.existsSync(sourceMap)) fs.renameSync(sourceMap, targetMap);
+
+    // Keep the sourcemap reference consistent with the renamed file.
+    const css = fs.readFileSync(targetCss, "utf8");
+    const updated = css.replace(/sourceMappingURL=.*?\*\//, `sourceMappingURL=${path.basename(targetMap)} */`);
+    if (updated !== css) fs.writeFileSync(targetCss, updated);
   }
 }
 
