@@ -22,7 +22,7 @@
   "author": "Triply <info@triply.cc>",
   "homepage": "https://github.com/Matdata-eu/Yasgui",
   "engines": {
-    "node": ">= 8"
+    "node": ">= 12"
   },
   "keywords": [
     "JavaScript",
