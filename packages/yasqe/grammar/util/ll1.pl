@@ -31,21 +31,21 @@ ll1_tables:-
 	iterate_matrix.
 
 validate_rules:-
-	NT=>_,
-	\+ (_=>RHS, memberchk(NT,RHS) ),
+	bnf(NT,_),
+	\+ (bnf(_,RHS), memberchk(NT,RHS) ),
 	format("Warning: unused non-terminal: ~w~n",[NT]),
 	fail.
 validate_rules:-
 	% (Check the untranslated rules)
-	LHS ==> RHS,
+	ebnf(LHS,RHS),
 	\+RHS=[],
 	\+RHS=[_|_],
 	format("Warning: atomic RHS: ~w~n",[LHS=>RHS]),
 	fail.
 validate_rules:-
-	_ => RHS,
+	bnf(_,RHS),
 	member(T,RHS),
-	\+ T => _,
+	\+ bnf(T,_),
 	remember(tm(T)),
 	fail.
 validate_rules:-
@@ -96,7 +96,7 @@ assert_terminals.
 first(Tm,Tm):-
 	tm(Tm).
 first(Nonterm,F):-
-        Nonterm=>RHS,
+        bnf(Nonterm,RHS),
 	first_list(RHS,F).
 
 first_list([],epsilon).
@@ -123,7 +123,7 @@ iterate_f.
 
 
 follow:-
-	B => RHS,
+	bnf(B,RHS),
 	follow_list(RHS,B).
 
 follow_list([X],B):-
@@ -152,13 +152,13 @@ copy_follow(B,A):-
 copy_follow(_,_).
 
 iterate_matrix:-
-	A => RHS,
+	bnf(A,RHS),
 	first_list(RHS,F),
 	F \== epsilon,
 	remember1(m(A,F,A=>RHS)),
 	fail.
 iterate_matrix:-
-	A => RHS,
+	bnf(A,RHS),
 	first_list(RHS,epsilon),
 	fo(A,F),
 	remember1(m(A,F,A=>RHS)),

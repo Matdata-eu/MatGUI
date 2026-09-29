@@ -20,7 +20,7 @@ stephen.cresswell@tso.co.uk
 % However, we do need it to check whether rules *could* precede
 % end-of-input, so use it with top-level
 
-:-dynamic '==>'/2.
+
 
 sparql11 ==> [prologue,(queryAll or updateAll), $].
 queryUnit ==> [query,$].
