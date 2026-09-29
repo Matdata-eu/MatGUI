@@ -70,6 +70,7 @@ This comprehensive guide covers everything developers need to know to integrate,
       - [`setTheme(theme: 'light' | 'dark'): void`](#setthemetheme-light--dark-void)
       - [`getTheme(): 'light' | 'dark'`](#gettheme-light--dark)
       - [`toggleTheme(): 'light' | 'dark'`](#toggletheme-light--dark)
+      - [`endpointDescribe: EndpointDescribePanel | undefined`](#endpointdescribe-endpointdescribepanel--undefined)
   - [Tab Class](#tab-class)
     - [Methods](#methods-1)
       - [`getName(): string`](#getname-string)
@@ -80,6 +81,8 @@ This comprehensive guide covers everything developers need to know to integrate,
       - [`query(): Promise<void>`](#query-promisevoid)
       - [`setQuery(query: string): void`](#setqueryquery-string-void)
       - [`getQuery(): string`](#getquery-string)
+      - [`runBackgroundQuery(query: string, options?): Promise<any>`](#runbackgroundqueryquery-string-options-promiseany)
+      - [`getRequestInit(): Promise<{ headers, withCredentials } | undefined>`](#getrequestinit-promise-headers-withcredentials---undefined)
   - [Yasqe Class](#yasqe-class)
     - [Methods](#methods-2)
       - [`getValue(): string`](#getvalue-string)
@@ -2231,6 +2234,18 @@ const newTheme = yasgui.toggleTheme();
 console.log('Switched to:', newTheme);
 ```
 
+##### `endpointDescribe: EndpointDescribePanel | undefined`
+
+The endpoint overview panel (see [Endpoint Describe Configuration](#endpoint-describe-configuration)). It is `undefined` when the panel is disabled with `endpointDescribe: { enabled: false }`.
+
+```javascript
+yasgui.endpointDescribe?.open();            // open (or expand) the panel
+yasgui.endpointDescribe?.setPinned(true);   // keep it open, also after a reload
+await yasgui.endpointDescribe?.runQuery("classes"); // run a describe query for the current endpoint
+yasgui.endpointDescribe?.collapse();        // collapse it to a thin bar
+yasgui.endpointDescribe?.close();
+```
+
 ### Tab Class
 
 Represents a query tab.
@@ -2304,6 +2319,32 @@ Get the current query.
 ```javascript
 const query = tab.getQuery();
 console.log('Current query:', query);
+```
+
+##### `runBackgroundQuery(query: string, options?): Promise<any>`
+
+Execute a SPARQL query against the tab's endpoint without changing the editor or the results view. The tab's request configuration and authentication are used (an expired OAuth 2.0 token is refreshed first) and no query events are emitted. Rejects on HTTP errors.
+
+Options: `accept` (Accept header), `signal` (an `AbortSignal`) and `skipGraphArgs` (don't send the tab's default/named graphs).
+
+```javascript
+const response = await tab.runBackgroundQuery("SELECT (COUNT(*) AS ?n) WHERE { ?s ?p ?o }", {
+  accept: "application/sparql-results+json",
+  skipGraphArgs: true,
+});
+const count = JSON.parse(response.content).results.bindings[0].n.value;
+```
+
+##### `getRequestInit(): Promise<{ headers, withCredentials } | undefined>`
+
+Get the request headers (including authentication headers) and credentials mode used for requests to the tab's endpoint, for example to fetch other resources from the same server.
+
+```javascript
+const init = await tab.getRequestInit();
+const response = await fetch(tab.getEndpoint(), {
+  headers: { ...init.headers, Accept: "text/turtle" },
+  credentials: init.withCredentials ? "include" : "same-origin",
+});
 ```
 
 ### Yasqe Class

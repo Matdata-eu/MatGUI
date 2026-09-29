@@ -49,6 +49,7 @@ If you want to **integrate YASGUI** into your application:
 - Smart autocomplete
 - Query formatting
 - Prefix management
+- Endpoint overview (service description, VoID and exploration queries)
 
 📊 **Powerful Visualizations**
 - Interactive tables
