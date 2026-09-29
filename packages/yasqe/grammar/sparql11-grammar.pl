@@ -3,6 +3,17 @@
 SPARQL 1.1 grammar rules based on the Last Call Working Draft of 24/07/2012:
   http://www.w3.org/TR/2012/WD-sparql11-query-20120724/#sparqlGrammar
 
+Extended with the SPARQL 1.2 grammar (Working Draft of 21/09/2026):
+  https://www.w3.org/TR/sparql12-query/#sparqlGrammar
+  - VERSION declaration
+  - reified triples  << s p o ~ r >>  and triple terms  <<( s p o )>>
+  - reifiers (~) and annotation blocks {| ... |}
+  - triple terms in VALUES and in expressions
+  - base direction in language tags ("x"@en--ltr)
+  - new built-ins (LANGDIR, STRLANGDIR, hasLANG, hasLANGDIR, isTRIPLE,
+    TRIPLE, SUBJECT, PREDICATE, OBJECT); aggregates are built-in calls
+  - '!' applies to a UnaryExpression
+
 Be careful with grammar notation - it is EBNF in prolog syntax!
 
 [...] lists always represent sequence.
@@ -33,13 +44,20 @@ queryAll ==>
 
 prologue ==>
 	%[?(baseDecl),*(prefixDecl)].
-	[*(baseDecl or prefixDecl)].
+	[*(or(baseDecl,prefixDecl,versionDecl))].
 
 baseDecl ==>
 	['BASE','IRI_REF'].
 
 prefixDecl ==>
 	['PREFIX','PNAME_NS','IRI_REF'].
+
+% SPARQL 1.2 [7]
+versionDecl ==>
+	['VERSION',versionSpecifier].
+% SPARQL 1.2 [8]
+versionSpecifier ==> ['STRING_LITERAL1'].
+versionSpecifier ==> ['STRING_LITERAL2'].
 
 % [7]
 selectQuery ==>
@@ -301,6 +319,14 @@ dataBlockValue ==> [rdfLiteral].
 dataBlockValue ==> [numericLiteral].
 dataBlockValue ==> [booleanLiteral].
 dataBlockValue ==> ['UNDEF'].
+dataBlockValue ==> [tripleTermData].
+
+% SPARQL 1.2 [70]
+reifier ==> ['~',?(varOrReifierId)].
+% SPARQL 1.2 [71]
+varOrReifierId ==> [var].
+varOrReifierId ==> [iriRef].
+varOrReifierId ==> [blankNode].
 
 %[66]
 minusGraphPattern ==>
@@ -340,6 +366,10 @@ triplesSameSubject ==>
 	[varOrTerm,propertyListNotEmpty].
 triplesSameSubject ==>
 	[triplesNode,propertyList].
+triplesSameSubject ==>
+	[reifiedTripleBlock].
+% SPARQL 1.2 [58]
+reifiedTripleBlock ==> [reifiedTriple,propertyList].
 %[76]
 propertyList ==> [propertyListNotEmpty].
 propertyList ==> [].
@@ -356,12 +386,15 @@ objectList ==>
 	[object,*([',',object])].
 %[80]
 object ==>
-	[graphNode].
+	[graphNode,annotation].
 %[81]
 triplesSameSubjectPath ==> [varOrTerm,propertyListPathNotEmpty].
 triplesSameSubjectPath ==> [triplesNodePath,propertyListPath].
+triplesSameSubjectPath ==> [reifiedTripleBlockPath].
+% SPARQL 1.2 [59]
+reifiedTripleBlockPath ==> [reifiedTriple,propertyListPath].
 %[82]
-propertyListPath ==> [propertyListNotEmpty].
+propertyListPath ==> [propertyListPathNotEmpty].
 propertyListPath ==> [].
 %[83]
 propertyListPathNotEmpty ==>
@@ -376,7 +409,7 @@ verbSimple ==> [var].
 objectListPath ==>
 	[objectPath,*([',',objectPath])].
 %[87]
-objectPath ==> [graphNodePath].
+objectPath ==> [graphNodePath,annotationPath].
 %[88]
 path ==> [pathAlternative].
 %[89].
@@ -448,15 +481,80 @@ blankNodePropertyListPath ==> ['[',propertyListPathNotEmpty,']'].
 collection ==> ['(',+(graphNode),')'].
 %[103]
 collectionPath ==> ['(',+(graphNodePath),')'].
+% SPARQL 1.2 [109]
+% pathReifier only wraps reifier, so that the tokenizer can reject reifiers
+% and annotations after a predicate that is not a simple path.
+annotationPath ==> [*(pathReifier or annotationBlockPath)].
+pathReifier ==> [reifier].
+% SPARQL 1.2 [110]
+annotationBlockPath ==> ['{|',propertyListPathNotEmpty,'|}'].
+% SPARQL 1.2 [111]
+annotation ==> [*(reifier or annotationBlock)].
+% SPARQL 1.2 [112]
+annotationBlock ==> ['{|',propertyListNotEmpty,'|}'].
 %[104]
 graphNode ==> [varOrTerm].
 graphNode ==> [triplesNode].
+graphNode ==> [reifiedTriple].
 %[105]
 graphNodePath ==> [varOrTerm].
 graphNodePath ==> [triplesNodePath].
+graphNodePath ==> [reifiedTriple].
 %[106]
 varOrTerm ==> [var].
 varOrTerm ==> [graphTerm].
+varOrTerm ==> [tripleTerm].
+% SPARQL 1.2 [116]
+reifiedTriple ==>
+	['<<',reifiedTripleSubject,verb,reifiedTripleObject,?(reifier),'>>'].
+% SPARQL 1.2 [117]
+reifiedTripleSubject ==> [var].
+reifiedTripleSubject ==> [iriRef].
+reifiedTripleSubject ==> [rdfLiteral].
+reifiedTripleSubject ==> [numericLiteral].
+reifiedTripleSubject ==> [booleanLiteral].
+reifiedTripleSubject ==> [blankNode].
+reifiedTripleSubject ==> [reifiedTriple].
+reifiedTripleSubject ==> [tripleTerm].
+% SPARQL 1.2 [118]
+reifiedTripleObject ==> [var].
+reifiedTripleObject ==> [iriRef].
+reifiedTripleObject ==> [rdfLiteral].
+reifiedTripleObject ==> [numericLiteral].
+reifiedTripleObject ==> [booleanLiteral].
+reifiedTripleObject ==> [blankNode].
+reifiedTripleObject ==> [reifiedTriple].
+reifiedTripleObject ==> [tripleTerm].
+% SPARQL 1.2 [119]
+tripleTerm ==>
+	['<<(',tripleTermSubject,verb,tripleTermObject,')>>'].
+% SPARQL 1.2 [120]
+tripleTermSubject ==> [var].
+tripleTermSubject ==> [iriRef].
+tripleTermSubject ==> [rdfLiteral].
+tripleTermSubject ==> [numericLiteral].
+tripleTermSubject ==> [booleanLiteral].
+tripleTermSubject ==> [blankNode].
+tripleTermSubject ==> [tripleTerm].
+% SPARQL 1.2 [121]
+tripleTermObject ==> [var].
+tripleTermObject ==> [iriRef].
+tripleTermObject ==> [rdfLiteral].
+tripleTermObject ==> [numericLiteral].
+tripleTermObject ==> [booleanLiteral].
+tripleTermObject ==> [blankNode].
+tripleTermObject ==> [tripleTerm].
+% SPARQL 1.2 [122]
+tripleTermData ==>
+	['<<(',tripleTermDataSubject,iriRef or 'a',tripleTermDataObject,')>>'].
+% SPARQL 1.2 [123]
+tripleTermDataSubject ==> [iriRef].
+% SPARQL 1.2 [124]
+tripleTermDataObject ==> [iriRef].
+tripleTermDataObject ==> [rdfLiteral].
+tripleTermDataObject ==> [numericLiteral].
+tripleTermDataObject ==> [booleanLiteral].
+tripleTermDataObject ==> [tripleTermData].
 %[107]
 varOrIRIref ==> [var].
 varOrIRIref ==> [iriRef].
@@ -504,7 +602,7 @@ additiveExpression ==>
 multiplicativeExpression ==>
 	[unaryExpression,*(['*',unaryExpression] or ['/',unaryExpression])].
 %[118]
-unaryExpression ==> ['!',primaryExpression].
+unaryExpression ==> ['!',unaryExpression].
 unaryExpression ==> ['+',primaryExpression].
 unaryExpression ==> ['-',primaryExpression].
 unaryExpression ==> [primaryExpression].
@@ -516,13 +614,29 @@ primaryExpression ==> [rdfLiteral].
 primaryExpression ==> [numericLiteral].
 primaryExpression ==> [booleanLiteral].
 primaryExpression ==> [var].
-primaryExpression ==> [aggregate].
+primaryExpression ==> [exprTripleTerm].
+% SPARQL 1.2 [137]
+exprTripleTerm ==>
+	['<<(',exprTripleTermSubject,verb,exprTripleTermObject,')>>'].
+% SPARQL 1.2 [138]
+exprTripleTermSubject ==> [iriRef].
+exprTripleTermSubject ==> [var].
+% SPARQL 1.2 [139]
+exprTripleTermObject ==> [iriRef].
+exprTripleTermObject ==> [rdfLiteral].
+exprTripleTermObject ==> [numericLiteral].
+exprTripleTermObject ==> [booleanLiteral].
+exprTripleTermObject ==> [var].
+exprTripleTermObject ==> [exprTripleTerm].
 %[120]
 brackettedExpression ==> ['(',expression,')'].
 %[121]
+% In SPARQL 1.2, aggregates are built-in calls (rather than primary expressions)
+builtInCall ==> [aggregate].
 builtInCall ==> ['STR','(',expression,')'].
 builtInCall ==> ['LANG','(',expression,')'].
 builtInCall ==> ['LANGMATCHES','(',expression,',',expression,')'].
+builtInCall ==> ['LANGDIR','(',expression,')'].
 builtInCall ==> ['DATATYPE','(',expression,')'].
 builtInCall ==> ['BOUND','(',var,')'].
 builtInCall ==> ['IRI','(',expression,')'].
@@ -567,6 +681,7 @@ builtInCall ==> ['SHA512','(',expression,')'].
 builtInCall ==> ['COALESCE',expressionList].
 builtInCall ==> ['IF','(',expression,',',expression,',',expression,')'].
 builtInCall ==> ['STRLANG','(',expression,',',expression,')'].
+builtInCall ==> ['STRLANGDIR','(',expression,',',expression,',',expression,')'].
 builtInCall ==> ['STRDT','(',expression,',',expression,')'].
 builtInCall ==> ['SAMETERM','(',expression,',',expression,')'].
 builtInCall ==> ['ISIRI','(',expression,')'].
@@ -574,9 +689,16 @@ builtInCall ==> ['ISURI','(',expression,')'].
 builtInCall ==> ['ISBLANK','(',expression,')'].
 builtInCall ==> ['ISLITERAL','(',expression,')'].
 builtInCall ==> ['ISNUMERIC','(',expression,')'].
+builtInCall ==> ['HASLANG','(',expression,')'].
+builtInCall ==> ['HASLANGDIR','(',expression,')'].
 builtInCall ==> [regexExpression].
 builtInCall ==> [existsFunc].
 builtInCall ==> [notExistsFunc].
+builtInCall ==> ['ISTRIPLE','(',expression,')'].
+builtInCall ==> ['TRIPLE','(',expression,',',expression,',',expression,')'].
+builtInCall ==> ['SUBJECT','(',expression,')'].
+builtInCall ==> ['PREDICATE','(',expression,')'].
+builtInCall ==> ['OBJECT','(',expression,')'].
 %[122]
 regexExpression ==>
 	['REGEX','(',expression,',',expression,?([',',expression]),')'].
@@ -608,7 +730,7 @@ aggregate ==>
 %[128]
 iriRefOrFunction ==> [iriRef,?(argList)].
 %[129]
-rdfLiteral ==> [string,?('LANGTAG' or ['^^',iriRef])].
+rdfLiteral ==> [string,?('LANG_DIR' or ['^^',iriRef])].
 %[130]
 numericLiteral ==> [numericLiteralUnsigned].
 numericLiteral ==> [numericLiteralPositive].
@@ -651,7 +773,7 @@ tm_regex([
 
 'VAR1',
 'VAR2',
-'LANGTAG',
+'LANG_DIR',
 
 'DOUBLE',
 'DECIMAL',
@@ -680,9 +802,13 @@ tm_keywords([
 
 'GROUP_CONCAT', % Must appear before GROUP
 'DATATYPE',     % Must appear before DATA
+'LANGDIR',      % Must appear before LANG
+'STRLANGDIR',   % Must appear before STRLANG
+'HASLANGDIR',   % Must appear before HASLANG
 
 'BASE',
 'PREFIX',
+'VERSION',
 'SELECT',
 'CONSTRUCT',
 'DESCRIBE',
@@ -792,6 +918,12 @@ tm_keywords([
 'AVG',
 'SAMPLE',
 'SEPARATOR',
+'HASLANG',
+'ISTRIPLE',
+'TRIPLE',
+'SUBJECT',
+'PREDICATE',
+'OBJECT',
 
 'STR'
 ]).
@@ -803,13 +935,18 @@ tm_keywords([
 % e.g. ANON, [
 % e.g. DOUBLE, DECIMAL, INTEGER
 % e.g. INTEGER_POSITIVE, PLUS
+% e.g. <<(, <<, <=, <   and   )>>, )   and   >>, >=, >
+% e.g. {|, {   and   |}, ||, |
 tm_punct([
 '*'= '\\*',
 'a'= 'a',
 '.'= '\\.',
+'{|'= '\\{\\|',
+'|}'= '\\|\\}',
 '{'= '\\{',
 '}'= '\\}',
 ','= ',',
+')>>'= '\\)>>',
 '('= '\\(',
 ')'= '\\)',
 ';'= ';',
@@ -820,6 +957,9 @@ tm_punct([
 '='= '=',
 '!='= '!=',
 '!'= '!',
+'<<('= '<<\\(',
+'<<'= '<<',
+'>>'= '>>',
 '<='= '<=',
 '>='= '>=',
 '<'= '<',
@@ -830,5 +970,6 @@ tm_punct([
 '^^'= '\\^\\^',
 '?' = '\\?',
 '|' = '\\|',
-'^'= '\\^'
+'^'= '\\^',
+'~'= '~'
 ]).
