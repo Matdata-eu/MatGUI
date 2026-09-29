@@ -99,6 +99,67 @@ select * {
     });
   });
 
+  describe("SPARQL 1.2", function () {
+    const sparql12Query = `VERSION "1.2"
+PREFIX : <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+SELECT * WHERE {
+  ?person :name "Alice"@en--ltr ~ ?r {| :statedBy ?authority |} .
+  << ?person :jobTitle "Designer" >> :accordingTo ?source .
+  ?r rdf:reifies <<( ?person :name "Alice"@en--ltr )>> .
+  FILTER(isTRIPLE(TRIPLE(?person, :name, "Alice")) && hasLANGDIR(?x))
+}`;
+
+    function checkSyntax(query: string) {
+      return page.evaluate((query) => {
+        window.yasqe.setValue(query);
+        window.yasqe.checkSyntax();
+        return {
+          valid: window.yasqe.queryValid,
+          errorIcons: document.querySelectorAll(".parseErrorIcon").length,
+        };
+      }, query);
+    }
+
+    it("Should mark a valid SPARQL 1.2 query as valid", async function () {
+      const result = await checkSyntax(sparql12Query);
+      expect(result.valid).to.be.true;
+      expect(result.errorIcons).to.equal(0);
+    });
+
+    it("Should mark an annotation after a property path as invalid", async function () {
+      const result = await checkSyntax(`PREFIX : <http://example.org/>
+SELECT * WHERE {
+  ?s :p/:q ?o {| :source ?g |} .
+}`);
+      expect(result.valid).to.be.false;
+      expect(result.errorIcons).to.equal(1);
+    });
+
+    for (const formatterType of ["sparql-formatter", "legacy"] as const) {
+      it(`Should keep a SPARQL 1.2 query valid when formatting with ${formatterType}`, async function () {
+        const result = await page.evaluate(
+          (query, formatterType) => {
+            if (!window.yasqe.persistentConfig) {
+              window.yasqe.persistentConfig = { query: "", editorHeight: "300px" };
+            }
+            window.yasqe.persistentConfig.formatterType = formatterType;
+            window.yasqe.setValue(query);
+            window.yasqe.format();
+            window.yasqe.checkSyntax();
+            return { valid: window.yasqe.queryValid, value: window.yasqe.getValue() };
+          },
+          sparql12Query,
+          formatterType,
+        );
+        expect(result.valid, result.value).to.be.true;
+        for (const token of ["<<(", ")>>", "<<", ">>", "{|", "|}", "~", "@en--ltr", "VERSION"]) {
+          expect(result.value).to.contain(token);
+        }
+      });
+    }
+  });
+
   describe("SPARQL Formatter", function () {
     it("Should format with sparql-formatter", async function () {
       const value = await page.evaluate(() => {

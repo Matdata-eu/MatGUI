@@ -41,7 +41,16 @@ function rewriteSource(source, filePath) {
   );
 }
 
+// The SPARQL tokenizer imports its generated LL(1) table, a plain JS file that tsc does not emit
+async function copyGrammarTable() {
+  const grammarDir = path.join("packages", "yasqe", "grammar");
+  const destDir = path.join(repoRoot, "build", "test", grammarDir);
+  if (!(await exists(destDir))) return;
+  await fs.copyFile(path.join(repoRoot, grammarDir, "_tokenizer-table.js"), path.join(destDir, "_tokenizer-table.js"));
+}
+
 async function main() {
+  await copyGrammarTable();
   if (!(await exists(targetDir))) return;
 
   const files = await walk(targetDir);
