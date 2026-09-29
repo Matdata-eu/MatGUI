@@ -18,6 +18,8 @@ export interface DescribeResult {
   hasMore?: boolean;
   /** True when rows were dropped before persisting */
   truncated?: boolean;
+  /** True when the endpoint returned an incomplete result (e.g. Virtuoso anytime query, HTTP 206) */
+  partial?: boolean;
 }
 
 export interface EndpointEntry {

@@ -9,12 +9,20 @@ import {
   wktExtent,
 } from "../../packages/yasgui/src/endpointDescribe/describeQueries.js";
 import {
+  cutAtLastStatement,
+  MAX_METADATA_BYTES,
+  readLimited,
   extractServiceDescription,
   extractVoidDatasets,
   fetchEndpointMetadata,
   getWellKnownVoidUrl,
   parseRdf,
 } from "../../packages/yasgui/src/endpointDescribe/metadataSources.js";
+import {
+  describeQueryError,
+  htmlToText,
+  isPartialResponse,
+} from "../../packages/yasgui/src/endpointDescribe/responseUtils.js";
 import DescribeStore, {
   MAX_ENDPOINTS,
   MAX_PERSISTED_ROWS,
@@ -62,6 +70,15 @@ describe("Endpoint describe queries", () => {
       const body = withoutStrings.replace(/PREFIX [\w-]+: <[^>]+>/g, "").replace(/<[^>]*>/g, "");
       for (const match of body.matchAll(/\b([a-z][\w-]*):[A-Za-z_]/g)) {
         expect(declared, `${query.id}: prefix ${match[1]}`).to.include(match[1]);
+      }
+    }
+  });
+
+  it("does not use REPLACE patterns that match the empty string (rejected by Virtuoso)", () => {
+    for (const query of defaultDescribeQueries) {
+      const text = buildQuery(query, context());
+      for (const match of text.matchAll(/REPLACE\([^,]+,\s*"((?:[^"\\]|\\.)*)"/g)) {
+        expect(new RegExp(match[1]).test(""), `${query.id}: ${match[1]}`).to.equal(false);
       }
     }
   });
@@ -180,6 +197,44 @@ describe("Endpoint describe metadata (SD / VoID)", () => {
     const datasets = extractVoidDatasets(quads);
     expect(datasets).to.have.length(1);
     expect(datasets[0].classPartitions).to.have.length(2);
+  });
+
+  it("flags blank-node datasets and drops datasets without information", () => {
+    const quads = parseRdf(
+      `@prefix void: <http://rdfs.org/ns/void#> .
+       _:graph a void:Dataset ; void:triples 42 .
+       _:empty a void:Dataset .`,
+      "text/turtle",
+      "https://example.org/sparql",
+    );
+    const datasets = extractVoidDatasets(quads);
+    expect(datasets).to.have.length(1);
+    expect(datasets[0].blank).to.equal(true);
+    expect(datasets[0].triples).to.equal(42);
+  });
+
+  it("cuts a truncated document after its last complete statement", () => {
+    const doc = '<http://a> <http://b> "1" .\n<http://c> <http://d> [ <http://e> "2" ] .\n<http://f> <http://g> "unfin';
+    const cut = cutAtLastStatement(doc);
+    expect(parseRdf(cut, "text/turtle", "https://example.org/")).to.have.length(3);
+    expect(cutAtLastStatement("no statement")).to.equal("");
+  });
+
+  it("stops reading large descriptions", async () => {
+    const chunk = new TextEncoder().encode("x".repeat(1_000_000));
+    let pulled = 0;
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled++;
+        controller.enqueue(chunk);
+      },
+    });
+    const { text, truncated } = await readLimited(new Response(stream), MAX_METADATA_BYTES);
+    expect(truncated).to.equal(true);
+    expect(text.length).to.be.at.least(MAX_METADATA_BYTES);
+    expect(pulled).to.be.below(10);
+    const small = await readLimited(new Response("<a> <b> <c> ."), MAX_METADATA_BYTES);
+    expect(small).to.deep.equal({ text: "<a> <b> <c> .", truncated: false });
   });
 
   it("rejects HTML responses", () => {
@@ -307,5 +362,62 @@ describe("Endpoint describe store", () => {
     });
     store.setResult("https://example.org/sparql", "q", { status: "done", vars: [], bindings: [], fetchedAt: 1 });
     expect(store.getResult("https://example.org/sparql", "q")).to.not.equal(undefined);
+  });
+});
+
+describe("Endpoint describe response handling", () => {
+  it("detects partial results of Virtuoso anytime queries", () => {
+    expect(isPartialResponse({ status: 206, headers: new Headers({ "X-SQL-State": "S1TAT" }) })).to.equal(true);
+    expect(isPartialResponse({ status: 200, headers: new Headers({ "X-SQL-State": "S1TAT" }) })).to.equal(true);
+    expect(isPartialResponse({ status: 200, headers: new Headers() })).to.equal(false);
+    expect(isPartialResponse(undefined)).to.equal(false);
+  });
+
+  it("summarizes HTML error pages", () => {
+    const wikimedia =
+      '<!DOCTYPE html>\n<html lang="en">\n<meta charset="utf-8">\n<title>Wikimedia Error</title>\n<style>* { margin: 0; }</style>\n<body>Too many requests</body></html>';
+    expect(htmlToText(wikimedia)).to.equal("Wikimedia Error");
+    expect(htmlToText("<html><body><h1>504 Gateway Time-out</h1></body></html>")).to.equal("504 Gateway Time-out");
+    expect(htmlToText("<div>a &amp; <b>b</b></div>")).to.equal("a & b");
+  });
+
+  it("explains rate limiting, gateway timeouts and client timeouts", () => {
+    const rateLimited: any = new Error("<!DOCTYPE html><html><title>Wikimedia Error</title></html>");
+    rateLimited.status = 429;
+    rateLimited.statusText = "Too Many Requests";
+    rateLimited.response = { headers: new Headers({ "Retry-After": "30" }) };
+    expect(describeQueryError(rateLimited)).to.equal(
+      "HTTP 429 Too Many Requests: The endpoint is rate limiting requests. Wait a moment before running more queries (retry after 30 s).",
+    );
+
+    const gateway: any = new Error(
+      '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"><HTML><TITLE>Gateway Timeout</TITLE></HTML>',
+    );
+    gateway.status = 504;
+    expect(describeQueryError(gateway)).to.equal(
+      "HTTP 504: The endpoint (or a gateway in front of it) did not answer in time. Gateway Timeout",
+    );
+
+    const virtuoso: any = new Error(
+      "Virtuoso 42000 Error The estimated execution time 6910 (sec) exceeds the limit of 60 (sec).",
+    );
+    virtuoso.status = 500;
+    expect(describeQueryError(virtuoso)).to.equal(
+      "HTTP 500: Virtuoso 42000 Error The estimated execution time 6910 (sec) exceeds the limit of 60 (sec).",
+    );
+
+    const blazegraph: any = new Error(
+      "SPARQL-QUERY: queryStr=SELECT DISTINCT ?graph WHERE { GRAPH ?graph { ?s ?p ?o } }\njava.util.concurrent.ExecutionException: java.util.concurrent.ExecutionException: com.bigdata.rdf.sparql.ast.QuadsOperationInTriplesModeException: Use of WITH and GRAPH constructs in query body is not supported in triples mode.\nCaused by: com.bigdata.rdf.sparql.ast.QuadsOperationInTriplesModeException: Use of WITH and GRAPH constructs in query body is not supported in triples mode.\n\tat com.bigdata.Foo.bar(Foo.java:1)",
+    );
+    blazegraph.status = 400;
+    blazegraph.statusText = "Bad Request";
+    expect(describeQueryError(blazegraph)).to.equal(
+      "HTTP 400 Bad Request: Use of WITH and GRAPH constructs in query body is not supported in triples mode.",
+    );
+
+    expect(describeQueryError(new Error("aborted"), { timedOut: true, timeoutMs: 60000 })).to.equal(
+      "Timed out after 60 s",
+    );
+    expect(describeQueryError(new Error("x".repeat(600)))).to.have.length(501);
   });
 });

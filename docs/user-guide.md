@@ -738,6 +738,8 @@ When the panel opens, MatGUI looks for metadata that the endpoint publishes abou
 - The [SPARQL Service Description](https://www.w3.org/TR/sparql11-service-description/), returned by the endpoint URL when it is requested without a query. It lists the supported SPARQL features, extension functions, result formats and named graphs.
 - A [VoID](https://www.w3.org/TR/void/) dataset description at `/.well-known/void` (or embedded in the service description), with statistics such as the number of triples, classes, vocabularies and class/property partitions.
 
+Some descriptions are very large (Wikidata's includes statistics for every class and property). Only the first 5 MB are read; the panel mentions it when a description was cut off.
+
 Many endpoints publish neither (for example GraphDB has no service description). The panel then simply says so and you can use the overview queries instead. If you run an endpoint yourself, publishing a service description and VoID makes it much easier to explore.
 
 **Overview queries**
@@ -755,6 +757,8 @@ The panel contains predefined queries, grouped in categories:
 
 - Queries only run when you click **Run** (▶) or **Run all** for a category, so large endpoints are never queried unexpectedly. Queries marked **may be slow** scan the whole dataset and may time out on large endpoints.
 - Every query is limited. Lists such as the named graphs are loaded page by page with **Load more**.
+- Some endpoints stop long-running queries at a time limit and return whatever they found so far (for example Virtuoso's "anytime queries", used by DBpedia). Such results are marked as **Partial result**: counts may be too low and an empty result does not mean there is no such data.
+- Public endpoints limit how many (expensive) queries you can run. When an endpoint answers that you are sending too many requests, wait a moment before running more queries. Errors of the endpoint are shown below the query (e.g. "estimated execution time exceeds the limit").
 - Describe queries run in the background with the endpoint and authentication settings of the current tab. They do not change your query or the results view. The default and named graphs configured for the tab are not applied, so the whole endpoint is described.
 - Click an IRI in the results to insert it into your query. MatGUI uses a prefixed name when it knows the prefix and adds the missing `PREFIX` declaration.
 - Click the **Open query in a new tab** button next to a query to open it in a new tab, to adapt it further.

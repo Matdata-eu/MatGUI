@@ -212,7 +212,7 @@ export const defaultDescribeQueries: DescribeQuery[] = [
     description: "Namespaces of the predicates, ranked by the number of triples using them.",
     expensive: true,
     query: (ctx) =>
-      `SELECT ?namespace (COUNT(*) AS ?triples) WHERE {\n  ?s ?p ?o .\n  BIND(REPLACE(STR(?p), "[^#/]*$", "") AS ?namespace)\n}\nGROUP BY ?namespace\nORDER BY DESC(?triples)\n${page(
+      `SELECT ?namespace (COUNT(*) AS ?triples) WHERE {\n  ?s ?p ?o .\n  BIND(REPLACE(STR(?p), "[^#/]+$", "") AS ?namespace)\n}\nGROUP BY ?namespace\nORDER BY DESC(?triples)\n${page(
         ctx,
       )}`,
     paginated: true,
@@ -250,6 +250,7 @@ export const defaultDescribeQueries: DescribeQuery[] = [
     label: "SKOS concept schemes",
     description: "SKOS concept schemes and the number of concepts in each.",
     paginated: true,
+    expensive: true,
     query: (ctx) =>
       `${prefixes(
         "skos",

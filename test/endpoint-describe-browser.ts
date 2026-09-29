@@ -73,6 +73,30 @@ async function mockEndpoints(page: puppeteer.Page, queries: string[]) {
         ],
       );
     }
+    if (/LANG\(\?label\)/.test(query)) {
+      // Virtuoso "anytime query": interrupted at the time limit, incomplete (here: empty) result
+      void request.respond({
+        status: 206,
+        headers: {
+          ...headers,
+          "Access-Control-Expose-Headers": "X-SQL-State",
+          "X-SQL-State": "S1TAT",
+          "X-SQL-Message": "RC...: Returning incomplete results, query interrupted by result timeout.",
+        },
+        contentType: "application/sparql-results+json",
+        body: sparqlJson(["property", "language", "labels"], []),
+      });
+      return;
+    }
+    if (/\?geometry geo:asWKT \?wkt \.\s*BIND/.test(query)) {
+      void request.respond({
+        status: 429,
+        headers: { ...headers, "Retry-After": "30", "Access-Control-Expose-Headers": "Retry-After" },
+        contentType: "text/html",
+        body: '<!DOCTYPE html><html lang="en"><title>Wikimedia Error</title><body>Too many requests</body></html>',
+      });
+      return;
+    }
     void request.respond({ status: 200, headers, contentType: "application/sparql-results+json", body });
   });
 }
@@ -185,6 +209,26 @@ describe("Endpoint describe panel", function () {
     await page.reload({ waitUntil: "networkidle2" });
     await page.waitForSelector(".yasgui-describe.open.pinned .yasgui-describe__drawer", { visible: true });
     await page.waitForSelector('.yasgui-describe__query[data-query-id="classes"] table');
+  });
+
+  it("flags partial results and explains rate limiting", async function () {
+    await openPanel();
+    await page.evaluate(() => (window as any).yasgui.endpointDescribe.runQuery("label-languages"));
+    const partial = await page.$eval(
+      '.yasgui-describe__query[data-query-id="label-languages"]',
+      (el) => el.querySelector(".yasgui-describe__partial")?.textContent || "",
+    );
+    expect(partial).to.contain("Partial result");
+
+    await page.evaluate(() => (window as any).yasgui.endpointDescribe.runQuery("wkt-crs"));
+    const error = await page.$eval(
+      '.yasgui-describe__query[data-query-id="wkt-crs"]',
+      (el) => el.querySelector(".yasgui-describe__error")?.textContent || "",
+    );
+    expect(error).to.contain("HTTP 429");
+    expect(error).to.contain("rate limiting");
+    expect(error).to.contain("retry after 30 s");
+    expect(error).not.to.contain("<html");
   });
 
   it("collapses an unpinned panel when the editor gets focus", async function () {

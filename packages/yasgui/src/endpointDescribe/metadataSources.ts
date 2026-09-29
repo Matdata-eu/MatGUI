@@ -19,6 +19,13 @@ const RDFS_LABEL = "http://www.w3.org/2000/01/rdf-schema#label";
 /** Maximum number of list items kept per metadata field */
 const MAX_ITEMS = 200;
 
+/**
+ * Maximum number of bytes read from a service description or VoID document.
+ * Some endpoints publish very large descriptions (e.g. Wikidata: ~19 MB with all partitions);
+ * only the first part is read and parsed.
+ */
+export const MAX_METADATA_BYTES = 5_000_000;
+
 export const RDF_ACCEPT = "text/turtle, application/n-triples;q=0.9, application/n-quads;q=0.8, text/n3;q=0.7";
 
 export type MetadataStatus = "ok" | "unavailable";
@@ -42,6 +49,8 @@ export interface VoidPartition {
 
 export interface VoidDataset {
   iri: string;
+  /** The dataset is a blank node: its identifier is not meaningful */
+  blank?: boolean;
   title?: string;
   triples?: number;
   entities?: number;
@@ -65,12 +74,22 @@ export interface EndpointMetadata {
   /** Human readable reason why a source is unavailable */
   sdError?: string;
   voidError?: string;
+  /** The description was larger than MAX_METADATA_BYTES and only partially read */
+  truncated?: boolean;
 }
 
 export interface FetchInit {
   headers?: { [key: string]: string };
   withCredentials?: boolean;
   signal?: AbortSignal;
+}
+
+/**
+ * Cut a truncated Turtle/N-Triples document after its last complete statement.
+ */
+export function cutAtLastStatement(content: string): string {
+  const match = /[\s\S]*\s\.[ \t]*(\r?\n|$)/.exec(content);
+  return match ? match[0] : "";
 }
 
 export function parseRdf(content: string, contentType: string | null, baseIRI: string): N3.Quad[] {
@@ -94,9 +113,11 @@ function unique(values: string[]): string[] {
 
 class QuadIndex {
   private bySubject = new Map<string, N3.Quad[]>();
+  public blankNodes = new Set<string>();
   constructor(public quads: N3.Quad[]) {
     for (const quad of quads) {
       const key = quad.subject.value;
+      if (quad.subject.termType === "BlankNode") this.blankNodes.add(key);
       if (!this.bySubject.has(key)) this.bySubject.set(key, []);
       this.bySubject.get(key)!.push(quad);
     }
@@ -156,16 +177,20 @@ export function extractServiceDescription(quads: N3.Quad[]): ServiceDescription 
 }
 
 function extractPartitions(index: QuadIndex, dataset: string, predicate: string, key: string): VoidPartition[] {
-  return index
-    .values(dataset, VOID + predicate)
-    .map((partition) => ({
-      iri: index.values(partition, VOID + key)[0],
+  const seen = new Set<string>();
+  const partitions: VoidPartition[] = [];
+  for (const partition of index.values(dataset, VOID + predicate)) {
+    const iri = index.values(partition, VOID + key)[0];
+    // The same partition may be described in both the service description and the VoID document
+    if (!iri || seen.has(iri)) continue;
+    seen.add(iri);
+    partitions.push({
+      iri,
       entities: index.number(partition, VOID + "entities"),
       triples: index.number(partition, VOID + "triples"),
-    }))
-    .filter((p, i, all) => !!p.iri && all.findIndex((other) => other.iri === p.iri) === i)
-    .sort((a, b) => (b.entities ?? b.triples ?? 0) - (a.entities ?? a.triples ?? 0))
-    .slice(0, MAX_ITEMS);
+    });
+  }
+  return partitions.sort((a, b) => (b.entities ?? b.triples ?? 0) - (a.entities ?? a.triples ?? 0)).slice(0, MAX_ITEMS);
 }
 
 export function extractVoidDatasets(quads: N3.Quad[]): VoidDataset[] {
@@ -181,9 +206,11 @@ export function extractVoidDatasets(quads: N3.Quad[]): VoidDataset[] {
     ...index.subjectsWith(VOID + "triples"),
     ...index.subjectsWith(VOID + "sparqlEndpoint"),
   ]).filter((iri) => !partitions.has(iri) && index.values(iri, RDF_TYPE).indexOf(VOID + "Linkset") < 0);
+  const linksets = index.subjectsWith(VOID + "subjectsTarget");
 
-  return candidates.map((iri) => ({
+  const datasets: VoidDataset[] = candidates.map((iri) => ({
     iri,
+    blank: index.blankNodes.has(iri) || undefined,
     title: index.values(iri, DCTERMS + "title")[0] || index.values(iri, RDFS_LABEL)[0],
     triples: index.number(iri, VOID + "triples"),
     entities: index.number(iri, VOID + "entities"),
@@ -195,8 +222,7 @@ export function extractVoidDatasets(quads: N3.Quad[]): VoidDataset[] {
     vocabularies: unique(index.values(iri, VOID + "vocabulary")),
     classPartitions: extractPartitions(index, iri, "classPartition", "class"),
     propertyPartitions: extractPartitions(index, iri, "propertyPartition", "property"),
-    linksets: index
-      .subjectsWith(VOID + "subjectsTarget")
+    linksets: linksets
       .filter((ls) => index.values(ls, VOID + "subjectsTarget").indexOf(iri) >= 0)
       .map((ls) => ({
         iri: ls,
@@ -204,9 +230,49 @@ export function extractVoidDatasets(quads: N3.Quad[]): VoidDataset[] {
         triples: index.number(ls, VOID + "triples"),
       })),
   }));
+  // Only keep datasets that tell something about the data
+  return datasets.filter(
+    (d) =>
+      d.title ||
+      d.triples !== undefined ||
+      d.entities !== undefined ||
+      d.classes !== undefined ||
+      d.properties !== undefined ||
+      d.distinctSubjects !== undefined ||
+      d.distinctObjects !== undefined ||
+      d.vocabularies.length ||
+      d.classPartitions.length ||
+      d.propertyPartitions.length ||
+      d.linksets.length,
+  );
 }
 
-async function fetchRdf(url: string, init: FetchInit): Promise<N3.Quad[]> {
+/**
+ * Read a response body, stopping after maxBytes
+ */
+export async function readLimited(response: Response, maxBytes: number): Promise<{ text: string; truncated: boolean }> {
+  const reader = response.body && typeof response.body.getReader === "function" ? response.body.getReader() : undefined;
+  if (!reader) {
+    const text = await response.text();
+    return text.length > maxBytes ? { text: text.substring(0, maxBytes), truncated: true } : { text, truncated: false };
+  }
+  const decoder = new TextDecoder();
+  let text = "";
+  let bytes = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    bytes += value.byteLength;
+    text += decoder.decode(value, { stream: true });
+    if (bytes >= maxBytes) {
+      void reader.cancel().catch(() => undefined);
+      return { text, truncated: true };
+    }
+  }
+  return { text: text + decoder.decode(), truncated: false };
+}
+
+async function fetchRdf(url: string, init: FetchInit): Promise<{ quads: N3.Quad[]; truncated: boolean }> {
   const response = await fetch(url, {
     method: "GET",
     headers: { ...(init.headers || {}), Accept: RDF_ACCEPT },
@@ -215,9 +281,10 @@ async function fetchRdf(url: string, init: FetchInit): Promise<N3.Quad[]> {
     signal: init.signal,
   });
   if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`.trim());
-  const content = await response.text();
-  if (!content.trim()) throw new Error("Empty response");
-  return parseRdf(content, response.headers.get("Content-Type"), response.url || url);
+  const { text, truncated } = await readLimited(response, MAX_METADATA_BYTES);
+  const content = truncated ? cutAtLastStatement(text) : text;
+  if (!content.trim()) throw new Error(truncated ? "Description too large" : "Empty response");
+  return { quads: parseRdf(content, response.headers.get("Content-Type"), response.url || url), truncated };
 }
 
 export function getWellKnownVoidUrl(endpoint: string): string | undefined {
@@ -258,7 +325,8 @@ export async function fetchEndpointMetadata(endpoint: string, init: FetchInit = 
 
   let sdQuads: N3.Quad[] = [];
   if (sdResult.status === "fulfilled") {
-    sdQuads = sdResult.value;
+    sdQuads = sdResult.value.quads;
+    if (sdResult.value.truncated) metadata.truncated = true;
     metadata.sd = extractServiceDescription(sdQuads);
     if (metadata.sd) metadata.sdStatus = "ok";
     else metadata.sdError = "No service description found in the response";
@@ -268,7 +336,8 @@ export async function fetchEndpointMetadata(endpoint: string, init: FetchInit = 
 
   let voidQuads: N3.Quad[] = [];
   if (voidResult.status === "fulfilled") {
-    voidQuads = voidResult.value;
+    voidQuads = voidResult.value.quads;
+    if (voidResult.value.truncated) metadata.truncated = true;
   } else if (!isAbort(voidResult.reason)) {
     metadata.voidError = errorMessage(voidResult.reason);
   }

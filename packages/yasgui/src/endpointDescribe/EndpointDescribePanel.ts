@@ -16,6 +16,7 @@ import {
   DescribeTable,
 } from "./describeQueries";
 import { EndpointMetadata, fetchEndpointMetadata, VoidDataset } from "./metadataSources";
+import { describeQueryError, isPartialResponse } from "./responseUtils";
 import "./EndpointDescribePanel.scss";
 
 export interface EndpointDescribeConfig {
@@ -186,6 +187,8 @@ export default class EndpointDescribePanel {
   public runQuery(queryId: string, loadMore = false): Promise<void> {
     const query = this.queries.find((q) => q.id === queryId);
     const tab = this.yasgui.getTab();
+    // The panel may be closed, so make sure the endpoint of the active tab is used
+    this.syncEndpoint(tab);
     const endpoint = this.endpoint;
     if (!query || !tab || !endpoint) return Promise.resolve();
     const key = `${endpoint}\n${queryId}`;
@@ -411,6 +414,15 @@ export default class EndpointDescribePanel {
       if (list.childElementCount) card.appendChild(list);
     }
     for (const dataset of metadata.datasets) card.appendChild(this.renderDataset(dataset));
+    if (metadata.truncated) {
+      card.appendChild(
+        el(
+          "p",
+          "yasgui-describe__muted",
+          "The description is very large: only its first part was read, so some partitions may be missing.",
+        ),
+      );
+    }
     if (metadata.sdStatus !== "ok" && metadata.voidStatus !== "ok") {
       card.appendChild(
         el(
@@ -448,7 +460,8 @@ export default class EndpointDescribePanel {
     title.appendChild(el("i", "fas fa-database"));
     title.appendChild(document.createTextNode(" "));
     if (dataset.title) title.appendChild(el("strong", undefined, dataset.title + " "));
-    title.appendChild(this.renderIri(dataset.iri));
+    if (!dataset.blank) title.appendChild(this.renderIri(dataset.iri));
+    else if (!dataset.title) title.appendChild(el("strong", undefined, "Dataset"));
     wrapper.appendChild(title);
 
     const stats = el("dl", "yasgui-describe__facts yasgui-describe__facts--stats");
@@ -546,6 +559,14 @@ export default class EndpointDescribePanel {
     if (result.status === "done") meta.push(`${result.bindings.length.toLocaleString()} rows`);
     if (result.truncated) meta.push("truncated");
     container.appendChild(el("div", "yasgui-describe__query-meta", meta.join(" · ")));
+    if (result.partial) {
+      const warning = el(
+        "div",
+        "yasgui-describe__partial",
+        "Partial result: the endpoint stopped this query at its time limit. Counts and lists may be incomplete, and an empty result does not mean there is no such data.",
+      );
+      container.appendChild(warning);
+    }
 
     if (result.error || result.status === "error") {
       container.appendChild(el("div", "yasgui-describe__error", result.error || "Query failed"));
@@ -736,6 +757,7 @@ export default class EndpointDescribePanel {
       if (!table.vars.length && parser.getBoolean() !== undefined) {
         table = { vars: ["result"], bindings: [{ result: { type: "literal", value: String(parser.getBoolean()) } }] };
       }
+      const partial = isPartialResponse(response);
       const hasMore = !!query.paginated && table.bindings.length >= pageSize;
       if (query.postProcess) table = query.postProcess(table);
       const result: DescribeResult = {
@@ -745,18 +767,17 @@ export default class EndpointDescribePanel {
         fetchedAt: Date.now(),
         durationMs: Date.now() - start,
         hasMore,
+        partial: partial || undefined,
       };
       this.store.setResult(endpoint, query.id, result);
     } catch (e: any) {
       if (running.controller.signal.aborted && !running.timedOut) return; // Cancelled by the user
-      let message = e instanceof Error ? e.message : String(e);
-      if (running.timedOut) message = `Timed out after ${Math.round(this.config.timeoutMs / 1000)} s`;
-      else if (e?.status) message = `HTTP ${e.status}${e.statusText ? " " + e.statusText : ""}: ${message}`;
+      const message = describeQueryError(e, { timedOut: running.timedOut, timeoutMs: this.config.timeoutMs });
       // Keep the rows that were already loaded when loading another page fails
       this.store.setResult(endpoint, query.id, {
         ...(offset > 0 && previous ? previous : { vars: [], bindings: [] }),
         status: offset > 0 && previous ? previous.status : "error",
-        error: message.length > 500 ? message.substring(0, 500) + "…" : message,
+        error: message,
         fetchedAt: Date.now(),
         durationMs: Date.now() - start,
         hasMore: false,
