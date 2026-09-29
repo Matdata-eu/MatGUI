@@ -1,5 +1,5 @@
 /**
- * CodeMirror 6 language definition for SPARQL 1.1, built on top of the
+ * CodeMirror 6 language definition for SPARQL (1.1 and 1.2), built on top of the
  * legacy (stream based) LL(1) tokenizer in ../../grammar/tokenizer.ts.
  *
  * Every token style emitted by the tokenizer gets its own lezer Tag and a
