@@ -1,0 +1,435 @@
+.yasgui {
+  // Row that holds the tab panels and the (docked) endpoint describe panel
+  > div.yasgui-main:not(.tabsList) {
+    flex-direction: row;
+
+    > .yasgui-tabPanels {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  .yasgui-describe {
+    display: none;
+    position: relative;
+    flex: 0 0 auto;
+    min-height: 0;
+    border-left: 1px solid var(--yasgui-border-color, #e0e0e0);
+    background: var(--yasgui-bg-primary, white);
+    color: var(--yasgui-text-primary, #000);
+
+    &.open {
+      display: flex;
+    }
+
+    &.resizing {
+      user-select: none;
+      cursor: col-resize;
+    }
+
+    &__resizer {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -3px;
+      width: 6px;
+      cursor: col-resize;
+      z-index: 2;
+
+      &:hover {
+        background: var(--yasgui-accent-color, #337ab7);
+        opacity: 0.4;
+      }
+    }
+
+    &__rail {
+      display: none;
+      width: 32px;
+      padding: 8px 0;
+      border: none;
+      background: var(--yasgui-bg-secondary, #f7f7f7);
+      color: var(--yasgui-text-secondary, #666);
+      cursor: pointer;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+
+      span {
+        writing-mode: vertical-rl;
+        white-space: nowrap;
+      }
+
+      &:hover {
+        color: var(--yasgui-text-primary, #000);
+      }
+    }
+
+    &.collapsed {
+      .yasgui-describe__rail {
+        display: flex;
+      }
+
+      .yasgui-describe__drawer,
+      .yasgui-describe__resizer {
+        display: none;
+      }
+    }
+
+    &__drawer {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      width: 420px;
+      max-width: 70vw;
+      height: 100%;
+    }
+
+    &__header {
+      border-bottom: 1px solid var(--yasgui-border-color, #e0e0e0);
+      padding: 8px 12px;
+    }
+
+    &__header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    &__title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    &__header-buttons,
+    &__query-actions {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    &__icon-button {
+      background: none;
+      border: none;
+      padding: 4px 6px;
+      border-radius: 4px;
+      color: var(--yasgui-text-secondary, #666);
+      cursor: pointer;
+
+      &:hover:not(:disabled) {
+        color: var(--yasgui-text-primary, #000);
+        background: var(--yasgui-bg-secondary, #f0f0f0);
+      }
+
+      &:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+    }
+
+    &.pinned .yasgui-describe__pin {
+      color: var(--yasgui-accent-color, #337ab7);
+    }
+
+    &__endpoint {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--yasgui-text-secondary, #666);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &__body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 8px 12px 16px;
+      font-size: 13px;
+    }
+
+    &__card {
+      border: 1px solid var(--yasgui-border-color, #e0e0e0);
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 10px;
+    }
+
+    &__card-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    &__status-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    &__badge {
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      border: 1px solid var(--yasgui-border-color, #e0e0e0);
+
+      &.ok {
+        border-color: #2e7d32;
+        color: #2e7d32;
+      }
+
+      &.unavailable {
+        color: var(--yasgui-text-secondary, #666);
+      }
+    }
+
+    &__facts {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 2px 8px;
+      margin: 4px 0;
+
+      dt {
+        color: var(--yasgui-text-secondary, #666);
+      }
+
+      dd {
+        margin: 0;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+    }
+
+    &__dataset {
+      border-top: 1px dashed var(--yasgui-border-color, #e0e0e0);
+      padding-top: 6px;
+      margin-top: 6px;
+    }
+
+    &__dataset-title {
+      overflow-wrap: anywhere;
+      margin-bottom: 4px;
+    }
+
+    &__partition > summary {
+      cursor: pointer;
+      margin: 4px 0;
+    }
+
+    &__category {
+      border-top: 1px solid var(--yasgui-border-color, #e0e0e0);
+      padding: 4px 0;
+    }
+
+    &__category-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 0;
+      cursor: pointer;
+      font-weight: 600;
+      list-style: none;
+
+      &::-webkit-details-marker {
+        display: none;
+      }
+
+      &::before {
+        content: "▸";
+        margin-right: 4px;
+        color: var(--yasgui-text-secondary, #666);
+      }
+    }
+
+    &__category[open] > .yasgui-describe__category-summary::before {
+      content: "▾";
+    }
+
+    &__category-label {
+      flex: 1;
+    }
+
+    &__run-all,
+    &__button {
+      font-size: 12px;
+      font-weight: normal;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--yasgui-border-color, #ccc);
+      background: var(--yasgui-bg-primary, white);
+      color: var(--yasgui-text-primary, #000);
+      cursor: pointer;
+
+      &:hover {
+        background: var(--yasgui-bg-secondary, #f0f0f0);
+      }
+    }
+
+    &__button {
+      margin-top: 6px;
+    }
+
+    &__query {
+      padding: 6px 0 8px 12px;
+
+      & + & {
+        border-top: 1px dotted var(--yasgui-border-color, #e0e0e0);
+      }
+    }
+
+    &__query-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    &__query-label {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-weight: 500;
+    }
+
+    &__slow {
+      font-size: 10px;
+      font-weight: normal;
+      padding: 0 5px;
+      border-radius: 8px;
+      background: #fff3cd;
+      color: #7a5b00;
+    }
+
+    &__query-description,
+    &__query-meta,
+    &__muted {
+      color: var(--yasgui-text-secondary, #666);
+      font-size: 12px;
+    }
+
+    &__query-meta {
+      margin-top: 4px;
+    }
+
+    &__loading {
+      margin-top: 4px;
+      font-style: italic;
+      color: var(--yasgui-text-secondary, #666);
+    }
+
+    &__error {
+      margin-top: 4px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      background: rgba(211, 47, 47, 0.08);
+      color: var(--yasgui-error-color, #c62828);
+      font-size: 12px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      max-height: 120px;
+      overflow: auto;
+    }
+
+    &__table-wrapper {
+      margin-top: 6px;
+      max-height: 320px;
+      overflow: auto;
+      border: 1px solid var(--yasgui-border-color, #e0e0e0);
+      border-radius: 4px;
+    }
+
+    &__table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+
+      th {
+        position: sticky;
+        top: 0;
+        background: var(--yasgui-bg-secondary, #f7f7f7);
+        text-align: left;
+        font-weight: 600;
+      }
+
+      th,
+      td {
+        padding: 3px 6px;
+        border-bottom: 1px solid var(--yasgui-border-color, #eee);
+        vertical-align: top;
+        overflow-wrap: anywhere;
+      }
+    }
+
+    &__iri {
+      background: none;
+      border: none;
+      padding: 0;
+      font: inherit;
+      text-align: left;
+      color: var(--yasgui-link-color, #337ab7);
+      cursor: pointer;
+      overflow-wrap: anywhere;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    &__lang {
+      margin-left: 2px;
+      color: var(--yasgui-text-secondary, #666);
+    }
+
+    // On small screens the panel becomes a bottom sheet
+    @media (max-width: 768px) {
+      &.open {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 60vh;
+        z-index: 1001;
+        border-left: none;
+        border-top: 1px solid var(--yasgui-border-color, #e0e0e0);
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      &__drawer {
+        width: 100% !important;
+        max-width: none;
+      }
+
+      &__resizer {
+        display: none;
+      }
+
+      &.collapsed {
+        height: auto;
+
+        .yasgui-describe__rail {
+          width: 100%;
+          flex-direction: row;
+          justify-content: center;
+
+          span {
+            writing-mode: horizontal-tb;
+          }
+
+          i {
+            transform: rotate(90deg);
+          }
+        }
+      }
+    }
+  }
+}

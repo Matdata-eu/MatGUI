@@ -33,6 +33,7 @@
   - [Endpoint Quick Switch](#endpoint-quick-switch)
   - [Configuration Import/Export](#configuration-importexport)
   - [URI Explorer](#uri-explorer)
+  - [Endpoint Overview](#endpoint-overview)
   - [Query Tabs](#query-tabs)
   - [Settings Modal](#settings-modal)
   - [SPARQL Endpoints Management](#sparql-endpoints-management)
@@ -725,6 +726,50 @@ Alternatively, use `Ctrl`+`Shift` and click on the URI to executes a CONSTRUCT q
 
 **Example:**
 Ctrl+clicking on `http://dbpedia.org/resource/European_Union` automatically queries for all triples where the European Union is the subject of.
+
+### Endpoint Overview
+
+Get to know an unfamiliar SPARQL endpoint while you write your queries. Click the **Describe endpoint** button in the control bar or press `F8` to open the **Endpoint overview** panel next to the editor.
+
+**Service description and VoID**
+
+When the panel opens, MatGUI looks for metadata that the endpoint publishes about itself:
+
+- The [SPARQL Service Description](https://www.w3.org/TR/sparql11-service-description/), returned by the endpoint URL when it is requested without a query. It lists the supported SPARQL features, extension functions, result formats and named graphs.
+- A [VoID](https://www.w3.org/TR/void/) dataset description at `/.well-known/void` (or embedded in the service description), with statistics such as the number of triples, classes, vocabularies and class/property partitions.
+
+Many endpoints publish neither (for example GraphDB has no service description). The panel then simply says so and you can use the overview queries instead. If you run an endpoint yourself, publishing a service description and VoID makes it much easier to explore.
+
+**Overview queries**
+
+The panel contains predefined queries, grouped in categories:
+
+| Category                      | Queries                                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------------------ |
+| Endpoint & dataset overview   | Named graphs, triples per named graph, total number of triples, most used namespaces       |
+| Vocabulary & schema           | Classes and properties with usage counts, SKOS concept schemes, SHACL/ShEx shapes          |
+| Instances                     | Sample instances of the most used classes, most connected nodes (hubs)                     |
+| Labels, languages & literals  | Labels per language, properties with language-tagged literals                              |
+| Interlinking & external links | Referenced hosts (e.g. Wikidata, GeoNames, DBpedia), linking properties, linked entities   |
+| Time & geo                    | Temporal properties, geospatial properties, coordinate reference systems, bounding boxes   |
+
+- Queries only run when you click **Run** (▶) or **Run all** for a category, so large endpoints are never queried unexpectedly. Queries marked **may be slow** scan the whole dataset and may time out on large endpoints.
+- Every query is limited. Lists such as the named graphs are loaded page by page with **Load more**.
+- Describe queries run in the background with the endpoint and authentication settings of the current tab. They do not change your query or the results view. The default and named graphs configured for the tab are not applied, so the whole endpoint is described.
+- Click an IRI in the results to insert it into your query. MatGUI uses a prefixed name when it knows the prefix and adds the missing `PREFIX` declaration.
+- Click the **Open query in a new tab** button next to a query to open it in a new tab, to adapt it further.
+
+**Remembered results**
+
+Results are remembered per endpoint, also when you execute other queries, switch tabs or reload the page. The panel always follows the endpoint of the active tab. Use the **Run again** button to refresh a result; the time it was fetched is shown next to it.
+
+**Keeping the panel out of the way**
+
+- **Move out of the way** (») collapses the panel to a thin bar at the side of the screen. Click the bar to expand it again.
+- An unpinned panel collapses automatically when you click into the query editor.
+- The **pin** button pins the panel: it stays open while you write queries and is restored when you reload the page.
+- Drag the left edge of the panel to change its width.
+- On small screens the panel opens as a sheet at the bottom of the screen.
 
 ### Query Tabs
 
@@ -1830,6 +1875,7 @@ Master Matgui with these keyboard shortcuts for faster querying.
 | `F11`    | Toggle YASQE (editor) fullscreen         |
 | `F10`    | Toggle YASR (results) fullscreen         |
 | `F9`     | Switch between YASQE and YASR fullscreen |
+| `F8`     | Toggle the endpoint overview panel       |
 | `Esc`    | Exit fullscreen mode                     |
 
 ### Matgui Tabs

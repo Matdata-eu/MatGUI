@@ -56,6 +56,7 @@ This comprehensive guide covers everything developers need to know to integrate,
     - [Examples](#examples)
     - [Security Best Practices](#security-best-practices)
   - [Endpoint Buttons Configuration](#endpoint-buttons-configuration)
+  - [Endpoint Describe Configuration](#endpoint-describe-configuration)
   - [Theme Configuration](#theme-configuration)
 - [API Reference](#api-reference)
   - [Yasgui Class](#yasgui-class)
@@ -689,6 +690,9 @@ interface Config {
 
   // Layout orientation: 'vertical' or 'horizontal'
   orientation?: 'vertical' | 'horizontal';  // default: 'vertical'
+
+  // "Describe endpoint" panel (see Endpoint Describe Configuration)
+  endpointDescribe: EndpointDescribeConfig;
 }
 ```
 
@@ -1954,6 +1958,81 @@ You can customize button appearance using CSS variables:
   --yasgui-endpoint-button-focus: #0066cc;
 }
 ```
+
+### Endpoint Describe Configuration
+
+The **Endpoint overview** panel shows the SPARQL service description and VoID description of the current endpoint, and a set of predefined overview queries (classes, properties, named graphs, languages, links, time and geo). Results are cached per endpoint under their own localStorage key (`<persistenceId>_endpointDescribe`), separately from the main configuration.
+
+```typescript
+interface EndpointDescribeConfig {
+  // Show the "Describe endpoint" button and panel
+  enabled: boolean;  // default: true
+
+  // Replace or extend the default describe queries
+  queries?: DescribeQuery[] | ((defaults: DescribeQuery[]) => DescribeQuery[]);
+
+  // Replace or extend the default categories
+  categories?: DescribeCategory[] | ((defaults: DescribeCategory[]) => DescribeCategory[]);
+
+  // Timeout of a single describe query, in milliseconds
+  timeoutMs: number;  // default: 60000
+
+  // Maximum number of describe queries running at the same time
+  maxConcurrentQueries: number;  // default: 2
+
+  // Fetch the service description and VoID when the panel opens
+  fetchMetadata: boolean;  // default: true
+}
+
+interface DescribeQuery {
+  id: string;
+  category: string;  // id of a DescribeCategory
+  label: string;
+  description?: string;
+  // SPARQL SELECT query, or a function that builds it (use ctx.limit and ctx.offset for paginated queries)
+  query: string | ((ctx: { limit: number; offset: number; getResult: (queryId: string) => any }) => string);
+  paginated?: boolean;  // show "Load more"
+  pageSize?: number;  // default: 25
+  expensive?: boolean;  // show a "may be slow" hint
+  dependsOn?: string;  // id of a query whose results are needed to build this one
+}
+
+interface DescribeCategory {
+  id: string;
+  label: string;
+  icon: string;  // Font Awesome icon class, e.g. "fa-train"
+}
+```
+
+**Example**: add a category with endpoint specific queries:
+
+```javascript
+const yasgui = new Yasgui(document.getElementById("yasgui"), {
+  endpointDescribe: {
+    categories: (defaults) => [
+      ...defaults,
+      { id: "railway", label: "Railway infrastructure", icon: "fa-train" },
+    ],
+    queries: (defaults) => [
+      ...defaults,
+      {
+        id: "operational-points",
+        category: "railway",
+        label: "Operational points per country",
+        query: `PREFIX era: <http://data.europa.eu/949/>
+SELECT ?country (COUNT(?op) AS ?operationalPoints) WHERE {
+  ?op a era:OperationalPoint ; era:inCountry ?country .
+}
+GROUP BY ?country
+ORDER BY DESC(?operationalPoints)
+LIMIT 50`,
+      },
+    ],
+  },
+});
+```
+
+Disable the panel with `endpointDescribe: { enabled: false }`. The panel can also be controlled programmatically through `yasgui.endpointDescribe` (`open()`, `close()`, `toggle()`, `collapse()`, `setPinned(pinned)`, `runQuery(queryId)`).
 
 ### Theme Configuration
 
