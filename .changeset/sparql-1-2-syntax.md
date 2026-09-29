@@ -12,3 +12,5 @@ Support SPARQL 1.2 syntax in the query editor, following the grammar of the [SPA
 - `!` applied to any unary expression, and aggregates wherever a built-in call is allowed
 
 A blank node property list followed by a property path (`[ :p ?o ] :a/:b ?c`) is no longer reported as a syntax error.
+
+Known incompatibility: a `<` comparison written without a space before a full IRI, such as `FILTER(?o<<http://example.org/a>)`, is now reported as a syntax error. SPARQL 1.2 reads `<<` as a single token (the longest match wins), so a SPARQL 1.2 parser rejects this query as well. Add a space to fix it: `FILTER(?o < <http://example.org/a>)`.

@@ -316,6 +316,10 @@ const sparql11Queries: TestCase[] = [
     query: `${PREFIXES}SELECT * WHERE {?s ?p ?o FILTER(?o>3) FILTER((?o)>(?s)) FILTER(?o>=1||?o<=0) FILTER(?o<?s)}`,
   },
   {
+    name: "comparison with a full IRI, separated by a space",
+    query: `${PREFIXES}SELECT * WHERE { ?s ?p ?o FILTER(?o < <http://example.org/a>) FILTER(<http://example.org/a>>?o) }`,
+  },
+  {
     name: "property paths",
     query: `${PREFIXES}SELECT * WHERE {
   ?s :p|:q ?a .
@@ -532,6 +536,12 @@ VERSION "1.2"`,
   {
     name: "language tag with an empty base direction",
     query: `${PREFIXES}SELECT * WHERE { ?s :label "hello"@en-- . }`,
+    errorLine: 4,
+  },
+  {
+    // Known incompatibility with SPARQL 1.1: the longest match '<<' is a single token in SPARQL 1.2
+    name: "'<' directly followed by a full IRI",
+    query: `${PREFIXES}SELECT * WHERE { ?s ?p ?o FILTER(?o<<http://example.org/a>) }`,
     errorLine: 4,
   },
 ];
