@@ -8,4 +8,4 @@ js_vars([
 ]).
 
 :-reconsult(gen_ll1).
-:-reconsult('../sparql11-grammar.pl').
+:-reconsult('../sparql-grammar.pl').
