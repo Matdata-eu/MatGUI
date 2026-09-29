@@ -8,7 +8,7 @@ stephen.cresswell@tso.co.uk
 
 
 ebnf_to_bnf:-
-	retractall(_=>_),
+	retractall(bnf(_,_)),
 	remember(change),
 	rewrite_until_stable.
 
@@ -21,9 +21,9 @@ rewrite_until_stable:-
 rewrite_until_stable.
 
 rewrite_any:-
-	LHS==>RHS0,
+	ebnf(LHS,RHS0),
 	rewrite(RHS0,RHS1),
-	remember(LHS=>RHS1),
+	remember(bnf(LHS,RHS1)),
 	fail.
 rewrite_any.
 
@@ -31,29 +31,29 @@ rewrite_any.
 *(A) ===> A_star :-
 	atom(A),
 	format(atom(A_star),"*~w",[A]),
-	remember(A_star=>[]),
-	remember(A_star=>[A,A_star]).
+	remember(bnf(A_star,[])),
+	remember(bnf(A_star,[A,A_star])).
 
 +(A) ===> A_plus :-
 	atom(A),
 	format(atom(A_plus),"+~w",[A]),
-	remember(A_plus==>[A,*(A)]). % Assert as EBNF - requires further wrangling
+	remember(ebnf(A_plus,[A,*(A)])). % Assert as EBNF - requires further wrangling
 
 ?(A) ===> A_qm :-
 	atom(A),
 	format(atom(A_qm),"?~w",[A]),
-	remember(A_qm=>[]),
-	remember(A_qm=>[A]).
+	remember(bnf(A_qm,[])),
+	remember(bnf(A_qm,[A])).
 
 +A \ B ===> A_or_B :-
 	format(atom(A_or_B),"(~w or ~w)",[A,B]),
-	remember(A_or_B=>[A]),
-	remember(A_or_B=>[B]).
+	remember(bnf(A_or_B,[A])),
+	remember(bnf(A_or_B,[B])).
 
 List ===> ListAtom :-
 	List = [_|_],
 	format(atom(ListAtom),"~w",[List]),
-	remember(ListAtom=>List).
+	remember(bnf(ListAtom,List)).
 
 OrExpr ===> ListAtom :-
 	OrExpr =.. [or|Args],
@@ -62,7 +62,7 @@ OrExpr ===> ListAtom :-
 
 map_disjuncts([],_).
 map_disjuncts([D|Ds],Head):-
-	remember(Head=>[D]),
+	remember(bnf(Head,[D])),
 	map_disjuncts(Ds,Head).
 
 % Apply rewrite rules starting from inside outwards

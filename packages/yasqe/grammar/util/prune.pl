@@ -11,14 +11,14 @@
 prune_for_top_symbol:-
 	top_symbol(Top),
 	reachable_syms(Top,NTs,_Ts),
-        findall(NT,(NT=>_RHS,\+memberchk(NT,NTs)),UnreachableNTs0),
+        findall(NT,(bnf(NT,_RHS),\+memberchk(NT,NTs)),UnreachableNTs0),
         sort(UnreachableNTs0,UnreachableNTs),
         delete_NTs(UnreachableNTs).
 
 delete_NTs([]).
 delete_NTs([NT|NTs]):-
 	format('Removing unreachable nonterminal ~w~n',[NT]),
-	retractall(NT=>_),
+	retractall(bnf(NT,_)),
 	delete_NTs(NTs).
 
 reachable_syms(Top,NTs,Ts):-
@@ -29,13 +29,13 @@ reachable_syms(Top,NTs,Ts):-
 	
 reachable([],_,_):-!.
 reachable([NT|NTs1],NTs0,Ts):-
-	once(findall(A,(NT=>RHS,member(A,RHS)),As)),
+	once(findall(A,(bnf(NT,RHS),member(A,RHS)),As)),
 	includes_rhs(As,NTs0,Ts),
 	reachable(NTs1,NTs0,Ts).
 
 includes_rhs([],_,_).
 includes_rhs([A|As],NTs0,Ts):-
-	A=>_,!,
+	bnf(A,_),!,
 	% Non-terminal
 	memberchk(A,NTs0),
 	includes_rhs(As,NTs0,Ts).

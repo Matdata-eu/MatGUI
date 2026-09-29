@@ -2,10 +2,10 @@
 */
 
 output_table_js:-
-	write('module.exports = {table:'),nl,
-	setof(LHS, RHS^(LHS=>RHS), NTs),
+	write('export const table = '),
+	setof(LHS, RHS^bnf(LHS,RHS), NTs),
 	form_table(NTs,'{'),
-	nl,write('},').
+	nl,write('};'),nl.
 
 output_terminals_js:-
 	nl,nl,write('var terminal=['),nl,
@@ -18,15 +18,15 @@ output_terminals_js:-
 output_keywords_js:-
 	tm_keywords(Ps),
 	findall(Reg,member(Reg,Ps),Regs),
-	nl,nl,write('keywords:/^('),
+	nl,nl,write('export const keywords = /^('),
 	output_as_regex_disj(Regs,''),
-	write(')/i ,'),nl.
+	write(')/i;'),nl.
 output_punct_js:-
 	tm_punct(Ps),
 	findall(Reg,member(_=Reg,Ps),Regs),
-	nl,write('punct:/^('),
+	nl,write('export const punct = /^('),
 	output_as_regex_disj(Regs,''),
-	write(')/ ,'),nl,nl.
+	write(')/;'),nl,nl.
 output_top_symbol_js:-
 	start_symbol(TS),
 	format('startSymbol:"~w";~n',[TS]).
@@ -42,7 +42,7 @@ output_accept_empty_js:-
 
 output_vars_js([]).
 output_vars_js([Var=Val|Pairs]):-
-	format('~w:~w,~n',[Var,Val]),
+	format('export const ~w = ~w;~n',[Var,Val]),
 	output_vars_js(Pairs).
 
 output_as_regex_disj([],_).
