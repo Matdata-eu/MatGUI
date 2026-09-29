@@ -43,6 +43,13 @@ export interface State {
   pendingToken: Token | undefined;
   bracketStack: Array<{ type: string; level: number }>;
   bracketLevel: number;
+  /**
+   * One entry per predicate (verb) of a triple pattern in a WHERE clause whose object list is still
+   * being parsed. `complex` is set when the predicate is not a simple path (IRI, 'a' or a variable),
+   * in which case SPARQL 1.2 disallows reifiers and annotations. `depth` is the parser stack depth
+   * below the object list, or undefined while the predicate itself is being parsed.
+   */
+  verbPaths: Array<{ complex: boolean; depth: number | undefined }>;
 }
 export interface Token {
   quotePos: "end" | "start" | "content" | undefined;
@@ -96,6 +103,7 @@ export function copyState(s: State): State {
     whereVariables: { ...s.whereVariables },
     pendingToken: s.pendingToken ? { ...s.pendingToken } : undefined,
     bracketStack: s.bracketStack.map((b) => ({ ...b })),
+    verbPaths: s.verbPaths.map((v) => ({ ...v })),
   };
 }
 
@@ -123,7 +131,8 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
   const BLANK_NODE_LABEL = "_:(" + PN_CHARS_U + "|[0-9])((" + PN_CHARS + "|\\.)*" + PN_CHARS + ")?";
   const PNAME_NS = "(" + PN_PREFIX + ")?:";
   const PNAME_LN = PNAME_NS + PN_LOCAL;
-  const LANGTAG = "@[a-zA-Z]+(-[a-zA-Z0-9]+)*";
+  // Language tag with optional (SPARQL 1.2) base direction, e.g. @en-US or @ar--rtl
+  const LANG_DIR = "@[a-zA-Z]+(-[a-zA-Z0-9]+)*(--[a-zA-Z]+)?";
 
   const EXPONENT = "[eE][\\+-]?[0-9]+";
   const INTEGER = "[0-9]+";
@@ -250,8 +259,8 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
     },
 
     {
-      name: "LANGTAG",
-      regex: new RegExp("^" + LANGTAG),
+      name: "LANG_DIR",
+      regex: new RegExp("^" + LANG_DIR),
       style: "meta",
     },
 
@@ -611,9 +620,47 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
         (state.allowBnodes ||
           (topSymbol != "blankNode" &&
             topSymbol != "blankNodePropertyList" &&
-            topSymbol != "blankNodePropertyListPath"))
+            topSymbol != "blankNodePropertyListPath")) &&
+        !violatesSimplePathCondition(topSymbol)
       );
     }
+
+    function currentVerbPath() {
+      return state.verbPaths[state.verbPaths.length - 1];
+    }
+
+    // Call after popping a symbol from the parser stack: once the symbol directly below an object
+    // list has been popped, that object list (and its predicate) has been fully parsed
+    function pruneVerbPaths() {
+      let top = currentVerbPath();
+      while (top && top.depth !== undefined && state.stack.length < top.depth) {
+        state.verbPaths.pop();
+        top = currentVerbPath();
+      }
+    }
+
+    // SPARQL 1.2: a reifier or annotation is only allowed after a triple whose predicate is a simple path
+    function violatesSimplePathCondition(topSymbol: string) {
+      if (topSymbol !== "pathReifier" && topSymbol !== "annotationBlockPath") return false;
+      const verbPath = currentVerbPath();
+      if (verbPath && verbPath.complex) {
+        state.errorMsg =
+          "Reifiers and annotations are only allowed after a triple whose predicate is an IRI, 'a' or a variable, not a property path";
+        return true;
+      }
+      return false;
+    }
+
+    // Keep track of predicates in property lists that allow property paths (see State.verbPaths)
+    function trackVerbPath(topSymbol: string, rhsLength: number) {
+      if (topSymbol === "verbPath" || topSymbol === "verbSimple") {
+        state.verbPaths.push({ complex: false, depth: undefined });
+      } else if (topSymbol === "objectListPath") {
+        const verbPath = currentVerbPath();
+        if (verbPath && verbPath.depth === undefined) verbPath.depth = state.stack.length - rhsLength;
+      }
+    }
+    const complexPathTokens = ["/", "|", "^", "!", "(", "*", "?", "+", "{"];
 
     // CodeMirror works with one line at a time,
     // but newline should behave like whitespace
@@ -659,6 +706,7 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
       // Incremental LL1 parse
       while (state.stack.length > 0 && tokenCat && state.OK && !finished) {
         topSymbol = state.stack.pop();
+        pruneVerbPaths();
         if (topSymbol === "var" && tokenOb.string) {
           state.variables[tokenOb.string] = tokenOb.string;
           // Track variables separately for CONSTRUCT template validation
@@ -687,10 +735,15 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
             // - consume token from input stream
             finished = true;
             setQueryType(topSymbol);
+            const verbPath = currentVerbPath();
+            if (verbPath && verbPath.depth === undefined && complexPathTokens.indexOf(tokenCat) >= 0) {
+              verbPath.complex = true;
+            }
             // Check whether $ (end of input token) is poss next
             // for everything on stack
             var allNillable = true;
             for (var sp = state.stack.length; sp > 0; --sp) {
+              if (state.stack[sp - 1] === "$") continue; // the end-of-input marker itself
               const item = ll1_table[state.stack[sp - 1]];
               if (!item || !item["$"]) allNillable = false;
             }
@@ -738,6 +791,7 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
             }
             // Peform any non-grammatical side-effects
             setSideConditions(topSymbol);
+            trackVerbPath(topSymbol, nextSymbols.length);
           } else {
             // No match in table - fail
             state.OK = false;
@@ -805,11 +859,19 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
     "}": 1,
     "]": 1,
     ")": 1,
+    "|}": 1,
+    ">>": 1,
+    ")>>": 1,
     "{": -1,
     "(": -1,
     "[": -1,
+    "{|": -1,
+    "<<": -1,
+    "<<(": -1,
     //		"*[;,?[or([verbPath,verbSimple]),objectList]]": 1,
   };
+
+  const closingBracketRegex = /^(\|\}|\)>>|>>|[\}\]\)])/;
 
   function indent(state: State, textAfter: string, indentUnit: number) {
     //just avoid we don't indent multi-line  literals
@@ -824,9 +886,10 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
     } else {
       var n = 0; // indent level
       var i = state.stack.length - 1;
-      if (/^[\}\]\)]/.test(textAfter)) {
+      const closeMatch = closingBracketRegex.exec(textAfter);
+      if (closeMatch) {
         // Skip stack items until after matching bracket
-        const closeBracket = textAfter.substr(0, 1);
+        const closeBracket = closeMatch[1];
         for (; i >= 0; --i) {
           if (state.stack[i] == closeBracket) {
             --i;
@@ -859,7 +922,7 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
       indent(state, textAfter, context.unit ?? config.indentUnit ?? 2),
     languageData: {
       commentTokens: { line: "#" },
-      indentOnInput: /^\s*[\}\]\)]$/,
+      indentOnInput: /^\s*(\|\}|\)>>|>>|[\}\]\)])$/,
       closeBrackets: { brackets: ["(", "[", "{", "'", '"'] },
     },
     startState: function (): State {
@@ -893,6 +956,7 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
         pendingToken: undefined,
         bracketStack: [],
         bracketLevel: 0,
+        verbPaths: [],
       };
     },
   };
