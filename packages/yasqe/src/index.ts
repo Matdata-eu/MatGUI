@@ -22,7 +22,7 @@ import type { ExtraKeys } from "./editor/keymap";
 import type { HintFn, HintList } from "./editor/autocompletion";
 import { isCompletionActive, openCompletion, hideCompletion } from "./editor/autocompletion";
 import { YasqeAjaxConfig } from "./sparql";
-import { spfmt } from "sparql-formatter";
+import { spfmt } from "@matdata/sparql-formatter";
 import * as L from "leaflet";
 import { coordinatesToWkt, wrapWktLiteral, WktCoordinate, WktGeometryType } from "./mapWidget";
 

@@ -45,11 +45,11 @@
     "@codemirror/state": "^6.7.2",
     "@codemirror/view": "^6.43.10",
     "@lezer/highlight": "^1.2.3",
+    "@matdata/sparql-formatter": "^1.0.0",
     "@matdata/yasgui-utils": "^4.6.1",
     "leaflet": "^1.9.4",
     "lodash-es": "^4.17.15",
-    "query-string": "^6.10.1",
-    "sparql-formatter": "^1.0.2"
+    "query-string": "^6.10.1"
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.21",

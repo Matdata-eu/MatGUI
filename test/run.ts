@@ -177,6 +177,29 @@ SELECT * WHERE {
       expect(value.split("\n").length).to.be.greaterThan(3);
     });
 
+    it("Should format SPARQL 1.2 and keep comments in place", async function () {
+      const value = await page.evaluate(() => {
+        if (window.yasqe.persistentConfig) window.yasqe.persistentConfig.formatterType = "sparql-formatter";
+        window.yasqe.setValue(
+          `SELECT * WHERE { :a :b :c ~:r {| :source ?src |} . << :s :p :o >> :q ?x . GRAPH ?g {\n# inside the graph\n} }`,
+        );
+        window.yasqe.formatQuery();
+        return window.yasqe.getValue();
+      });
+      expect(value).to.equal(
+        [
+          "SELECT *",
+          "WHERE {",
+          "  :a :b :c ~ :r {| :source ?src |} .",
+          "  << :s :p :o >> :q ?x .",
+          "  GRAPH ?g {",
+          "    # inside the graph",
+          "  }",
+          "}",
+        ].join("\n"),
+      );
+    });
+
     it("Should format with legacy formatter when selected", async function () {
       const value = await page.evaluate(() => {
         // Set formatter type to legacy
