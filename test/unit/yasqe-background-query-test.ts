@@ -134,4 +134,48 @@ describe("Yasqe background query execution", () => {
       globalThis.fetch = originalFetch;
     }
   });
+
+  it("omits the tab's graph arguments when skipGraphArgs is set", async () => {
+    const originalFetch = globalThis.fetch;
+    const bodies: string[] = [];
+
+    try {
+      globalThis.fetch = async (input: any) => {
+        bodies.push(await (input as Request).text());
+        return new Response('{"head":{"vars":[]},"results":{"bindings":[]}}', {
+          status: 200,
+          headers: { "Content-Type": "application/sparql-results+json" },
+        });
+      };
+
+      const yasqeMock = {
+        config: { requestConfig: {} },
+        emit: () => true,
+        getQueryMode: () => "query",
+        getQueryType: () => "SELECT",
+        getValue: () => "SELECT * WHERE { ?s ?p ?o } LIMIT 1",
+      } as any;
+      const config = {
+        endpoint: "https://example.org/sparql",
+        method: "POST",
+        queryArgument: "query",
+        acceptHeaderSelect: "application/sparql-results+json",
+        defaultGraphs: ["https://example.org/g1"],
+        namedGraphs: ["https://example.org/g2"],
+      } as any;
+
+      await executeQuery(yasqeMock, config, { customQuery: "ASK {}", silent: true });
+      await executeQuery(yasqeMock, config, { customQuery: "ASK {}", silent: true, skipGraphArgs: true });
+
+      const withGraphs = new URLSearchParams(bodies[0]);
+      const withoutGraphs = new URLSearchParams(bodies[1]);
+      expect(withGraphs.get("default-graph-uri")).to.equal("https://example.org/g1");
+      expect(withGraphs.get("named-graph-uri")).to.equal("https://example.org/g2");
+      expect(withoutGraphs.get("default-graph-uri")).to.equal(null);
+      expect(withoutGraphs.get("named-graph-uri")).to.equal(null);
+      expect(withoutGraphs.get("query")).to.equal("ASK {}");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
 });

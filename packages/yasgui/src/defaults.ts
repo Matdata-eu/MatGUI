@@ -31,6 +31,12 @@ export default function initialize(): Config<CatalogueItem> {
     showThemeToggle: true,
     orientation: "vertical",
     showSnippetsBar: true,
+    endpointDescribe: {
+      enabled: true,
+      timeoutMs: 60000,
+      maxConcurrentQueries: 2,
+      fetchMetadata: true,
+    },
     endpointButtons: undefined,
     endpointCatalogueOptions: {
       getData: () => {

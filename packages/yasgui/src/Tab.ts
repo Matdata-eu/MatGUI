@@ -458,6 +458,13 @@ export class Tab extends EventEmitter {
       }
     }
 
+    // F8 - Toggle the endpoint describe panel
+    if (event.key === "F8" && this.yasgui.endpointDescribe) {
+      event.preventDefault();
+      this.yasgui.endpointDescribe.toggle();
+      return;
+    }
+
     // F11 - Toggle Yasqe fullscreen
     if (event.key === "F11") {
       event.preventDefault();
@@ -1580,6 +1587,37 @@ export class Tab extends EventEmitter {
     // Note: void operator is intentional - errors are handled in the catch block of executeBackgroundQuery
     void this.executeBackgroundQuery(constructQuery);
   };
+
+  /**
+   * Execute a SPARQL query against this tab's endpoint without touching the editor or the results view.
+   * The request configuration and authentication of the tab are used.
+   */
+  public async runBackgroundQuery(
+    query: string,
+    options: { accept?: string; signal?: AbortSignal; skipGraphArgs?: boolean } = {},
+  ): Promise<any> {
+    if (!this.yasqe) throw new Error("No yasqe editor initialized");
+    const tokenValid = await this.ensureOAuth2TokenValid();
+    if (!tokenValid) throw new Error("OAuth 2.0 authentication failed");
+    return Yasqe.Sparql.executeQuery(this.yasqe, undefined, {
+      customQuery: query,
+      customAccept: options.accept,
+      signal: options.signal,
+      silent: true,
+      skipGraphArgs: options.skipGraphArgs,
+    });
+  }
+
+  /**
+   * Request headers (including authentication) and credentials mode used for requests to this tab's endpoint.
+   */
+  public async getRequestInit(): Promise<{ headers: { [key: string]: string }; withCredentials: boolean } | undefined> {
+    if (!this.yasqe) return undefined;
+    await this.ensureOAuth2TokenValid();
+    const ajaxConfig = Yasqe.Sparql.getAjaxConfig(this.yasqe);
+    if (!ajaxConfig) return undefined;
+    return { headers: { ...(ajaxConfig.headers || {}) }, withCredentials: ajaxConfig.withCredentials };
+  }
 
   private async executeBackgroundQuery(query: string) {
     if (!this.yasqe || !this.yasr) return;

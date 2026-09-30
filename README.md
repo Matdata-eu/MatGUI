@@ -57,6 +57,7 @@ Matgui provides a complete SPARQL development environment with powerful features
 - **[Query Formatting](https://github.com/Matdata-eu/Matgui/blob/main/docs/user-guide.md#query-formatting)** - One-click query beautification with configurable formatters
 - **[Prefix Management](https://github.com/Matdata-eu/Matgui/blob/main/docs/user-guide.md#prefix-management)** - Auto-capture and reuse PREFIX declarations
 - **[URI Explorer](https://github.com/Matdata-eu/Matgui/blob/main/docs/user-guide.md#uri-explorer)** - Ctrl+Click URIs to explore connections
+- **[Endpoint Overview](https://github.com/Matdata-eu/Matgui/blob/main/docs/user-guide.md#endpoint-overview)** - Explore an unfamiliar endpoint: service description, VoID and overview queries (classes, properties, graphs, languages, links, geo) in a side panel
 - **[Keyboard Shortcuts](https://github.com/Matdata-eu/Matgui/blob/main/docs/user-guide.md#keyboard-shortcuts)** - Efficient query development workflow
 
 ### 📊 Powerful Visualizations
@@ -248,6 +249,7 @@ const yasgui = new Yasgui(document.getElementById('yasgui'), {
   theme: 'dark',                           // 'light' or 'dark'
   orientation: 'horizontal',               // 'horizontal' or 'vertical'
   showSnippetsBar: true,                   // Show code snippets
+  endpointDescribe: { enabled: true },     // "Describe endpoint" panel (F8)
   
   // Persistence
   persistenceId: 'my-yasgui-instance',     // Custom storage ID
