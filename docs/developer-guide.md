@@ -56,6 +56,7 @@ This comprehensive guide covers everything developers need to know to integrate,
     - [Examples](#examples)
     - [Security Best Practices](#security-best-practices)
   - [Endpoint Buttons Configuration](#endpoint-buttons-configuration)
+  - [Endpoint Describe Configuration](#endpoint-describe-configuration)
   - [Theme Configuration](#theme-configuration)
 - [API Reference](#api-reference)
   - [Yasgui Class](#yasgui-class)
@@ -69,6 +70,7 @@ This comprehensive guide covers everything developers need to know to integrate,
       - [`setTheme(theme: 'light' | 'dark'): void`](#setthemetheme-light--dark-void)
       - [`getTheme(): 'light' | 'dark'`](#gettheme-light--dark)
       - [`toggleTheme(): 'light' | 'dark'`](#toggletheme-light--dark)
+      - [`endpointDescribe: EndpointDescribePanel | undefined`](#endpointdescribe-endpointdescribepanel--undefined)
   - [Tab Class](#tab-class)
     - [Methods](#methods-1)
       - [`getName(): string`](#getname-string)
@@ -79,6 +81,8 @@ This comprehensive guide covers everything developers need to know to integrate,
       - [`query(): Promise<void>`](#query-promisevoid)
       - [`setQuery(query: string): void`](#setqueryquery-string-void)
       - [`getQuery(): string`](#getquery-string)
+      - [`runBackgroundQuery(query: string, options?): Promise<any>`](#runbackgroundqueryquery-string-options-promiseany)
+      - [`getRequestInit(): Promise<{ headers, withCredentials } | undefined>`](#getrequestinit-promise-headers-withcredentials---undefined)
   - [Yasqe Class](#yasqe-class)
     - [Methods](#methods-2)
       - [`getValue(): string`](#getvalue-string)
@@ -689,6 +693,9 @@ interface Config {
 
   // Layout orientation: 'vertical' or 'horizontal'
   orientation?: 'vertical' | 'horizontal';  // default: 'vertical'
+
+  // "Describe endpoint" panel (see Endpoint Describe Configuration)
+  endpointDescribe: EndpointDescribeConfig;
 }
 ```
 
@@ -1955,6 +1962,81 @@ You can customize button appearance using CSS variables:
 }
 ```
 
+### Endpoint Describe Configuration
+
+The **Endpoint overview** panel shows the SPARQL service description and VoID description of the current endpoint, and a set of predefined overview queries (classes, properties, named graphs, languages, links, time and geo). Results are cached per endpoint under their own localStorage key (`<persistenceId>_endpointDescribe`), separately from the main configuration.
+
+```typescript
+interface EndpointDescribeConfig {
+  // Show the "Describe endpoint" button and panel
+  enabled: boolean;  // default: true
+
+  // Replace or extend the default describe queries
+  queries?: DescribeQuery[] | ((defaults: DescribeQuery[]) => DescribeQuery[]);
+
+  // Replace or extend the default categories
+  categories?: DescribeCategory[] | ((defaults: DescribeCategory[]) => DescribeCategory[]);
+
+  // Timeout of a single describe query, in milliseconds
+  timeoutMs: number;  // default: 60000
+
+  // Maximum number of describe queries running at the same time
+  maxConcurrentQueries: number;  // default: 2
+
+  // Fetch the service description and VoID when the panel opens
+  fetchMetadata: boolean;  // default: true
+}
+
+interface DescribeQuery {
+  id: string;
+  category: string;  // id of a DescribeCategory
+  label: string;
+  description?: string;
+  // SPARQL SELECT query, or a function that builds it (use ctx.limit and ctx.offset for paginated queries)
+  query: string | ((ctx: { limit: number; offset: number; getResult: (queryId: string) => any }) => string);
+  paginated?: boolean;  // show "Load more"
+  pageSize?: number;  // default: 25
+  expensive?: boolean;  // show a "may be slow" hint
+  dependsOn?: string;  // id of a query whose results are needed to build this one
+}
+
+interface DescribeCategory {
+  id: string;
+  label: string;
+  icon: string;  // Font Awesome icon class, e.g. "fa-train"
+}
+```
+
+**Example**: add a category with endpoint specific queries:
+
+```javascript
+const yasgui = new Yasgui(document.getElementById("yasgui"), {
+  endpointDescribe: {
+    categories: (defaults) => [
+      ...defaults,
+      { id: "railway", label: "Railway infrastructure", icon: "fa-train" },
+    ],
+    queries: (defaults) => [
+      ...defaults,
+      {
+        id: "operational-points",
+        category: "railway",
+        label: "Operational points per country",
+        query: `PREFIX era: <http://data.europa.eu/949/>
+SELECT ?country (COUNT(?op) AS ?operationalPoints) WHERE {
+  ?op a era:OperationalPoint ; era:inCountry ?country .
+}
+GROUP BY ?country
+ORDER BY DESC(?operationalPoints)
+LIMIT 50`,
+      },
+    ],
+  },
+});
+```
+
+Disable the panel with `endpointDescribe: { enabled: false }`. The panel can also be controlled programmatically through `yasgui.endpointDescribe` (`open()`, `close()`, `toggle()`, `collapse()`, `setPinned(pinned)`, `runQuery(queryId)`).
+
 ### Theme Configuration
 
 YASGUI supports both light and dark themes with comprehensive customization options.
@@ -2152,6 +2234,18 @@ const newTheme = yasgui.toggleTheme();
 console.log('Switched to:', newTheme);
 ```
 
+##### `endpointDescribe: EndpointDescribePanel | undefined`
+
+The endpoint overview panel (see [Endpoint Describe Configuration](#endpoint-describe-configuration)). It is `undefined` when the panel is disabled with `endpointDescribe: { enabled: false }`.
+
+```javascript
+yasgui.endpointDescribe?.open();            // open (or expand) the panel
+yasgui.endpointDescribe?.setPinned(true);   // keep it open, also after a reload
+await yasgui.endpointDescribe?.runQuery("classes"); // run a describe query for the current endpoint
+yasgui.endpointDescribe?.collapse();        // collapse it to a thin bar
+yasgui.endpointDescribe?.close();
+```
+
 ### Tab Class
 
 Represents a query tab.
@@ -2225,6 +2319,32 @@ Get the current query.
 ```javascript
 const query = tab.getQuery();
 console.log('Current query:', query);
+```
+
+##### `runBackgroundQuery(query: string, options?): Promise<any>`
+
+Execute a SPARQL query against the tab's endpoint without changing the editor or the results view. The tab's request configuration and authentication are used (an expired OAuth 2.0 token is refreshed first) and no query events are emitted. Rejects on HTTP errors.
+
+Options: `accept` (Accept header), `signal` (an `AbortSignal`) and `skipGraphArgs` (don't send the tab's default/named graphs).
+
+```javascript
+const response = await tab.runBackgroundQuery("SELECT (COUNT(*) AS ?n) WHERE { ?s ?p ?o }", {
+  accept: "application/sparql-results+json",
+  skipGraphArgs: true,
+});
+const count = JSON.parse(response.content).results.bindings[0].n.value;
+```
+
+##### `getRequestInit(): Promise<{ headers, withCredentials } | undefined>`
+
+Get the request headers (including authentication headers) and credentials mode used for requests to the tab's endpoint, for example to fetch other resources from the same server.
+
+```javascript
+const init = await tab.getRequestInit();
+const response = await fetch(tab.getEndpoint(), {
+  headers: { ...init.headers, Accept: "text/turtle" },
+  credentials: init.withCredentials ? "include" : "same-origin",
+});
 ```
 
 ### Yasqe Class

@@ -18,6 +18,7 @@ import "@matdata/yasgui-graph-plugin/dist/yasgui-graph-plugin.min.css";
 import "@matdata/yasgui-table-plugin/dist/yasgui-table-plugin.min.css";
 import { ThemeManager, Theme } from "./ThemeManager";
 import QueryBrowser from "./queryManagement/QueryBrowser";
+import EndpointDescribePanel, { EndpointDescribeConfig } from "./endpointDescribe/EndpointDescribePanel";
 import "./index.scss";
 import "./themes.scss";
 import "./github-dark-theme.scss";
@@ -109,6 +110,10 @@ export interface Config<EndpointObject extends CatalogueItem = CatalogueItem> {
    * Show code snippets bar in all tabs (global setting)
    */
   showSnippetsBar?: boolean;
+  /**
+   * "Describe endpoint" panel: service description, VoID and overview queries of the current endpoint
+   */
+  endpointDescribe: EndpointDescribeConfig;
 }
 export type PartialConfig = {
   [P in keyof Config]?: Config[P] extends object ? Partial<Config[P]> : Config[P];
@@ -157,6 +162,8 @@ export class Yasgui extends EventEmitter {
   public persistentConfig: PersistentConfig;
   public themeManager: ThemeManager;
   public queryBrowser: QueryBrowser;
+  public endpointDescribe: EndpointDescribePanel | undefined;
+  public mainEl: HTMLDivElement;
   private recentTabIds: string[] = [];
   private navigationSnapshot: string[] | null = null;
   private navigationCursor = 0;
@@ -194,6 +201,11 @@ export class Yasgui extends EventEmitter {
 
     this.tabElements = new TabElements(this);
     this.tabPanelsEl = document.createElement("div");
+    addClass(this.tabPanelsEl, "yasgui-tabPanels");
+    // Tab panels and the docked endpoint describe panel sit side by side
+    this.mainEl = document.createElement("div");
+    addClass(this.mainEl, "yasgui-main");
+    this.mainEl.appendChild(this.tabPanelsEl);
 
     this.queryBrowser = new QueryBrowser(this);
     this.on("tabClose", (_yasgui, tab) => {
@@ -201,7 +213,7 @@ export class Yasgui extends EventEmitter {
     });
 
     this.rootEl.appendChild(this.tabElements.drawTabsList());
-    this.rootEl.appendChild(this.tabPanelsEl);
+    this.rootEl.appendChild(this.mainEl);
     this.rootEl.appendChild(this.queryBrowser.getElement());
     let executeIdAfterInit: string | undefined;
     let optionsFromUrl: PersistedTabJson | undefined;
@@ -258,6 +270,10 @@ export class Yasgui extends EventEmitter {
         }
         // }
       }
+    }
+    if (this.config.endpointDescribe?.enabled) {
+      this.endpointDescribe = new EndpointDescribePanel(this);
+      this.mainEl.appendChild(this.endpointDescribe.getElement());
     }
   }
   public hasFullscreen(fullscreen: boolean) {
@@ -503,6 +519,7 @@ export class Yasgui extends EventEmitter {
   }
   public destroy() {
     this.removeAllListeners();
+    this.endpointDescribe?.destroy();
     this.tabElements.destroy();
     for (const tabId in this._tabs) {
       const tab = this._tabs[tabId];

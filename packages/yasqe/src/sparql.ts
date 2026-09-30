@@ -181,7 +181,22 @@ export interface ExecuteQueryOptions {
    * Useful for background/plugin-driven queries that should not update main UI state.
    */
   silent?: boolean;
+  /**
+   * Do not send the default/named graph arguments configured for the tab.
+   * Useful for queries that should describe the whole endpoint.
+   */
+  skipGraphArgs?: boolean;
 }
+
+const GRAPH_ARG_NAMES = [
+  "default-graph-uri",
+  "named-graph-uri",
+  "using-graph-uri",
+  "using-named-graph-uri",
+  // getUrlArguments uses these (trailing space) names for update queries
+  "using-graph-uri ",
+  "using-named-graph-uri ",
+];
 
 export async function executeQuery(
   yasqe: Yasqe,
@@ -256,10 +271,10 @@ export async function executeQuery(
       searchParams.append("query", options.customQuery);
 
       // Add other args except the query/update parameter
-      appendArgsToParams(populatedConfig.args, ["query", "update"]);
+      appendArgsToParams(populatedConfig.args, ["query", "update", ...(options.skipGraphArgs ? GRAPH_ARG_NAMES : [])]);
     } else {
       // Add all args from config
-      appendArgsToParams(populatedConfig.args);
+      appendArgsToParams(populatedConfig.args, options?.skipGraphArgs ? GRAPH_ARG_NAMES : []);
     }
 
     if (populatedConfig.reqMethod === "POST") {

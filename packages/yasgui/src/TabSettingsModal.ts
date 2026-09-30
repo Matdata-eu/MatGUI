@@ -99,6 +99,17 @@ export default class TabSettingsModal {
     controlBarEl.appendChild(this.mapButton);
     this.mapButton.onclick = (event: MouseEvent) => this.openMapWidget(event);
 
+    // Describe endpoint button
+    if (this.tab.yasgui.config.endpointDescribe?.enabled) {
+      const describeButton = document.createElement("button");
+      describeButton.setAttribute("aria-label", "Describe endpoint");
+      describeButton.title = "Describe endpoint (F8)";
+      describeButton.innerHTML = '<i class="fas fa-magnifying-glass-chart"></i>';
+      addClass(describeButton, "tabContextButton", "describeEndpointButton", "desktopOnly");
+      describeButton.onclick = () => this.tab.yasgui.endpointDescribe?.toggle();
+      controlBarEl.appendChild(describeButton);
+    }
+
     // Hamburger menu button and dropdown (mobile only)
     const hamburgerContainer = document.createElement("div");
     addClass(hamburgerContainer, "hamburgerContainer", "mobileOnly");
@@ -166,6 +177,17 @@ export default class TabSettingsModal {
       this.closeHamburgerMenu();
     };
     this.hamburgerDropdown.appendChild(mapItem);
+
+    if (this.tab.yasgui.config.endpointDescribe?.enabled) {
+      const describeItem = document.createElement("button");
+      addClass(describeItem, "hamburgerMenuItem");
+      describeItem.innerHTML = '<i class="fas fa-magnifying-glass-chart"></i><span>Describe endpoint</span>';
+      describeItem.onclick = () => {
+        this.tab.yasgui.endpointDescribe?.toggle();
+        this.closeHamburgerMenu();
+      };
+      this.hamburgerDropdown.appendChild(describeItem);
+    }
 
     // Theme toggle menu item (if enabled)
     if (this.tab.yasgui.config.showThemeToggle) {
