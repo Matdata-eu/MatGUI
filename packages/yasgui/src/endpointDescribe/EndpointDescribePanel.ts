@@ -613,7 +613,8 @@ export default class EndpointDescribePanel {
     if (term.type === "bnode") return document.createTextNode(`_:${term.value}`);
     const value = term.value;
     const span = el("span", "yasgui-describe__literal");
-    span.textContent = /^-?\d{4,}$/.test(value) ? Number(value).toLocaleString() : value;
+    const isYear = term.datatype === "http://www.w3.org/2001/XMLSchema#gYear";
+    span.textContent = !isYear && /^-?\d{4,}$/.test(value) ? Number(value).toLocaleString() : value;
     if (term["xml:lang"]) span.appendChild(el("span", "yasgui-describe__lang", `@${term["xml:lang"]}`));
     return span;
   }
