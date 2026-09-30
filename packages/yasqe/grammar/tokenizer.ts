@@ -50,6 +50,8 @@ export interface State {
    * below the object list, or undefined while the predicate itself is being parsed.
    */
   verbPaths: Array<{ complex: boolean; depth: number | undefined }>;
+  /** Whether an annotation block at this point would be preceded by an explicit reifier (~ id) */
+  annotationHasReifier: boolean;
 }
 export interface Token {
   quotePos: "end" | "start" | "content" | undefined;
@@ -110,9 +112,9 @@ export function copyState(s: State): State {
 export default function (config: TokenizerConfig = {}): StreamParser<State> {
   const ll1_table = grammar.table;
 
-  const IRI_REF = '<[^<>"`|{}^\\\x00-\x20]*>';
+  // The last alternative is [#x10000-#xEFFFF], i.e. a UTF-16 surrogate pair
   const PN_CHARS_BASE =
-    "[A-Za-z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD]";
+    "(?:[A-Za-z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD]|[\\uD800-\\uDB7F][\\uDC00-\\uDFFF])";
   const PN_CHARS_U = PN_CHARS_BASE + "|_";
 
   const PN_CHARS = "(" + PN_CHARS_U + "|-|[0-9\\u00B7\\u0300-\\u036F\\u203F-\\u2040])";
@@ -153,8 +155,12 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
   //unicode escape sequences (which the sparql spec considers part of the pre-processing of sparql queries)
   //are marked as invalid. We have little choice (other than adding a layer of complixity) than to modify the grammar accordingly
   //however, for now only allow these escape sequences in literals (where actually, this should be allows in e.g. prefixes as well)
+  //Escape sequences may not encode surrogate code points (U+D800 - U+DFFF), not even as a pair
   const hex4 = HEX + "{4}";
-  const unicode = "(\\\\u" + hex4 + "|\\\\U00(10|0" + HEX + ")" + hex4 + ")";
+  const notSurrogate = "(?![dD][89a-fA-F])";
+  const unicode =
+    "(\\\\u" + notSurrogate + hex4 + "|\\\\U00(10" + hex4 + "|0(?=" + HEX + notSurrogate + ")" + HEX + hex4 + "))";
+  const IRI_REF = '<([^<>"`|{}^\\\\\\x00-\\x20]|' + unicode + ")*>";
   const STRING_LITERAL1 = "'(([^\\x27\\x5C\\x0A\\x0D])|" + ECHAR + "|" + unicode + ")*'";
   const STRING_LITERAL2 = '"(([^\\x22\\x5C\\x0A\\x0D])|' + ECHAR + "|" + unicode + ')*"';
 
@@ -204,7 +210,10 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
       },
       contents: {
         name: "STRING_LITERAL_LONG_" + key,
-        regex: new RegExp("^" + STRING_LITERAL_LONG[key].CONTENTS),
+        // One or two quotes at the end of a line are content: the line break separates them from the closing quotes
+        regex: new RegExp(
+          "^" + STRING_LITERAL_LONG[key].CONTENTS + "(" + STRING_LITERAL_LONG[key].QUOTES.charAt(0) + "{1,2}$)?",
+        ),
         style: "string",
       },
       closing: {
@@ -489,14 +498,27 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
 
       // Keywords
       consumed = stream.match(grammar.keywords, true, false) as any;
-      if (consumed)
+      if (consumed) {
+        const cat = stream.current().toUpperCase();
+        // The tokens INSERT DATA, DELETE DATA and DELETE WHERE need white space between the words
+        if ((cat === "DATA" || cat === "WHERE") && /(INSERT|DELETE)$/i.test(stream.string.slice(0, stream.start))) {
+          state.errorMsg = "Expected white space before " + cat;
+          return {
+            cat: "<invalid_token>",
+            style: "error",
+            string: consumed[0],
+            start: stream.start,
+            quotePos: undefined,
+          };
+        }
         return {
-          cat: stream.current().toUpperCase(),
+          cat,
           style: "keyword",
           string: consumed[0],
           start: stream.start,
           quotePos: undefined,
         };
+      }
 
       // Punctuation
       consumed = stream.match(grammar.punct, true, false) as any;
@@ -614,15 +636,29 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
       }
     }
 
-    function checkSideConditions(topSymbol: string) {
+    function checkSideConditions(topSymbol: string, nextSymbols: string[]) {
       return (
         (state.allowVars || topSymbol != "var") &&
         (state.allowBnodes ||
           (topSymbol != "blankNode" &&
             topSymbol != "blankNodePropertyList" &&
-            topSymbol != "blankNodePropertyListPath")) &&
+            topSymbol != "blankNodePropertyListPath" &&
+            !introducesImplicitReifier(topSymbol, nextSymbols))) &&
         !violatesSimplePathCondition(topSymbol)
       );
+    }
+
+    // A reified triple or annotation without an explicit reifier id gets a fresh blank node as reifier,
+    // which is not allowed where blank nodes are disallowed (DELETE DATA, DELETE WHERE and DELETE templates)
+    function introducesImplicitReifier(topSymbol: string, nextSymbols: string[]) {
+      const implicit =
+        ((topSymbol === "?varOrReifierId" || topSymbol === "?reifier") && nextSymbols.length === 0) ||
+        ((topSymbol === "annotationBlock" || topSymbol === "annotationBlockPath") && !state.annotationHasReifier);
+      if (implicit) {
+        state.errorMsg =
+          "A reifier must be given explicitly (e.g. ~ :id) here: an implicit reifier is a blank node, and blank nodes are not allowed in DELETE";
+      }
+      return implicit;
     }
 
     function currentVerbPath() {
@@ -739,6 +775,8 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
             if (verbPath && verbPath.depth === undefined && complexPathTokens.indexOf(tokenCat) >= 0) {
               verbPath.complex = true;
             }
+            // An annotation block after '|}' or '>>' is not preceded by a reifier of the same triple
+            if (tokenCat === "|}" || tokenCat === ">>") state.annotationHasReifier = false;
             // Check whether $ (end of input token) is poss next
             // for everything on stack
             var allNillable = true;
@@ -784,7 +822,7 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
           // - see if there is an entry for topSymbol
           // and nextToken in table
           const nextSymbols = ll1_table[topSymbol][tokenCat];
-          if (nextSymbols != undefined && checkSideConditions(topSymbol)) {
+          if (nextSymbols != undefined && checkSideConditions(topSymbol, nextSymbols)) {
             // Match - copy RHS of rule to stack
             for (var i = nextSymbols.length - 1; i >= 0; --i) {
               state.stack.push(nextSymbols[i]);
@@ -792,6 +830,8 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
             // Peform any non-grammatical side-effects
             setSideConditions(topSymbol);
             trackVerbPath(topSymbol, nextSymbols.length);
+            if (topSymbol === "reifier") state.annotationHasReifier = true;
+            else if (topSymbol === "object" || topSymbol === "objectPath") state.annotationHasReifier = false;
           } else {
             // No match in table - fail
             state.OK = false;
@@ -957,6 +997,7 @@ export default function (config: TokenizerConfig = {}): StreamParser<State> {
         bracketStack: [],
         bracketLevel: 0,
         verbPaths: [],
+        annotationHasReifier: false,
       };
     },
   };

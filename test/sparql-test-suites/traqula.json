@@ -1,0 +1,2296 @@
+{
+  "source": "https://www.npmjs.com/package/@traqula/test-utils/v/1.4.0",
+  "license": "The MIT License (MIT)\n\nCopyright © 2024–now Jitse De Smet\nComunica Association and Ghent University – imec, Belgium\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.\n",
+  "tests": [
+    {
+      "id": "sparql-1-1-invalid/bnode-reuse-subquery-union",
+      "expect": "invalid",
+      "query": "SELECT * {\n   ?x ?y ?z .\n   { SELECT DISTINCT * { { _:b ?a ?b . } UNION { _:b ?c ?d } } }\n}"
+    },
+    {
+      "id": "sparql-1-1-invalid/count-with-ungrouped-expression-variable",
+      "expect": "invalid",
+      "query": "SELECT (COUNT(?y) AS ?cnt) (?y + 1 AS ?result) WHERE { ?s ?p ?y }\n"
+    },
+    {
+      "id": "sparql-1-1-invalid/select-star-with-group-by",
+      "expect": "invalid",
+      "query": "SELECT * WHERE { ?s ?p ?o } GROUP BY ?s\n"
+    },
+    {
+      "id": "sparql-1-1-invalid/should-throw-on-unknown",
+      "expect": "invalid",
+      "query": "#PREFIX dbo:  <http://dbpedia.org/property/>\n\nSELECT * {\n    ?territory dbo:name ?name .\n}\n"
+    },
+    {
+      "id": "sparql-1-1-invalid/ungrouped-variable-in-expression-projection",
+      "expect": "invalid",
+      "query": "SELECT (?y + 1 AS ?result) WHERE { ?s ?p ?y } GROUP BY ?s\n"
+    },
+    {
+      "id": "sparql-1-1-invalid/word-spacing-delete-data",
+      "expect": "invalid",
+      "query": "DeleteData {\n  ex:s ex:p ex:o .\n}\n"
+    },
+    {
+      "id": "sparql-1-1-invalid/word-spacing-delete-where",
+      "expect": "invalid",
+      "query": "DeleteWhere {\n  ?s ?p ?o .\n}\n"
+    },
+    {
+      "id": "sparql-1-1-invalid/word-spacing-insert-data",
+      "expect": "invalid",
+      "query": "InsertData {\n  ex:s ex:p ex:o .\n}\n"
+    },
+    {
+      "id": "sparql-1-1/add-silent",
+      "expect": "valid",
+      "query": "ADD SILENT <http://g1> TO <http://g2>"
+    },
+    {
+      "id": "sparql-1-1/additive-neg-div",
+      "expect": "valid",
+      "query": "SELECT * WHERE { FILTER(?x -2 / 3 > 0) }"
+    },
+    {
+      "id": "sparql-1-1/additive-pos-mult",
+      "expect": "valid",
+      "query": "SELECT * WHERE { FILTER(?x +2 * 3 > 0) }"
+    },
+    {
+      "id": "sparql-1-1/all",
+      "expect": "valid",
+      "query": "SELECT * WHERE {\n  ?s ?p ?o\n}\n"
+    },
+    {
+      "id": "sparql-1-1/all-var-idx",
+      "expect": "valid",
+      "query": "SELECT * WHERE {\n  ?1s ?1p ?1o .\n  ?2s ?2p ?2o .\n}\n"
+    },
+    {
+      "id": "sparql-1-1/artists-ghent",
+      "expect": "valid",
+      "query": "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX dbpedia: <http://dbpedia.org/resource/>\nPREFIX dbpedia-owl: <http://dbpedia.org/ontology/>\n\nCONSTRUCT {\n  ?person a dbpedia-owl:Artist;\n          rdfs:label ?name;\n          dbpedia-owl:birthPlace ?city.\n}\nWHERE {\n  ?person a dbpedia-owl:Artist;\n          rdfs:label ?name;\n          dbpedia-owl:birthPlace ?city.\n  ?city rdfs:label ?cityName;\n        rdfs:label \"Ghent\"@en;\n        dbpedia-owl:country ?country.\n  ?country rdfs:label \"Belgium\"@en.\n}\n"
+    },
+    {
+      "id": "sparql-1-1/artists-york",
+      "expect": "valid",
+      "query": "PREFIX dbpedia-owl: <http://dbpedia.org/ontology/>\nSELECT ?p ?c WHERE {\n    ?p a dbpedia-owl:Artist.\n    ?p dbpedia-owl:birthPlace ?c.\n    ?c <http://xmlns.com/foaf/0.1/name> \"York\"@en.\n}\n"
+    },
+    {
+      "id": "sparql-1-1/ask-basic",
+      "expect": "valid",
+      "query": "ASK { ?s ?p ?o }"
+    },
+    {
+      "id": "sparql-1-1/ask-in-anonymous-node",
+      "expect": "valid",
+      "query": "BASE <ex:>\nask { [<>?o]. }\n"
+    },
+    {
+      "id": "sparql-1-1/base-declaration",
+      "expect": "valid",
+      "query": "BASE <http://base.example.org/> SELECT * WHERE { ?s ?p ?o }"
+    },
+    {
+      "id": "sparql-1-1/blank-node-path",
+      "expect": "valid",
+      "query": "SELECT * WHERE { [ <http://p> ?o ] <http://p2> ?o2 }"
+    },
+    {
+      "id": "sparql-1-1/blank-node-subject",
+      "expect": "valid",
+      "query": "SELECT * WHERE { _:b1 ?p ?o }"
+    },
+    {
+      "id": "sparql-1-1/blanks",
+      "expect": "valid",
+      "query": "BASE <ex:>\nCONSTRUCT {\n  ?s0 ?p0 [ <a0> [ <b0> <c0> ] ].\n  [ <a0> [ <b0> <c0> ] ] ?p0 ?o0.\n}\nWHERE {\n  ?s1 ?p1 [], <a1>; ?q1 <b1>, <c1>.\n  []  ?p2 ?o2.\n  ?s3 ?p3 [ <a3> <b3> ].\n  ?s4 ?p4 [ <a4> <b4>; <c4> <d4>, <e4> ].\n  ?s5 ?p5 [ <a5> [ <b5> <c5> ] ].\n  [ <a6> [ <b6> <c6> ] ] ?p6 ?o6.\n  [ <a7> <b7>; <c7> <d7>, <e7> ].\n}\n"
+    },
+    {
+      "id": "sparql-1-1/bnode-nil",
+      "expect": "valid",
+      "query": "SELECT * WHERE { FILTER(BNODE() = ?x) }"
+    },
+    {
+      "id": "sparql-1-1/boolean-case",
+      "expect": "valid",
+      "query": "SELECT * WHERE {\n    ?s ?p true .\n    ?s ?p True .\n    ?s ?p trUE .\n    ?s ?p TRUE .\n    ?s ?p false .\n    ?s ?p False .\n    ?s ?p falSE .\n    ?s ?p FALSE .\n}\n"
+    },
+    {
+      "id": "sparql-1-1/bsbm1",
+      "expect": "valid",
+      "query": "PREFIX bsbm-inst: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/>\nPREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT DISTINCT ?product ?label\nWHERE {\n    ?product rdfs:label ?label .\n    ?product a bsbm-inst:ProductType105 .\n    ?product bsbm:productFeature bsbm-inst:ProductFeature815 .\n    ?product bsbm:productFeature bsbm-inst:ProductFeature814 .\n    ?product bsbm:productPropertyNumeric1 ?value1 .\n\tFILTER (?value1 > 486)\n}\nORDER BY ?label\nLIMIT 10\n"
+    },
+    {
+      "id": "sparql-1-1/bsbm10",
+      "expect": "valid",
+      "query": "PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#> \nPREFIX dc: <http://purl.org/dc/elements/1.1/>\n\nSELECT DISTINCT ?offer ?price\nWHERE {\n\t?offer bsbm:product <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer5/Product186> .\n\t?offer bsbm:vendor ?vendor .\n    ?offer dc:publisher ?vendor .\n\t?vendor bsbm:country <http://downlode.org/rdf/iso-3166/countries#US> .\n\t?offer bsbm:deliveryDays ?deliveryDays .\n\tFILTER (?deliveryDays <= 3)\n\t?offer bsbm:price ?price .\n    ?offer bsbm:validTo ?date .\n    FILTER (?date > \"2008-06-20T00:00:00\"^^<http://www.w3.org/2001/XMLSchema#dateTime> )\n}\nORDER BY xsd:double(str(?price))\nLIMIT 10\n"
+    },
+    {
+      "id": "sparql-1-1/bsbm3",
+      "expect": "valid",
+      "query": "PREFIX bsbm-inst: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/>\nPREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?product ?label\nWHERE {\n    ?product rdfs:label ?label .\n    OPTIONAL {\n        ?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature1043> .\n        ?product rdfs:label ?testVar }\n    FILTER (!bound(?testVar)) \n}\nORDER BY ?label\nLIMIT 10\n"
+    },
+    {
+      "id": "sparql-1-1/bsbm4",
+      "expect": "valid",
+      "query": "PREFIX bsbm-inst: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/>\nPREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT DISTINCT ?product ?label ?propertyTextual\nWHERE {\n    { \n       ?product rdfs:label ?label .\n       ?product rdf:type <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductType140> .\n       ?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature4373> .\n\t   ?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature1475> .\n       ?product bsbm:productPropertyTextual1 ?propertyTextual .\n\t   ?product bsbm:productPropertyNumeric1 ?p1 .\n\t   FILTER ( ?p1 > 160 )\n    } UNION {\n       ?product rdfs:label ?label .\n       ?product rdf:type <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductType140> .\n       ?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature4373> .\n\t   ?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature4372> .\n       ?product bsbm:productPropertyTextual1 ?propertyTextual .\n\t   ?product bsbm:productPropertyNumeric2 ?p2 .\n\t   FILTER ( ?p2> 77 ) \n    } \n}\nORDER BY ?label\nOFFSET 5\nLIMIT 10\n"
+    },
+    {
+      "id": "sparql-1-1/bsbm5",
+      "expect": "valid",
+      "query": "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>\n\nSELECT DISTINCT ?product ?productLabel\nWHERE { \n\t?product rdfs:label ?productLabel .\n    FILTER (<http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer1/Product28> != ?product)\n\t<http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer1/Product28> bsbm:productFeature ?prodFeature .\n\t?product bsbm:productFeature ?prodFeature .\n\t<http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer1/Product28> bsbm:productPropertyNumeric1 ?origProperty1 .\n\t?product bsbm:productPropertyNumeric1 ?simProperty1 .\n\tFILTER (?simProperty1 < (?origProperty1 + 120) && ?simProperty1 > (?origProperty1 - 120))\n\t<http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer1/Product28> bsbm:productPropertyNumeric2 ?origProperty2 .\n\t?product bsbm:productPropertyNumeric2 ?simProperty2 .\n\tFILTER (?simProperty2 < (?origProperty2 + 170) && ?simProperty2 > (?origProperty2 - 170))\n}\nORDER BY ?productLabel\nLIMIT 5\n"
+    },
+    {
+      "id": "sparql-1-1/bsbm6",
+      "expect": "valid",
+      "query": "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>\n\nSELECT ?product ?label\nWHERE {\n\t?product rdfs:label ?label .\n    ?product rdf:type bsbm:Product .\n\tFILTER regex(?label, \"word\")\n}\n"
+    },
+    {
+      "id": "sparql-1-1/bsbm8",
+      "expect": "valid",
+      "query": "PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>\nPREFIX dc: <http://purl.org/dc/elements/1.1/>\nPREFIX rev: <http://purl.org/stuff/rev#>\nPREFIX foaf: <http://xmlns.com/foaf/0.1/>\n\nSELECT ?title ?text ?reviewDate ?reviewer ?reviewerName ?rating1 ?rating2 ?rating3 ?rating4 \nWHERE { \n\t?review bsbm:reviewFor <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer16/Product783> .\n\t?review dc:title ?title .\n\t?review rev:text ?text .\n\tFILTER langMatches( lang(?text), \"EN\" ) \n\t?review bsbm:reviewDate ?reviewDate .\n\t?review rev:reviewer ?reviewer .\n\t?reviewer foaf:name ?reviewerName .\n\tOPTIONAL { ?review bsbm:rating1 ?rating1 . }\n\tOPTIONAL { ?review bsbm:rating2 ?rating2 . }\n\tOPTIONAL { ?review bsbm:rating3 ?rating3 . }\n\tOPTIONAL { ?review bsbm:rating4 ?rating4 . }\n}\nORDER BY DESC(?reviewDate)\nLIMIT 20\n"
+    },
+    {
+      "id": "sparql-1-1/bsbm9",
+      "expect": "valid",
+      "query": "PREFIX rev: <http://purl.org/stuff/rev#>\n\nDESCRIBE ?x\nWHERE { <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromRatingSite1/Review7958> rev:reviewer ?x }\n"
+    },
+    {
+      "id": "sparql-1-1/clear-drop",
+      "expect": "valid",
+      "query": "CREATE SILENT GRAPH <ex:graph>;\nCREATE GRAPH <ex:graph>;\nCLEAR SILENT GRAPH <ex:graph>;\nCLEAR GRAPH <ex:graph>;\nCLEAR DEFAULT;\nCLEAR NAMED;\nCLEAR ALL;\nDROP SILENT GRAPH <ex:graph>;\nDROP GRAPH <ex:graph>;\nDROP DEFAULT;\nDROP NAMED;\nDROP ALL;\n"
+    },
+    {
+      "id": "sparql-1-1/collection-adjacent-terms",
+      "expect": "valid",
+      "query": "PREFIX ex: <http://example.org/>\nSELECT * WHERE {\n  ?s ex:p ( ?a ?b ex:c ex:d _:e ex:f \"g\"@en ex:h \"i\"^^ex:j ex:k 1 ?l [ ex:m ex:n ] ex:o ( ex:p ex:q ) ex:r ) .\n  ( ex:s ?t ) ex:u ?v .\n}\n"
+    },
+    {
+      "id": "sparql-1-1/collection-object",
+      "expect": "valid",
+      "query": "SELECT * WHERE { ?s <http://p> (<http://a>) }"
+    },
+    {
+      "id": "sparql-1-1/collection-path-subject",
+      "expect": "valid",
+      "query": "SELECT * WHERE { (<http://a> <http://b>) <http://p> ?o }"
+    },
+    {
+      "id": "sparql-1-1/collection-subject",
+      "expect": "valid",
+      "query": "SELECT * WHERE { (<http://a>) <http://p> ?o }"
+    },
+    {
+      "id": "sparql-1-1/compact-bgp",
+      "expect": "valid",
+      "query": "BASE <ex:>\nSELECT * WHERE {\n  <s1> <p1> <o1>;\n    <p2> <o2>;\n    <p3> [\n      <p4> <o4>;\n      <p5> [\n        <p6> <o6>;\n        <p7> <o7>, <o7a>\n      ];\n      <p8> <o8>\n    ];\n    <p9> <o9>, <o9a>, <o9b>.\n}\n"
+    },
+    {
+      "id": "sparql-1-1/construct",
+      "expect": "valid",
+      "query": "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }\n"
+    },
+    {
+      "id": "sparql-1-1/construct-empty-template",
+      "expect": "valid",
+      "query": "CONSTRUCT {} WHERE { ?s ?p ?o }\n"
+    },
+    {
+      "id": "sparql-1-1/construct-extra-semicolon",
+      "expect": "valid",
+      "query": "CONSTRUCT { \n  ?s a <http://example.org/ExampleThing>;\n     <http://example.org/hasvalue> \"value\";\n     ?p ?o;\n  .\n} WHERE { ?s ?p ?o }\n"
+    },
+    {
+      "id": "sparql-1-1/construct-multi-extra-semicolons",
+      "expect": "valid",
+      "query": "CONSTRUCT { \n  ?s a <http://example.org/ExampleThing>;;\n     <http://example.org/hasvalue> \"value\";;\n     ?p ?o;;;\n  .\n} WHERE { ?s ?p ?o }\n"
+    },
+    {
+      "id": "sparql-1-1/construct-without-template",
+      "expect": "valid",
+      "query": "CONSTRUCT WHERE { ?s ?p ?o }\n"
+    },
+    {
+      "id": "sparql-1-1/count",
+      "expect": "valid",
+      "query": "select ?p (count(*) as ?n) {\n  [ ?p [] ].\n}\n"
+    },
+    {
+      "id": "sparql-1-1/count-select",
+      "expect": "valid",
+      "query": "SELECT (COUNT(?s) AS ?cnt) WHERE { ?s ?p ?o }"
+    },
+    {
+      "id": "sparql-1-1/delete-only",
+      "expect": "valid",
+      "query": "DELETE { ?s ?p ?o } WHERE { ?s ?p ?o }"
+    },
+    {
+      "id": "sparql-1-1/delete-where",
+      "expect": "valid",
+      "query": "DELETE WHERE { ?s ?p ?o }"
+    },
+    {
+      "id": "sparql-1-1/describe-adjacent-terms",
+      "expect": "valid",
+      "query": "PREFIX ex: <http://example.org/>\nDESCRIBE ?s ?o ex:a ex:b <http://example.org/c> ?e ex:d\nWHERE { ?s ex:p ?o ; ex:q ?e }\n"
+    },
+    {
+      "id": "sparql-1-1/distinct-extension-function",
+      "expect": "valid",
+      "query": "SELECT ?s (<http://ex.org/func>(DISTINCT ?o) as ?x) WHERE { ?s ?p ?o } GROUP BY ?s\n"
+    },
+    {
+      "id": "sparql-1-1/double-negative-exponent",
+      "expect": "valid",
+      "query": "ASK {\n    FILTER((-3e0) = 0)\n}"
+    },
+    {
+      "id": "sparql-1-1/double-positive-exponent",
+      "expect": "valid",
+      "query": "ASK {\n    FILTER((+3e0) = 0)\n}"
+    },
+    {
+      "id": "sparql-1-1/drop-named",
+      "expect": "valid",
+      "query": "DROP NAMED"
+    },
+    {
+      "id": "sparql-1-1/empty-values",
+      "expect": "valid",
+      "query": "SELECT *\nWHERE {\n  ?s ?p ?o.\n}\nVALUES () { () }\n"
+    },
+    {
+      "id": "sparql-1-1/escape-backspace",
+      "expect": "valid",
+      "query": "SELECT * WHERE { ?s ?p \"\\b\" }"
+    },
+    {
+      "id": "sparql-1-1/escape-cr",
+      "expect": "valid",
+      "query": "SELECT * WHERE { ?s ?p \"\\r\" }"
+    },
+    {
+      "id": "sparql-1-1/escape-formfeed",
+      "expect": "valid",
+      "query": "SELECT * WHERE { ?s ?p \"\\f\" }"
+    },
+    {
+      "id": "sparql-1-1/escape-tab",
+      "expect": "valid",
+      "query": "SELECT * WHERE { ?s ?p \"\\t\" }"
+    },
+    {
+      "id": "sparql-1-1/fedbench-cd1",
+      "expect": "valid",
+      "query": "SELECT ?predicate ?object WHERE {\n   { <http://dbpedia.org/resource/Barack_Obama> ?predicate ?object }\n   UNION\n   { ?subject <http://www.w3.org/2002/07/owl#sameAs> <http://dbpedia.org/resource/Barack_Obama> .\n     ?subject ?predicate ?object }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/fedbench-cd2",
+      "expect": "valid",
+      "query": "SELECT ?party ?page  WHERE {\n   <http://dbpedia.org/resource/Barack_Obama> <http://dbpedia.org/ontology/party> ?party .\n   ?x <http://data.nytimes.com/elements/topicPage> ?page .\n   ?x <http://www.w3.org/2002/07/owl#sameAs> <http://dbpedia.org/resource/Barack_Obama> .\n}\n"
+    },
+    {
+      "id": "sparql-1-1/fedbench-cd3",
+      "expect": "valid",
+      "query": "SELECT ?president ?party ?page WHERE {\n   ?president <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/President> .\n   ?president <http://dbpedia.org/ontology/nationality> <http://dbpedia.org/resource/United_States> .\n   ?president <http://dbpedia.org/ontology/party> ?party .\n   ?x <http://data.nytimes.com/elements/topicPage> ?page .\n   ?x <http://www.w3.org/2002/07/owl#sameAs> ?president .\n}\n"
+    },
+    {
+      "id": "sparql-1-1/filter-neg-div",
+      "expect": "valid",
+      "query": "SELECT * WHERE { ?s ?p ?o FILTER(?x -3 / ?y > 0) }\n"
+    },
+    {
+      "id": "sparql-1-1/filter-neg-mult",
+      "expect": "valid",
+      "query": "SELECT * WHERE { ?s ?p ?o FILTER(-3 * ?x > 0) }"
+    },
+    {
+      "id": "sparql-1-1/filter-pos-div",
+      "expect": "valid",
+      "query": "SELECT * WHERE { ?s ?p ?o FILTER(?x +4 / 2 > 0) }"
+    },
+    {
+      "id": "sparql-1-1/filter-pos-mult",
+      "expect": "valid",
+      "query": "SELECT * WHERE { ?s ?p ?o FILTER(?x +2 * 3 > 0) }"
+    },
+    {
+      "id": "sparql-1-1/func-nil-args",
+      "expect": "valid",
+      "query": "SELECT * WHERE { FILTER(<http://ex.org/func>()) }"
+    },
+    {
+      "id": "sparql-1-1/graph-empty-insert",
+      "expect": "valid",
+      "query": "INSERT DATA { GRAPH <http://g> { } }"
+    },
+    {
+      "id": "sparql-1-1/group-and-bind",
+      "expect": "valid",
+      "query": "PREFIX : <http://www.example.org/>\nSELECT (:foo AS ?foo) (COUNT(?outObject) AS ?out)\nWHERE {\n    ?s :predicate ?outObject\n}\nGROUP BY ?s\n"
+    },
+    {
+      "id": "sparql-1-1/group-brackets",
+      "expect": "valid",
+      "query": "PREFIX : <http://www.example.org/>\nSELECT ?company (COUNT(DISTINCT ?key) AS ?keyCount) WHERE {\n    ?company a :Company .\n    ?company :hasKey ?key.\n}\nGROUP BY ?company\nORDER BY ?company\n"
+    },
+    {
+      "id": "sparql-1-1/group-by-adjacent-terms",
+      "expect": "valid",
+      "query": "PREFIX ex: <http://example.org/>\nSELECT ?a ?b ?c (COUNT(*) AS ?n)\nWHERE { ?a ex:p ?b ; ex:q ?c ; ex:r ?d }\nGROUP BY ?a ?b ex:f(?d) ?c STR(?d) (?d AS ?e)\n"
+    },
+    {
+      "id": "sparql-1-1/group-by-bind-expr",
+      "expect": "valid",
+      "query": "SELECT ?x WHERE { ?s ?p ?y } GROUP BY (?y AS ?x)"
+    },
+    {
+      "id": "sparql-1-1/group-by-bind-var",
+      "expect": "valid",
+      "query": "SELECT ?g (COUNT(*) AS ?c) WHERE { ?s ?p ?x . BIND(?x AS ?g) } GROUP BY ?g"
+    },
+    {
+      "id": "sparql-1-1/group-concat",
+      "expect": "valid",
+      "query": "SELECT ?s (GROUP_CONCAT(?p) AS ?plist) (GROUP_CONCAT(DISTINCT ?p; SEPARATOR = \",\\\"/\") AS ?plist2) (GROUP_CONCAT(DISTINCT ?p; SEPARATOR = \"\") AS ?plist3)\n{\n  ?s ?p ?c\n}\nGROUP BY ?s\n"
+    },
+    {
+      "id": "sparql-1-1/group-variable",
+      "expect": "valid",
+      "query": "PREFIX : <http://www.example.org/>\nSELECT ?O12 (COUNT(?O1) AS ?C)\nWHERE { ?S :p ?O1; :q ?O2 } GROUP BY ((?O1 + ?O2) AS ?O12)\nORDER BY ?O12\n"
+    },
+    {
+      "id": "sparql-1-1/in",
+      "expect": "valid",
+      "query": "SELECT * {\n  ?a ?b ?c.\n  FILTER (?a IN (1, 2, 3))\n  FILTER (?c NOT IN (1, 2, 3))\n  FILTER (?a in (1))\n  FILTER (?c NOT IN ())\n}\n"
+    },
+    {
+      "id": "sparql-1-1/inv-nps-path",
+      "expect": "valid",
+      "query": "SELECT * WHERE { ?s !(^<http://p1>|^<http://p2>) ?o }"
+    },
+    {
+      "id": "sparql-1-1/inverse-paths-anonymous-node",
+      "expect": "valid",
+      "query": "PREFIX dbpedia-owl: <http://dbpedia.org/ontology/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n\nSELECT *\nWHERE {\n  ?movie a dbpedia-owl:Film ;\n    dbpedia-owl:starring [\n      rdfs:label \"Brad Pitt\"@en ;\n      ^dbpedia-owl:starring ?otherMovie\n    ] .\n}\n"
+    },
+    {
+      "id": "sparql-1-1/inverse-paths-in-anonymous-node",
+      "expect": "valid",
+      "query": "PREFIX dbpedia-owl: <http://dbpedia.org/ontology/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n\nSELECT *\nWHERE {\n  ?movie a dbpedia-owl:Film ;\n    dbpedia-owl:starring [\n      rdfs:label \"Brad Pitt\"@en ;\n      ^dbpedia-owl:starring ?otherMovie\n    ] .\n}\n"
+    },
+    {
+      "id": "sparql-1-1/inverse-paths-in-anonymous-node-2",
+      "expect": "valid",
+      "query": "PREFIX dbpedia-owl: <http://dbpedia.org/ontology/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n\nSELECT *\nWHERE {\n  ?movie\n    dbpedia-owl:starring [\n      rdfs:label \"Brad Pitt\"@en ;\n      ^dbpedia-owl:starring ?otherMovie\n    ] .\n}\n"
+    },
+    {
+      "id": "sparql-1-1/lists",
+      "expect": "valid",
+      "query": "BASE <ex:>\nCONSTRUCT {\n  ?s0 ?p0 ( <a0> ( <b0> <c0> ) ).\n  ( <a0> ( <b0> <c0> ) ) ?p0 ?o0.\n}\nWHERE {\n  ?s1 ?p1 (), <a1>.\n  ()  ?p2 ?o2.\n  ?s3 ?p3 ( <a3> ).\n  ?s4 ?p4 ( <a4> <b4> <c4> ).\n  ?s5 ?p5 ( <a5> ( <b5> <c5> ) ).\n  ( <a6> ( <b6> <c6> ) ) ?p6 ?o6.\n  ( <a7> <b7> ).\n  ?s8 ?p8 ( [ <a8> <b8>; <c8> <d8>, <e8> ] ).\n}\n"
+    },
+    {
+      "id": "sparql-1-1/literal-newline",
+      "expect": "valid",
+      "query": "SELECT * WHERE { ?s ?p \"line1\\nline2\" }"
+    },
+    {
+      "id": "sparql-1-1/load",
+      "expect": "valid",
+      "query": "LOAD <http://www.w3.org/TR/skos-reference/skos.rdf>\n"
+    },
+    {
+      "id": "sparql-1-1/load-into",
+      "expect": "valid",
+      "query": "LOAD <http://www.w3.org/TR/skos-reference/skos.rdf> INTO GRAPH <urn:namespaces:skos>\n"
+    },
+    {
+      "id": "sparql-1-1/load-silent",
+      "expect": "valid",
+      "query": "LOAD SILENT <http://ex.org/>"
+    },
+    {
+      "id": "sparql-1-1/minus-optional",
+      "expect": "valid",
+      "query": "SELECT * WHERE { ?s ?p ?o MINUS { ?a ?b ?c OPTIONAL { ?d ?e ?f } } }"
+    },
+    {
+      "id": "sparql-1-1/multiline",
+      "expect": "valid",
+      "query": "SELECT ?p WHERE {\n    ?p <http://xmlns.com/foaf/0.1/name> \"York\\ntest\"@en.\n}\n"
+    },
+    {
+      "id": "sparql-1-1/multiple-updates",
+      "expect": "valid",
+      "query": "INSERT DATA { <http://s> <http://p> <http://o> } ; DELETE DATA { <http://s2> <http://p2> <http://o2> }"
+    },
+    {
+      "id": "sparql-1-1/negate-and",
+      "expect": "valid",
+      "query": "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n\nselect *\nwhere {\n    { ?c a owl:Class . }\n    FILTER ( ! (BOUND(?c) && ( REGEX(str(?c), \"^toto\",\"i\"))) )\n}\nlimit 10\n"
+    },
+    {
+      "id": "sparql-1-1/negated-inverse-path",
+      "expect": "valid",
+      "query": "SELECT * WHERE { ?s !(^<http://p>) ?o }"
+    },
+    {
+      "id": "sparql-1-1/nested-path",
+      "expect": "valid",
+      "query": "prefix : <http://example.org/>\nselect ?X where { :A0 ((:P)*)* ?X }\norder by ?X\n"
+    },
+    {
+      "id": "sparql-1-1/no-space-select",
+      "expect": "valid",
+      "query": "SELECTDISTINCT?s{?s?p?o}GROUPBY(?s)HAVING(?p=?o)ORDERBY(?s)LIMIT10OFFSET9VALUES?o{trueundeffalse}\n"
+    },
+    {
+      "id": "sparql-1-1/note-as-var-not-in-term-subquery",
+      "expect": "valid",
+      "query": "SELECT (1 AS ?x) WHERE { SELECT ?y WHERE { ?y ?p ?o } }\n"
+    },
+    {
+      "id": "sparql-1-1/note-as-var-not-in-wildcard-subquery",
+      "expect": "valid",
+      "query": "SELECT (1 AS ?x) WHERE { SELECT * WHERE { ?s ?p ?o } }\n"
+    },
+    {
+      "id": "sparql-1-1/note-expression-grouped-var",
+      "expect": "valid",
+      "query": "SELECT (?x + 1 AS ?result) WHERE { ?s ?p ?x } GROUP BY ?x\n"
+    },
+    {
+      "id": "sparql-1-1/optional",
+      "expect": "valid",
+      "query": "SELECT ?p ?c ?d WHERE {\n    ?p a <http://dbpedia.org/ontology/Artist>.\n    OPTIONAL {\n      ?p <http://dbpedia.org/ontology/deathPlace> ?d.\n    }\n    ?p <http://dbpedia.org/ontology/birthPlace> ?c.\n    ?c <http://xmlns.com/foaf/0.1/name> \"York\"@en.\n}\n"
+    },
+    {
+      "id": "sparql-1-1/optional-subquery",
+      "expect": "valid",
+      "query": "SELECT * { {} OPTIONAL {SELECT * { ?s ?p ?o }} }\n"
+    },
+    {
+      "id": "sparql-1-1/or",
+      "expect": "valid",
+      "query": "SELECT * WHERE {\n  ?a ?b ?c.\n  FILTER (?a = 1 || ?a = 2 || ?a = 3 || ?a = 4)\n  FILTER (?a = 1 && ?a = 2 && ?a = 3 && ?a = 4)\n  FILTER (?a = 1 && ?a = 2 || ?a = 3 && ?a = 4)\n}\n"
+    },
+    {
+      "id": "sparql-1-1/order-by-var",
+      "expect": "valid",
+      "query": "SELECT * WHERE { ?s ?p ?o } ORDER BY ?o"
+    },
+    {
+      "id": "sparql-1-1/order-operator",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.org/ns#>\nSELECT * { ?s ?p ?o }\nORDER BY (?o+5)\n"
+    },
+    {
+      "id": "sparql-1-1/prefix-only-iri",
+      "expect": "valid",
+      "query": "PREFIX ex: <http://example.org/> SELECT * WHERE { ex: ?p ?o }"
+    },
+    {
+      "id": "sparql-1-1/quads-after-graph",
+      "expect": "valid",
+      "query": "INSERT DATA { GRAPH <http://g> { <http://s> <http://p> <http://o> } <http://s2> <http://p2> <http://o2> }"
+    },
+    {
+      "id": "sparql-1-1/replace-four-args",
+      "expect": "valid",
+      "query": "SELECT * WHERE { FILTER(REPLACE(?s, \"x\", \"y\", \"i\") = ?s) }"
+    },
+    {
+      "id": "sparql-1-1/replace-three-args",
+      "expect": "valid",
+      "query": "SELECT * WHERE { FILTER(REPLACE(?s, \"x\", \"y\") = ?s) }"
+    },
+    {
+      "id": "sparql-1-1/sequence-paths-in-anonymous-node",
+      "expect": "valid",
+      "query": "prefix : <https://ex.com/>\nselect * {\n:a :a :a ;\n  :a [\n    :a/:a :a\n  ] .\n}\n"
+    },
+    {
+      "id": "sparql-1-1/spaced-data-update",
+      "expect": "valid",
+      "query": "# Basically tests Note 7 of the SPARQL 1.1 spec\nINsert     Data {\n  <http://example.org/subject> <http://example.org/predicate> \"object\" .\n};\nDelete\nData {\n  <http://example.org/subject> <http://example.org/predicate> \"object\" .\n};\nDeLete WHERE {\n  <http://example.org/subject> <http://example.org/predicate> ?o .\n};"
+    },
+    {
+      "id": "sparql-1-1/sparql-10-1a",
+      "expect": "valid",
+      "query": "PREFIX  dc:  <http://purl.org/dc/elements/1.1/>\nPREFIX  ns:  <http://example.org/ns#>\n\nSELECT  ?title ?price\n{  ?x ns:price ?p .\n   ?x ns:discount ?discount\n   BIND (?p*(1-?discount) AS ?price)\n   FILTER(?price < 20)\n   ?x dc:title ?title . \n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-10-1b",
+      "expect": "valid",
+      "query": "PREFIX  dc:  <http://purl.org/dc/elements/1.1/>\nPREFIX  ns:  <http://example.org/ns#>\n\nSELECT  ?title ?price\n{  { ?x ns:price ?p .\n     ?x ns:discount ?discount\n     BIND (?p*(1-?discount) AS ?price)\n   }\n   {?x dc:title ?title . }\n   FILTER(?price < 20)\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-10-2-2a",
+      "expect": "valid",
+      "query": "PREFIX dc:   <http://purl.org/dc/elements/1.1/> \nPREFIX :     <http://example.org/book/> \nPREFIX ns:   <http://example.org/ns#> \n\nSELECT ?book ?title ?price\n{\n   VALUES ?book { :book1 :book3 }\n   ?book dc:title ?title ;\n         ns:price ?price .\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-10-2-2b",
+      "expect": "valid",
+      "query": "PREFIX dc:   <http://purl.org/dc/elements/1.1/> \nPREFIX :     <http://example.org/book/> \nPREFIX ns:   <http://example.org/ns#> \n\nSELECT ?book ?title ?price\n{\n   ?book dc:title ?title ;\n         ns:price ?price .\n   VALUES (?book ?title)\n   { (UNDEF \"SPARQL Tutorial\")\n     (:book2 UNDEF)\n   }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-10-2-2c",
+      "expect": "valid",
+      "query": "PREFIX dc:   <http://purl.org/dc/elements/1.1/> \nPREFIX :     <http://example.org/book/> \nPREFIX ns:   <http://example.org/ns#> \n\nSELECT ?book ?title ?price\n{\n   ?book dc:title ?title ;\n         ns:price ?price .\n}\nVALUES (?book ?title)\n{ (UNDEF \"SPARQL Tutorial\")\n  (:book2 UNDEF)\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-11-1",
+      "expect": "valid",
+      "query": "PREFIX : <http://books.example/>\nSELECT (SUM(?lprice) AS ?totalPrice)\nWHERE {\n  ?org :affiliates ?auth .\n  ?auth :writesBook ?book .\n  ?book :price ?lprice .\n}\nGROUP BY ?org\nHAVING (SUM(?lprice) > 10)\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-11-2",
+      "expect": "valid",
+      "query": "PREFIX : <http://data.example/>\nSELECT (AVG(?y) AS ?avg)\nWHERE {\n  ?a :x ?x ;\n     :y ?y .\n}\nGROUP BY ?x\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-11-3",
+      "expect": "valid",
+      "query": "PREFIX : <http://data.example/>\nSELECT (AVG(?size) AS ?asize)\nWHERE {\n  ?x :size ?size\n}\nGROUP BY ?x\nHAVING(AVG(?size) > 10)\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-11-4",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/data/#>\nSELECT ?x (MIN(?y) * 2 AS ?min)\nWHERE {\n  ?x :p ?y .\n  ?x :q ?z .\n} GROUP BY ?x (STR(?z))\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-11-5",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/data/#>\nSELECT ?g (AVG(?p) AS ?avg) ((MIN(?p) + MAX(?p)) / 2 AS ?c)\nWHERE {\n  ?g :p ?p .\n}\nGROUP BY ?g\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-12",
+      "expect": "valid",
+      "query": "PREFIX : <http://people.example/>\nPREFIX : <http://people.example/>\nSELECT ?y ?minName\nWHERE {\n  :alice :knows ?y .\n  {\n    SELECT ?y (MIN(?name) AS ?minName)\n    WHERE {\n      ?y :name ?name .\n    } GROUP BY ?y\n  }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-13-2-1",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT  ?name\nFROM    <http://example.org/foaf/aliceFoaf>\nWHERE   { ?x foaf:name ?name }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-13-2-2",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT  ?name\nFROM NAMED <http://example.org/alice>\nFROM NAMED <http://example.org/bob>\nWHERE   { ?x foaf:name ?name }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-13-2-3",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nPREFIX dc: <http://purl.org/dc/elements/1.1/>\n\nSELECT ?who ?g ?mbox\nFROM <http://example.org/dft.ttl>\nFROM NAMED <http://example.org/alice>\nFROM NAMED <http://example.org/bob>\nWHERE\n{\n   ?g dc:publisher ?who .\n   GRAPH ?g { ?x foaf:mbox ?mbox }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-13-3-1",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n\nSELECT ?src ?bobNick\nFROM NAMED <http://example.org/foaf/aliceFoaf>\nFROM NAMED <http://example.org/foaf/bobFoaf>\nWHERE\n  {\n    GRAPH ?src\n    { ?x foaf:mbox <mailto:bob@work.example> .\n      ?x foaf:nick ?bobNick\n    }\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-13-3-2",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nPREFIX data: <http://example.org/foaf/>\n\nSELECT ?nick\nFROM NAMED <http://example.org/foaf/aliceFoaf>\nFROM NAMED <http://example.org/foaf/bobFoaf>\nWHERE\n  {\n     GRAPH data:bobFoaf {\n         ?x foaf:mbox <mailto:bob@work.example> .\n         ?x foaf:nick ?nick }\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-13-3-3",
+      "expect": "valid",
+      "query": "PREFIX  data:  <http://example.org/foaf/>\nPREFIX  foaf:  <http://xmlns.com/foaf/0.1/>\nPREFIX  rdfs:  <http://www.w3.org/2000/01/rdf-schema#>\n\nSELECT ?mbox ?nick ?ppd\nFROM NAMED <http://example.org/foaf/aliceFoaf>\nFROM NAMED <http://example.org/foaf/bobFoaf>\nWHERE\n{\n  GRAPH data:aliceFoaf\n  {\n    ?alice foaf:mbox <mailto:alice@work.example> ;\n           foaf:knows ?whom .\n    ?whom  foaf:mbox ?mbox ;\n           rdfs:seeAlso ?ppd .\n    ?ppd  a foaf:PersonalProfileDocument .\n  } .\n  GRAPH ?ppd\n  {\n      ?w foaf:mbox ?mbox ;\n         foaf:nick ?nick\n  }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-13-3-4",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nPREFIX dc:   <http://purl.org/dc/elements/1.1/>\n\nSELECT ?name ?mbox ?date\nWHERE\n  {  ?g dc:publisher ?name ;\n        dc:date ?date .\n    GRAPH ?g\n      { ?person foaf:name ?name ; foaf:mbox ?mbox }\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-15-1a",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\n\nSELECT ?name\nWHERE { ?x foaf:name ?name }\nORDER BY ?name\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-15-1b",
+      "expect": "valid",
+      "query": "PREFIX     :    <http://example.org/ns#>\nPREFIX foaf:    <http://xmlns.com/foaf/0.1/>\n\nSELECT ?name\nWHERE { ?x foaf:name ?name ; :empId ?emp }\nORDER BY DESC(?emp)\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-15-1c",
+      "expect": "valid",
+      "query": "PREFIX     :    <http://example.org/ns#>\nPREFIX foaf:    <http://xmlns.com/foaf/0.1/>\n\nSELECT ?name\nWHERE { ?x foaf:name ?name ; :empId ?emp }\nORDER BY ?name DESC(?emp)\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-15-2",
+      "expect": "valid",
+      "query": "PREFIX foaf:       <http://xmlns.com/foaf/0.1/>\nSELECT ?name\nWHERE\n { ?x foaf:name ?name }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-15-3",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\nSELECT ?name WHERE { ?x foaf:name ?name }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-15-3-1",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\nSELECT DISTINCT ?name WHERE { ?x foaf:name ?name }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-15-3-2",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\nSELECT REDUCED ?name WHERE { ?x foaf:name ?name }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-15-4",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\n\nSELECT  ?name\nWHERE   { ?x foaf:name ?name }\nORDER BY ?name\nLIMIT   5\nOFFSET  10\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-15-5",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\n\nSELECT ?name\nWHERE { ?x foaf:name ?name }\nLIMIT 20\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-16-1-1",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\nSELECT ?nameX ?nameY ?nickY\nWHERE\n  { ?x foaf:knows ?y ;\n       foaf:name ?nameX .\n    ?y foaf:name ?nameY .\n    OPTIONAL { ?y foaf:nick ?nickY }\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-16-1-2a",
+      "expect": "valid",
+      "query": "PREFIX  dc:  <http://purl.org/dc/elements/1.1/>\nPREFIX  ns:  <http://example.org/ns#>\nSELECT  ?title (?p*(1-?discount) AS ?price)\n{ ?x ns:price ?p .\n  ?x dc:title ?title . \n  ?x ns:discount ?discount \n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-16-1-2b",
+      "expect": "valid",
+      "query": "PREFIX  dc:  <http://purl.org/dc/elements/1.1/>\nPREFIX  ns:  <http://example.org/ns#>\nSELECT  ?title (?p AS ?fullPrice) (?fullPrice*(1-?discount) AS ?customerPrice)\n{ ?x ns:price ?p .\n   ?x dc:title ?title . \n   ?x ns:discount ?discount \n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-16-2",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\nPREFIX vcard:   <http://www.w3.org/2001/vcard-rdf/3.0#>\nCONSTRUCT   { <http://example.org/person#Alice> vcard:FN ?name }\nWHERE       { ?x foaf:name ?name }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-16-2-1",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\nPREFIX vcard:   <http://www.w3.org/2001/vcard-rdf/3.0#>\n\nCONSTRUCT { ?x  vcard:N _:v .\n            _:v vcard:givenName ?gname .\n            _:v vcard:familyName ?fname }\nWHERE\n {\n    { ?x foaf:firstname ?gname } UNION  { ?x foaf:givenname   ?gname } .\n    { ?x foaf:surname   ?fname } UNION  { ?x foaf:family_name ?fname } .\n }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-16-2-2",
+      "expect": "valid",
+      "query": "PREFIX  dc: <http://purl.org/dc/elements/1.1/>\nPREFIX app: <http://example.org/ns#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nCONSTRUCT { ?s ?p ?o } WHERE\n {\n   GRAPH ?g { ?s ?p ?o } .\n   ?g dc:publisher <http://www.w3.org/> .\n   ?g dc:date ?date .\n   FILTER ( app:customDate(?date) > \"2005-02-28T00:00:00Z\"^^xsd:dateTime ) .\n }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-16-2-3",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nPREFIX site: <http://example.org/stats#>\n\nCONSTRUCT { [] foaf:name ?name }\nWHERE\n{ [] foaf:name ?name ;\n     site:hits ?hits .\n}\nORDER BY desc(?hits)\nLIMIT 2\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-16-2-4",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nCONSTRUCT WHERE { ?x foaf:name ?name }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-16-3",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\nASK  { ?x foaf:name  \"Alice\" ;\n          foaf:mbox  <mailto:alice@work.example> }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-16-4-1",
+      "expect": "valid",
+      "query": "DESCRIBE <http://example.org/>\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-16-4-2a",
+      "expect": "valid",
+      "query": "PREFIX foaf:   <http://xmlns.com/foaf/0.1/>\nDESCRIBE ?x\nWHERE    { ?x foaf:mbox <mailto:alice@org> }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-16-4-2b",
+      "expect": "valid",
+      "query": "PREFIX foaf:   <http://xmlns.com/foaf/0.1/>\nDESCRIBE ?x\nWHERE    { ?x foaf:name \"Alice\" }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-16-4-2c",
+      "expect": "valid",
+      "query": "PREFIX foaf:   <http://xmlns.com/foaf/0.1/>\nDESCRIBE ?x ?y <http://example.org/>\nWHERE    {?x foaf:knows ?y}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-16-4-3",
+      "expect": "valid",
+      "query": "PREFIX ent:  <http://org.example.com/employees#>\nDESCRIBE ?x WHERE { ?x ent:employeeId \"1234\" }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17",
+      "expect": "valid",
+      "query": "PREFIX a:      <http://www.w3.org/2000/10/annotation-ns#>\nPREFIX dc:     <http://purl.org/dc/elements/1.1/>\nPREFIX xsd:    <http://www.w3.org/2001/XMLSchema#>\n\nSELECT ?annot\nWHERE { ?annot  a:annotates  <http://www.w3.org/TR/rdf-sparql-query/> .\n        ?annot  dc:date      ?date .\n        FILTER ( ?date > \"2005-01-01T00:00:00Z\"^^xsd:dateTime ) }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-4-1-1a",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nPREFIX dc:   <http://purl.org/dc/elements/1.1/>\nPREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>\nSELECT ?givenName\n WHERE { ?x foaf:givenName  ?givenName .\n         OPTIONAL { ?x dc:date ?date } .\n         FILTER ( bound(?date) ) }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-4-1-1b",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nPREFIX dc:   <http://purl.org/dc/elements/1.1/>\nSELECT ?name\n WHERE { ?x foaf:givenName  ?name .\n         OPTIONAL { ?x dc:date ?date } .\n         FILTER (!bound(?date)) }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-4-1-7a",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT ?name1 ?name2\nWHERE { ?x foaf:name  ?name1 ;\n        foaf:mbox  ?mbox1 .\n        ?y foaf:name  ?name2 ;\n        foaf:mbox  ?mbox2 .\n        FILTER (?mbox1 = ?mbox2 && ?name1 != ?name2)\n      }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-4-1-7b",
+      "expect": "valid",
+      "query": "PREFIX a:      <http://www.w3.org/2000/10/annotation-ns#>\nPREFIX dc:     <http://purl.org/dc/elements/1.1/>\nPREFIX xsd:    <http://www.w3.org/2001/XMLSchema#>\n\nSELECT ?annotates\nWHERE { ?annot  a:annotates  ?annotates .\n        ?annot  dc:date      ?date .\n        FILTER ( ?date = xsd:dateTime(\"2005-01-01T00:00:00Z\") ) \n      }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-4-1-8a",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT ?name1 ?name2\nWHERE { ?x foaf:name  ?name1 ;\n        foaf:mbox  ?mbox1 .\n         ?y foaf:name  ?name2 ;\n         foaf:mbox  ?mbox2 .\n         FILTER (sameTerm(?mbox1, ?mbox2) && !sameTerm(?name1, ?name2))\n      } \n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-4-1-8b",
+      "expect": "valid",
+      "query": "PREFIX  :      <http://example.org/WMterms#>\nPREFIX  t:     <http://example.org/types#>\n\nSELECT ?aLabel1 ?bLabel\nWHERE { ?a  :label        ?aLabel .\n        ?a  :weight       ?aWeight .\n        ?a  :displacement ?aDisp .\n\n        ?b  :label        ?bLabel .\n        ?b  :weight       ?bWeight .\n        ?b  :displacement ?bDisp .\n\n        FILTER ( sameTerm(?aWeight, ?bWeight) && !sameTerm(?aDisp, ?bDisp)) }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-4-2-1",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT ?name ?mbox\n WHERE { ?x foaf:name  ?name ;\n            foaf:mbox  ?mbox .\n         FILTER isIRI(?mbox) }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-4-2-2",
+      "expect": "valid",
+      "query": "PREFIX a:      <http://www.w3.org/2000/10/annotation-ns#>\nPREFIX dc:     <http://purl.org/dc/elements/1.1/>\nPREFIX foaf:   <http://xmlns.com/foaf/0.1/>\n\nSELECT ?given ?family\nWHERE { ?annot  a:annotates  <http://www.w3.org/TR/rdf-sparql-query/> .\n  ?annot  dc:creator   ?c .\n  OPTIONAL { ?c  foaf:given   ?given ; foaf:family  ?family } .\n  FILTER isBlank(?c)\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-4-2-3",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT ?name ?mbox\nWHERE { ?x foaf:name  ?name ;\n        foaf:mbox  ?mbox .\n        FILTER isLiteral(?mbox) }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-4-2-5",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT ?name ?mbox\n WHERE { ?x foaf:name  ?name ;\n            foaf:mbox  ?mbox .\n         FILTER regex(str(?mbox), \"@work\\\\.example$\") }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-4-2-6",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT ?name ?mbox\n WHERE { ?x foaf:name  ?name ;\n            foaf:mbox  ?mbox .\n         FILTER ( lang(?name) = \"es\" ) }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-4-2-7",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nPREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>\nPREFIX eg:   <http://biometrics.example/ns#>\nSELECT ?name ?shoeSize\n WHERE { ?x foaf:name  ?name ; eg:shoeSize  ?shoeSize .\n         FILTER ( datatype(?shoeSize) = xsd:integer ) }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-4-3-13a",
+      "expect": "valid",
+      "query": "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nSELECT ?title\n WHERE { ?x dc:title  \"That Seventies Show\"@en ;\n            dc:title  ?title .\n         FILTER langMatches( lang(?title), \"FR\" ) }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-4-3-13b",
+      "expect": "valid",
+      "query": "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nSELECT ?title\n WHERE { ?x dc:title  ?title .\n         FILTER langMatches( lang(?title), \"*\" ) }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-4-3-14",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT ?name\n WHERE { ?x foaf:name  ?name\n         FILTER regex(?name, \"^ali\", \"i\") }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-6a",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nPREFIX func: <http://example.org/functions#>\nSELECT ?name ?id\nWHERE { ?x foaf:name  ?name ;\n           func:empId   ?id .\n        FILTER (func:even(?id)) }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-17-6b",
+      "expect": "valid",
+      "query": "PREFIX aGeo: <http://example.org/geo#>\n\nSELECT ?neighbor\nWHERE { ?a aGeo:placeName \"Grenoble\" .\n        ?a aGeo:locationX ?axLoc .\n        ?a aGeo:locationY ?ayLoc .\n\n        ?b aGeo:placeName ?neighbor .\n        ?b aGeo:locationX ?bxLoc .\n        ?b aGeo:locationY ?byLoc .\n\n        FILTER ( aGeo:distance(?axLoc, ?ayLoc, ?bxLoc, ?byLoc) < 10 ) .\n      }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-18-a",
+      "expect": "valid",
+      "query": "PREFIX dbpedia-owl:<http://dbpedia.org/owl/#>\nPREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>\nSELECT ?movie\nWHERE {\n  ?movie a dbpedia-owl:Film ;\n    dbpedia-owl:starring [\n      rdfs:label \"Brad Pitt\"@en ;\n      ^dbpedia-owl:starring ?otherMovie\n    ] .\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-18-b",
+      "expect": "valid",
+      "query": "prefix example: <http://example/id/>\nPREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>\nPREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nselect ?s ?p ?o {\n    ?s  rdf:type [ example:prop* ?o ] .\n    ?s  rdf:type [ example:prop* ?o ] ;\n        example:p2 ?_ .\n    ?s  example:p1 ?_ ; \n        rdf:type [ example:prop* ?o ] ;\n        example:p2 ?o .\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-18-c",
+      "expect": "valid",
+      "query": "prefix : <https://ex.com/>\nselect ?a {\n:a ?a :a ;\n  :a [\n    :a/:a :a\n  ] .\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-19-a",
+      "expect": "valid",
+      "query": "select ?p (count(*) as ?n) {\n  [ ?p [] ].\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-4-2a",
+      "expect": "valid",
+      "query": "PREFIX  dc: <http://purl.org/dc/elements/1.1/>\nSELECT  ?title\nWHERE   { <http://example.org/book/book1> dc:title ?title } \n"
+    },
+    {
+      "id": "sparql-1-1/sparql-4-2b",
+      "expect": "valid",
+      "query": "PREFIX  dc: <http://purl.org/dc/elements/1.1/>\nPREFIX  : <http://example.org/book/>\n\nSELECT  $title\nWHERE   { :book1  dc:title  $title }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-4-2c",
+      "expect": "valid",
+      "query": "BASE    <http://example.org/book/>\nPREFIX  dc: <http://purl.org/dc/elements/1.1/>\n\nSELECT  $title\nWHERE   { <book1>  dc:title  ?title }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-5-2-1",
+      "expect": "valid",
+      "query": "SELECT ?x\nWHERE {}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-5-2-2a",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\nSELECT ?name ?mbox\n {  ?x foaf:name ?name .\n    ?x foaf:mbox ?mbox .\n    FILTER regex(?name, \"Smith\")\n }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-5-2-2b",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\nSELECT ?name ?mbox\n {  FILTER regex(?name, \"Smith\")\n    ?x foaf:name ?name .\n    ?x foaf:mbox ?mbox .\n }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-5-2-2c",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\nSELECT ?name ?mbox\n {  ?x foaf:name ?name .\n    FILTER regex(?name, \"Smith\")\n    ?x foaf:mbox ?mbox .\n }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-5-2-3a",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\nSELECT ?name ?mbox\n  {\n    ?x foaf:name ?name .\n    ?x foaf:mbox ?mbox .\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-5-2-3b",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\nSELECT ?name ?mbox\n  {\n    ?x foaf:name ?name . FILTER regex(?name, \"Smith\")\n    ?x foaf:mbox ?mbox .\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-5-2-3c",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\nSELECT ?name ?mbox\n  {\n    ?x foaf:name ?name .\n    {}\n    ?x foaf:mbox ?mbox .\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-5-2a",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\nSELECT ?name ?mbox\nWHERE  {\n          ?x foaf:name ?name .\n          ?x foaf:mbox ?mbox .\n       }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-5-2b",
+      "expect": "valid",
+      "query": "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>\nSELECT ?name ?mbox\nWHERE  { { ?x foaf:name ?name . }\n         { ?x foaf:mbox ?mbox . }\n       }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-6-1",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT ?name ?mbox\nWHERE  { ?x foaf:name  ?name .\n         OPTIONAL { ?x  foaf:mbox  ?mbox }\n       }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-6-2",
+      "expect": "valid",
+      "query": "PREFIX  dc:  <http://purl.org/dc/elements/1.1/>\nPREFIX  ns:  <http://example.org/ns#>\nSELECT  ?title ?price\nWHERE   { ?x dc:title ?title .\n          OPTIONAL { ?x ns:price ?price . FILTER (?price < 30) }\n        }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-6-3",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT ?name ?mbox ?hpage\nWHERE  { ?x foaf:name  ?name .\n         OPTIONAL { ?x foaf:mbox ?mbox } .\n         OPTIONAL { ?x foaf:homepage ?hpage }\n       }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-7a",
+      "expect": "valid",
+      "query": "PREFIX dc10:  <http://purl.org/dc/elements/1.0/>\nPREFIX dc11:  <http://purl.org/dc/elements/1.1/>\n\nSELECT ?title\nWHERE  { { ?book dc10:title  ?title } UNION { ?book dc11:title  ?title } }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-7b",
+      "expect": "valid",
+      "query": "PREFIX dc10:  <http://purl.org/dc/elements/1.0/>\nPREFIX dc11:  <http://purl.org/dc/elements/1.1/>\n\nSELECT ?x ?y\nWHERE  { { ?book dc10:title ?x } UNION { ?book dc11:title  ?y } }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-7c",
+      "expect": "valid",
+      "query": "PREFIX dc10:  <http://purl.org/dc/elements/1.0/>\nPREFIX dc11:  <http://purl.org/dc/elements/1.1/>\n\nSELECT ?title ?author\nWHERE  { { ?book dc10:title ?title .  ?book dc10:creator ?author }\n         UNION\n         { ?book dc11:title ?title .  ?book dc11:creator ?author }\n       }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-8-1-1",
+      "expect": "valid",
+      "query": "PREFIX  rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \nPREFIX  foaf:   <http://xmlns.com/foaf/0.1/> \n\nSELECT ?person\nWHERE \n{\n    ?person rdf:type  foaf:Person .\n    FILTER NOT EXISTS { ?person foaf:name ?name }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-8-1-2",
+      "expect": "valid",
+      "query": "PREFIX  rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \nPREFIX  foaf:   <http://xmlns.com/foaf/0.1/> \n\nSELECT ?person\nWHERE \n{\n    ?person rdf:type  foaf:Person .\n    FILTER EXISTS { ?person foaf:name ?name }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-8-2",
+      "expect": "valid",
+      "query": "PREFIX :       <http://example/>\nPREFIX foaf:   <http://xmlns.com/foaf/0.1/>\n\nSELECT DISTINCT ?s\nWHERE {\n   ?s ?p ?o .\n   MINUS {\n      ?s foaf:givenName \"Bob\" .\n   }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-8-3-1a",
+      "expect": "valid",
+      "query": "SELECT *\n{ \n  ?s ?p ?o\n  FILTER NOT EXISTS { ?x ?y ?z }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-8-3-1b",
+      "expect": "valid",
+      "query": "SELECT *\n{ \n   ?s ?p ?o \n   MINUS \n     { ?x ?y ?z }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-8-3-2a",
+      "expect": "valid",
+      "query": "PREFIX : <http://example/>\nSELECT * \n{ \n  ?s ?p ?o \n  FILTER NOT EXISTS { :a :b :c }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-8-3-2b",
+      "expect": "valid",
+      "query": "PREFIX : <http://example/>\nSELECT * \n{ \n  ?s ?p ?o \n  MINUS { :a :b :c }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-8-3-3a",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/>\nSELECT * WHERE {\n        ?x :p ?n\n        FILTER NOT EXISTS {\n                ?x :q ?m .\n                FILTER(?n = ?m)\n        }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-8-3-3b",
+      "expect": "valid",
+      "query": "PREFIX : <http://example/>\nSELECT * WHERE {\n        ?x :p ?n\n        MINUS {\n                ?x :q ?m .\n                FILTER(?n = ?m)\n        }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2a",
+      "expect": "valid",
+      "query": "PREFIX :     <http://example/>\nPREFIX dc:   <http://purl.org/dc/elements/1.1/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nSELECT *\n  { :book1 dc:title|rdfs:label ?displayString }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2b",
+      "expect": "valid",
+      "query": "PREFIX :     <http://example/>\nPREFIX dc:   <http://purl.org/dc/elements/1.1/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nSELECT *\n  { :book1 <http://purl.org/dc/elements/1.1/title> | <http://www.w3.org/2000/01/rdf-schema#label> ?displayString }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2c",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT *\n  {\n    ?x foaf:mbox <mailto:alice@example> .\n    ?x foaf:knows/foaf:name ?name .\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2d",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT *\n  { \n    ?x foaf:mbox <mailto:alice@example> .\n    ?x foaf:knows/foaf:knows/foaf:name ?name .\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2e",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n  SELECT ?x ?name \n  {\n     ?x  foaf:mbox <mailto:alice@example> .\n     ?x  foaf:knows [ foaf:knows [ foaf:name ?name ]]. \n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2f",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n  SELECT ?x ?name\n  {\n    ?x  foaf:mbox <mailto:alice@example> .\n    ?x  foaf:knows ?a1 .\n    ?a1 foaf:knows ?a2 .\n    ?a2 foaf:name ?name .\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2g",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n  SELECT *\n  { ?x foaf:mbox <mailto:alice@example> .\n    ?x foaf:knows/foaf:knows ?y .\n    FILTER ( ?x != ?y )\n    ?y foaf:name ?name \n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2h",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n  SELECT *\n  { ?x foaf:mbox <mailto:alice@example> }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2i",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n  SELECT *\n  { <mailto:alice@example> ^foaf:mbox ?x }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2j",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n  SELECT *\n  {\n    ?x foaf:knows/^foaf:knows ?y .  \n    FILTER(?x != ?y)\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2k",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n  SELECT *\n  {\n    ?x foaf:knows ?gen1 .\n    ?y foaf:knows ?gen1 .  \n    FILTER(?x != ?y)\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2l",
+      "expect": "valid",
+      "query": "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n  SELECT *\n  {\n    ?x foaf:mbox <mailto:alice@example> .\n    ?x foaf:knows+/foaf:name ?name .\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2m",
+      "expect": "valid",
+      "query": "BASE <http://example.org/>\nPREFIX ex: <http://example.org/#>\n  SELECT *\n  { ?ancestor (ex:motherOf|ex:fatherOf)+ <#me> }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2n",
+      "expect": "valid",
+      "query": "PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n  SELECT *\n  { <http://example/thing> rdf:type/rdfs:subClassOf* ?type }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2o",
+      "expect": "valid",
+      "query": "PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n  SELECT *\n  { ?x rdf:type/rdfs:subClassOf* ?type }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2p",
+      "expect": "valid",
+      "query": "PREFIX :     <http://example/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n  SELECT *\n  { ?x ?p ?v . ?p rdfs:subPropertyOf* :property }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2q",
+      "expect": "valid",
+      "query": "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n  SELECT *\n  { ?x !(rdf:type|^rdf:type) ?y }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-2r",
+      "expect": "valid",
+      "query": "PREFIX :    <http://example/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n  SELECT *\n  { :list rdf:rest*/rdf:first ?element }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-3a",
+      "expect": "valid",
+      "query": "PREFIX :   <http://example/>\nSELECT * \n{  ?s :item/:price ?x . }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-3b",
+      "expect": "valid",
+      "query": "PREFIX :   <http://example/>\nSELECT * \n{  ?s :item ?_a .\n   ?_a :price ?x . }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-3c",
+      "expect": "valid",
+      "query": "  PREFIX :   <http://example/>\n  SELECT (sum(?x) AS ?total)\n  { \n    :order :item/:price ?x\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-4a",
+      "expect": "valid",
+      "query": "  PREFIX  rdfs:   <http://www.w3.org/2000/01/rdf-schema#> \n  PREFIX  rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n  SELECT ?x ?type\n  { \n    ?x rdf:type/rdfs:subClassOf* ?type\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-9-4b",
+      "expect": "valid",
+      "query": "  PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n  PREFIX :     <http://example/>\n  SELECT ?person\n  { \n    :x foaf:knows+ ?person\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-fed-2-1",
+      "expect": "valid",
+      "query": "PREFIX foaf:   <http://xmlns.com/foaf/0.1/>\nSELECT ?name\nFROM <http://example.org/myfoaf.rdf>\nWHERE\n{\n  <http://example.org/myfoaf/I> foaf:knows ?person .\n  SERVICE <http://people.example.org/sparql> { \n    ?person foaf:name ?name . } \n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-fed-2-2",
+      "expect": "valid",
+      "query": "PREFIX foaf:   <http://xmlns.com/foaf/0.1/>\nSELECT ?person ?interest ?known\nWHERE\n{\n  SERVICE <http://people.example.org/sparql> { \n    ?person foaf:name ?name .  \n    OPTIONAL { \n      ?person foaf:interest ?interest .\n      SERVICE <http://people2.example.org/sparql> { \n        ?person foaf:knows ?known . } }\n  }    \n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-fed-2-3",
+      "expect": "valid",
+      "query": "PREFIX foaf:   <http://xmlns.com/foaf/0.1/>\nSELECT ?name\nWHERE\n{\n  SERVICE SILENT <http://people.example.org/sparql> { \n    <http://example.org/people15> foaf:name ?name . }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-fed-2-4a",
+      "expect": "valid",
+      "query": "PREFIX foaf:   <http://xmlns.com/foaf/0.1/>\nSELECT ?s\n{\n  ?s a foaf:Person .\n  SERVICE <http://example.org/sparql> {?s foaf:knows ?o }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-fed-2-4b",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.org/>\nPREFIX foaf:   <http://xmlns.com/foaf/0.1/>\nSELECT ?s\n{\n  ?s a foaf:Person\n} \n"
+    },
+    {
+      "id": "sparql-1-1/sparql-fed-2-4c",
+      "expect": "valid",
+      "query": "PREFIX foaf:   <http://xmlns.com/foaf/0.1/>\nPREFIX : <http://example.org/>\nSELECT * {?s foaf:knows ?o } VALUES (?s) { (:a) (:b) }\n\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-fed-2-4d",
+      "expect": "valid",
+      "query": "PREFIX foaf:   <http://xmlns.com/foaf/0.1/>\nSELECT ?s ?o\n{\n  ?s a foaf:Person\n  SERVICE <http://example.org/sparql> {?s foaf:knows ?o }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-fed-4",
+      "expect": "valid",
+      "query": "PREFIX  void: <http://rdfs.org/ns/void#>\nPREFIX  dc:   <http://purl.org/dc/elements/1.1/>\nPREFIX  doap: <http://usefulinc.com/ns/doap#> \n\nSELECT ?service ?projectName\nWHERE {\n  # Find the service with subject \"remote\".\n  ?p dc:subject ?projectSubject ;\n     void:sparqlEndpoint ?service .\n     FILTER regex(?projectSubject, \"remote\")\n\n  # Query that service projects.\n  SERVICE ?service {\n     ?project  doap:name ?projectName . } \n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-modifiers-order",
+      "expect": "valid",
+      "query": "PREFIX : <http://books.example/>\nSELECT (SUM(?lprice) AS ?totalPrice)\nWHERE {\n  ?org :affiliates ?auth .\n  ?auth :writesBook ?book .\n  ?book :price ?lprice .\n}\nGROUP BY ?org\nHAVING (SUM(?lprice) > 10)\nORDER BY ?totalPrice\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-1-1-1",
+      "expect": "valid",
+      "query": "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT { <http://example/egbook> dc:title  \"This is an example title\" } WHERE {}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-3-1-1a",
+      "expect": "valid",
+      "query": "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA\n{ \n  <http://example/book1> dc:title \"A new book\" ;\n                         dc:creator \"A.N.Other\" .\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-3-1-1b",
+      "expect": "valid",
+      "query": "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nPREFIX ns: <http://example.org/ns#>\nINSERT DATA\n{ GRAPH <http://example/bookStore> { <http://example/book1>  ns:price  42 } }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-3-1-2a",
+      "expect": "valid",
+      "query": "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n\nDELETE DATA\n{\n  <http://example/book2> dc:title \"David Copperfield\" ;\n                         dc:creator \"Edmund Wells\" .\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-3-1-2b",
+      "expect": "valid",
+      "query": "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nDELETE DATA\n{ GRAPH <http://example/bookStore> { <http://example/book1>  dc:title  \"Fundamentals of Compiler Desing\" } } ;\n\nINSERT DATA\n{ GRAPH <http://example/bookStore> { <http://example/book1>  dc:title  \"Fundamentals of Compiler Design\" } }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-3-1-3",
+      "expect": "valid",
+      "query": "PREFIX foaf:  <http://xmlns.com/foaf/0.1/>\n\nWITH <http://example/addresses>\nDELETE { ?person foaf:givenName 'Bill' }\nINSERT { ?person foaf:givenName 'William' }\nWHERE\n  { ?person foaf:givenName 'Bill'\n  }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-3-1-3-1a",
+      "expect": "valid",
+      "query": "PREFIX dc:  <http://purl.org/dc/elements/1.1/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nDELETE\n { ?book ?p ?v }\nWHERE\n { ?book dc:date ?date .\n   FILTER ( ?date > \"1970-01-01T00:00:00-02:00\"^^xsd:dateTime )\n   ?book ?p ?v\n }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-3-1-3-1b",
+      "expect": "valid",
+      "query": "PREFIX foaf:  <http://xmlns.com/foaf/0.1/>\n\nWITH <http://example/addresses>\nDELETE { ?person ?property ?value } \nWHERE { ?person ?property ?value ; foaf:givenName 'Fred' } \n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-3-1-3-2a",
+      "expect": "valid",
+      "query": "PREFIX dc:  <http://purl.org/dc/elements/1.1/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nINSERT \n  { GRAPH <http://example/bookStore2> { ?book ?p ?v } }\nWHERE\n  { GRAPH  <http://example/bookStore>\n       { ?book dc:date ?date .\n         FILTER ( ?date > \"1970-01-01T00:00:00-02:00\"^^xsd:dateTime )\n         ?book ?p ?v\n  } }\t\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-3-1-3-2b",
+      "expect": "valid",
+      "query": "PREFIX foaf:  <http://xmlns.com/foaf/0.1/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nINSERT \n  { GRAPH <http://example/addresses>\n    {\n      ?person  foaf:name  ?name .\n      ?person  foaf:mbox  ?email\n    } }\nWHERE\n  { GRAPH  <http://example/people>\n    {\n      ?person  foaf:name  ?name .\n      OPTIONAL { ?person  foaf:mbox  ?email }\n    } }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-3-1-3-2c",
+      "expect": "valid",
+      "query": "PREFIX dc:  <http://purl.org/dc/elements/1.1/>\nPREFIX dcmitype: <http://purl.org/dc/dcmitype/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nINSERT\n  { GRAPH <http://example/bookStore2> { ?book ?p ?v } }\nWHERE\n  { GRAPH  <http://example/bookStore>\n     { ?book dc:date ?date . \n       FILTER ( ?date < \"2000-01-01T00:00:00-02:00\"^^xsd:dateTime )\n       ?book ?p ?v\n     }\n  } ;\n\nWITH <http://example/bookStore>\nDELETE\n { ?book ?p ?v }\nWHERE\n { ?book dc:date ?date ;\n         dc:type dcmitype:PhysicalObject .\n   FILTER ( ?date < \"2000-01-01T00:00:00-02:00\"^^xsd:dateTime ) \n   ?book ?p ?v\n } \n\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-3-1-3-3a",
+      "expect": "valid",
+      "query": "PREFIX foaf:  <http://xmlns.com/foaf/0.1/>\n\nDELETE WHERE { ?person foaf:givenName 'Fred';\n                       ?property      ?value }\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-3-1-3-3b",
+      "expect": "valid",
+      "query": "PREFIX foaf:  <http://xmlns.com/foaf/0.1/>\n\nDELETE WHERE {\n  GRAPH <http://example.com/names> {\n    ?person foaf:givenName 'Fred' ;\n            ?property1 ?value1\n  }\n  GRAPH <http://example.com/addresses> {\n    ?person ?property2 ?value2\n  }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-3-2-3",
+      "expect": "valid",
+      "query": "COPY DEFAULT TO <http://example.org/named>\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-3-2-4",
+      "expect": "valid",
+      "query": "MOVE DEFAULT TO <http://example.org/named>\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-3-2-5",
+      "expect": "valid",
+      "query": "ADD DEFAULT TO <http://example.org/named>\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-4-2-4",
+      "expect": "valid",
+      "query": "DELETE { ?S ?P ?O . } WHERE { ?S ?P ?O . FILTER ( isBlank(?S)) } \n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-multiple-prefixes",
+      "expect": "valid",
+      "query": "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <http://example/book1> dc:title \"A new book\" .} ;\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nINSERT DATA { <http://example/book2> rdfs:label \"A second book\" .}\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-only-prefix",
+      "expect": "valid",
+      "query": "PREFIX a: <urn:a>\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-trailing-prologue",
+      "expect": "valid",
+      "query": "INSERT DATA { <http://example/book1> <urn:label> \"A new book\" .} ; PREFIX a: <urn:a>\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-update-trailing-semicolon",
+      "expect": "valid",
+      "query": "INSERT DATA { <http://example/book1> <urn:label> \"A new book\" .} ;\n"
+    },
+    {
+      "id": "sparql-1-1/sparql-values-clause",
+      "expect": "valid",
+      "query": "PREFIX : <http://books.example/>\nSELECT (SUM(?lprice) AS ?totalPrice)\nWHERE {\n  ?org :affiliates ?auth .\n  ?auth :writesBook ?book .\n  ?book :price ?lprice .\n}\nGROUP BY ?org\nHAVING (SUM(?lprice) > 10)\nORDER BY ?totalPrice\nVALUES (?book) { \n     (:book2)\n   }\n"
+    },
+    {
+      "id": "sparql-1-1/strlen",
+      "expect": "valid",
+      "query": "SELECT ?str (STRLEN(?str) as ?strlen) { [] ?p ?str }\n"
+    },
+    {
+      "id": "sparql-1-1/sub-values",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.org/>\nSELECT ?s ?o {\n{\n    SELECT * WHERE {\n        ?s ?p ?o .\n    }\n    VALUES (?o) { (:b) }\n}\n}\n"
+    },
+    {
+      "id": "sparql-1-1/subquery",
+      "expect": "valid",
+      "query": "SELECT ?x WHERE { SELECT ?x ?p ?y WHERE { ?x ?p ?y. } }\n"
+    },
+    {
+      "id": "sparql-1-1/subtract",
+      "expect": "valid",
+      "query": "SELECT * WHERE {\n  BIND (?a-1 AS ?b)\n}\n"
+    },
+    {
+      "id": "sparql-1-1/sum-count",
+      "expect": "valid",
+      "query": "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nSELECT (SUM(?val) AS ?sum) (COUNT(?a) AS ?count) (COUNT(*) AS ?countAll)\nWHERE {\n  ?a rdf:value ?val .\n} GROUP BY ?a\n"
+    },
+    {
+      "id": "sparql-1-1/unary-minus",
+      "expect": "valid",
+      "query": "SELECT * WHERE { FILTER(-?x < 0) }"
+    },
+    {
+      "id": "sparql-1-1/unary-plus",
+      "expect": "valid",
+      "query": "SELECT * WHERE { FILTER(+?x > 0) }"
+    },
+    {
+      "id": "sparql-1-1/unicode",
+      "expect": "valid",
+      "query": "SELECT * WHERE {\n    ?🎄🎉 ?🎁🎀 \"𓅃 𓃽 𓆟\"\n}\n"
+    },
+    {
+      "id": "sparql-1-1/union",
+      "expect": "valid",
+      "query": "PREFIX dbpedia: <http://dbpedia.org/resource/>\nSELECT ?label WHERE {\n  { dbpedia:Belgium <http://www.w3.org/2000/01/rdf-schema#label> ?label. }\n  UNION\n  { dbpedia:Belgium <http://dbpedia.org/property/commonName>     ?label. }\n  UNION\n  { dbpedia:Belgium <http://xmlns.com/foaf/0.1/name>             ?label. }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/union-complex",
+      "expect": "valid",
+      "query": "PREFIX dbpedia: <http://dbpedia.org/resource/>\nPREFIX dbpedia-owl: <http://dbpedia.org/ontology/>\nSELECT * WHERE {\n  ?city dbpedia-owl:country dbpedia:Belgium.\n\n  { ?city <http://www.w3.org/2000/01/rdf-schema#label> ?label. }\n  UNION\n  { ?city <http://dbpedia.org/property/commonName>     ?label. }\n  UNION\n  { ?city <http://xmlns.com/foaf/0.1/name>             ?label. }\n}\n"
+    },
+    {
+      "id": "sparql-1-1/unspaced-variables",
+      "expect": "valid",
+      "query": "SELECT ?s?o WHERE { ?s?p?o }\n"
+    },
+    {
+      "id": "sparql-1-1/using",
+      "expect": "valid",
+      "query": "WITH <urn:one:graph>\nDELETE { ?s <foo:bar> ?o }\nUSING <urn:another:graph>\nUSING NAMED <urn:anamed:graph>\nWHERE { ?s <foo:bar> ?o }\n"
+    },
+    {
+      "id": "sparql-1-1/values-at-end",
+      "expect": "valid",
+      "query": "SELECT * WHERE { ?s ?p ?o } VALUES ?x { <http://ex> }"
+    },
+    {
+      "id": "sparql-1-1/values-in-where",
+      "expect": "valid",
+      "query": "SELECT ?x WHERE { VALUES ?x { <http://ex> } } GROUP BY ?x"
+    },
+    {
+      "id": "sparql-1-2-invalid/codepoint-esc-01-bad",
+      "expect": "invalid",
+      "query": "# The query `ASK {}` entirely encoded using codepoint escapes.\n\\u0041\\u0053\\u004B\\u0020\\u007B\\u007D\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/codepoint-esc-02-bad",
+      "expect": "invalid",
+      "query": "# Codepoint escape in prefixed name : PNAME_NS\n\nSELECT * {\n    ?x n\\0073:abc ?o\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/codepoint-esc-03-bad",
+      "expect": "invalid",
+      "query": "# Codepoint escape in prefixed name : PN_LOCAL\nPREFIX ns: <http://example/ns#>\n\nSELECT * {\n    ?x ns:a\\u0062c ?o\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/codepoint-esc-04-bad",
+      "expect": "invalid",
+      "query": "# Codepoint escape in variable\n\nPREIFX ns: <http://example/ns#>\n\nSELECT * {\n    ?a\\u0062c ns:abc ?o\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/should-throw-on-unknown-prefix-in-triple-pattern",
+      "expect": "invalid",
+      "query": "VERSION \"1.2\"\nPREFIX dbr:  <http://dbpedia.org/resource/>\n#PREFIX geo:  <http://example.org/ontology/geo/>\nPREFIX prov: <http://www.w3.org/ns/prov#>\nPREFIX dbo:  <http://dbpedia.org/property/>\n\nSELECT * {\n    << ?territory geo:partOf ?country >> prov:wasAttributedTo ?claimant .\n    ?territory dbo:name ?name .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-alternate-path-anonreifier",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * WHERE {\n    <<s :p|:q ?o>>.\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-alternate-path-reifier",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * WHERE {\n    <<s :p|:q ?o ~ :iri >>.\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-alternate-path-tripleterm",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * WHERE {\n    <<(s :p|:q ?o)>>.\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-annotated-anonreifier-alternate-path",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * WHERE {\n    ?s :p|:q ?o {| ?pp ?oo |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-annotated-anonreifier-list-predicate",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   :p (\"abc\") :o  {| :q 123 |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-annotated-anonreifier-oneOrMore",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * WHERE {\n    ?s :p+ ?o {| ?pp ?oo |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-annotated-anonreifier-optional",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * {\n  :s :p? :o {| ?p ?o |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-annotated-anonreifier-path",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * WHERE {\n    ?s :p/:q ?o {| ?pp ?oo |}.\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-annotated-anonreifier-path-on-start",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * WHERE {\n    :s+ :p ?o {| ?pp ?oo |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-annotated-anonreifier-variable-path",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * WHERE {\n  ?s1 ?p1/?p2 ?o1 {| ?p2 ?o2 |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-annotated-reifier-list-predicate",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   :p (\"abc\") :o ~ :iri  {| :q 123 |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-annotated-reifier-oneOrMore",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/>\n\nSELECT * WHERE {\n    ?s :p+ ?o ~ :iri {| ?pp ?oo |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-annotated-reifier-optional",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/>\n\nSELECT * {\n  :s :p? :o ~ :iri {| ?p ?o |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-annotated-reifier-path",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/>\n\nSELECT * WHERE {\n    ?s :p/:q ?o ~ :iri {| ?pp ?oo |}.\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-annotated-reifier-path-on-start",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/>\n\nSELECT * WHERE {\n    :s+ :p ?o ~ :iri {| ?pp ?oo |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-annotated-reifier-reifier-alternate-path",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/>\n\nSELECT * WHERE {\n    ?s :p|:q ?o ~ :iri {| ?pp ?oo |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-annotated-reifier-variable-path",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/>\n\nSELECT * WHERE {\n  ?s1 ?p1/?p2 ?o1 ~ :iri {| ?p2 ?o2 |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-bind-anonreified",
+      "expect": "invalid",
+      "query": "SELECT * {\n    ?s ?p ?o .\n    BIND(<< ?s ?p ?o >> AS ?t )\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-bind-reified",
+      "expect": "invalid",
+      "query": "SELECT * {\n    ?s ?p ?o .\n    BIND(<< ?s ?p ?o ~ :iri >> AS ?t )\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-bindbnode-anonreifier",
+      "expect": "invalid",
+      "query": "SELECT * {\n    ?s ?p ?o .\n    BIND(<< [] ?p ?o >> AS ?t )\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-bindbnode-reifier",
+      "expect": "invalid",
+      "query": "SELECT * {\n    ?s ?p ?o .\n    BIND(<< [] ?p ?o ~ :iri >> AS ?t )\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-bindbnode-tripleterm",
+      "expect": "invalid",
+      "query": "SELECT * {\n    ?s ?p ?o .\n    BIND(<<( [] ?p ?o )>> AS ?t )\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-bnode-predicate-anonreifier",
+      "expect": "invalid",
+      "query": "SELECT * WHERE {\n  <<?s [] ?o>> ?p2 ?o2 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-bnode-predicate-reifier",
+      "expect": "invalid",
+      "query": "SELECT * WHERE {\n  <<?s [] ?o ~ :iri>> ?p2 ?o2 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-bnode-predicate-tripleterm",
+      "expect": "invalid",
+      "query": "SELECT * WHERE {\n  <<(?s [] ?o)>> ?p2 ?o2 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-list-anonreifier-01",
+      "expect": "invalid",
+      "query": "PREFIX ex: <http://example.com/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT * WHERE {\n    <<?s ?p ?o>> ex:author ex:Bob .\n    << ex:Moscow a ex:City >> ex:author ?person .\n    # TODO: See if this should be throwing an error\n    << _:b ex:x () >> ex:broken true .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-list-anonreifier-02",
+      "expect": "invalid",
+      "query": "PREFIX ex: <http://example.com/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT * WHERE {\n    <<?s ?p ?o>> ex:author ex:Bob .\n    << ex:Moscow a ex:City >> ex:author ?person .\n    # TODO: See if this should be throwing an error\n    << _:b ex:x ( 1 2 3 ) >> ex:broken true .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-list-reifier-01",
+      "expect": "invalid",
+      "query": "PREFIX ex: <http://example.com/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT * WHERE {\n    <<?s ?p ?o ~ :iri >> ex:author ex:Bob .\n    << ex:Moscow a ex:City ~ :iri >> ex:author ?person .\n    # TODO: See if this should be throwing an error\n    << _:b ex:x () ~ :iri >> ex:broken true .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-list-reifier-02",
+      "expect": "invalid",
+      "query": "PREFIX ex: <http://example.com/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT * WHERE {\n    <<?s ?p ?o ~ :iri >> ex:author ex:Bob .\n    << ex:Moscow a ex:City ~ :iri >> ex:author ?person .\n    # TODO: See if this should be throwing an error\n    << _:b ex:x ( 1 2 3 ) ~ :iri >> ex:broken true .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-list-tripleterm-01",
+      "expect": "invalid",
+      "query": "PREFIX ex: <http://example.com/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT * WHERE {\n    <<(?s ?p ?o)>> ex:author ex:Bob .\n    <<( ex:Moscow a ex:City )>> ex:author ?person .\n    # TODO: See if this should be throwing an error\n    <<( _:b ex:x () )>> ex:broken true .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-list-tripleterm-02",
+      "expect": "invalid",
+      "query": "PREFIX ex: <http://example.com/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT * WHERE {\n    <<(?s ?p ?o)>> ex:author ex:Bob .\n    <<( ex:Moscow a ex:City )>> ex:author ?person .\n    # TODO: See if this should be throwing an error\n    <<( _:b ex:x ( 1 2 3 ) )>> ex:broken true .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-nested-annotated-path-anonreifier",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * WHERE {\n    ?s ?p ?o {| :p/:q ?oo {| ?a ?b |} |}.\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-nested-annotated-path-reifier",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * WHERE {\n    ?s ?p ?o ~ :iri {| :p/:q ?oo ~ :iri {| ?a ?b |} |}.\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-list-object-anonreifier",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   <<?s :p (\"abc\") >> :q 123 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-list-object-reifier",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   <<?s :p (\"abc\") ~ :iri >> :q 123 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-list-object-tripleterm",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   <<(?s :p (\"abc\") )>> :q 123 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-list-predicate-anonreifier",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   <<?s :p (\"abc\") >> :q 123 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-list-predicate-reifier",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   <<?s :p (\"abc\") ~ :iri >> :q 123 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-list-predicate-tripleterm",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   <<(?s :p (\"abc\") )>> :q 123 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-list-subject-anonreifier",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   <<(\"abc\") :p :o >> :q 123 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-list-subject-reifier",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   <<(\"abc\") :p :o ~ :iri >> :q 123 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-list-subject-tripleterm",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   <<((\"abc\") :p :o )>> :q 123 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-path-anonreifier",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * WHERE {\n    <<?s :p/:q ?o>>.\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-path-bind-anonreifier",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    ?s ?p ?o .\n    BIND(<< ?s :p/:q ?o >> AS ?t )\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-path-bind-reifier",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    ?s ?p ?o .\n    BIND(<< ?s :p/:q ?o ~ :iri >> AS ?t )\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-path-bind-tripleterm",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    ?s ?p ?o .\n    BIND(<<( ?s :p/:q ?o )>> AS ?t )\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-path-reifier",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * WHERE {\n    <<?s :p/:q ?o ~ :iri>>.\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-path-tripleterm",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * WHERE {\n    <<(?s :p/:q ?o)>>.\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-variable-path-anonreifier",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * WHERE {\n  <<?s1 ?p1/?p2 ?o1>>\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-variable-path-reifier",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * WHERE {\n  <<?s1 ?p1/?p2 ?o1 ~ :iri>>\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-quoted-variable-path-tripleterm",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/> \n\nSELECT * WHERE {\n  <<(?s1 ?p1/?p2 ?o1)>>\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-syntax-basic-tripleterm-subject",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    VALUES ?x {\n        <<(:s :p :o )>>\n        <<( <<(:s :p :o )>> :q :z )>>\n    }\n    VALUES (?y ?z) { (<<(:s :p :o )>> 123 )\n                      (123 <<(:s :p :o )>> ) }\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-syntax-update-anonreifier-01",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nDELETE {\n    ?s :r ?o {| :added 'Property :r' |}\n} WHERE {\n   ?s :p ?o {| :q1+ 'ABC' |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-syntax-update-anonreifier-02",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nDELETE DATA  {\n    :s :p :o1  {| :added 'Test' |}\n}\n;\nINSERT DATA  {\n    :s :p :o2  {| :added 'Test' |}\n}\n\n\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-tripleterm-separate-01",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * WHERE {\n   <<( ?s ?p ?o )>> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-tripleterm-separate-02",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * WHERE {\n   <<( :s :p :o )>> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-tripleterm-separate-03",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * WHERE {\n   <<( :s :p <<( ?s :p2 :o2 )>> )>> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-tripleterm-separate-04",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n   <<( ?s ?p ?o )>> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-tripleterm-separate-05",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n   <<( :s :p :o )>> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/sparql-1-2-tripleterm-separate-06",
+      "expect": "invalid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n   <<( :s :p <<( ?s :p2 :o2 )>> )>> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/surrogate-esc-01-bad",
+      "expect": "invalid",
+      "query": "## Surrogate pair. Not legal.\n\nSELECT * {\n    ?s ?p \"\\uD83C\\uDCA1\" .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/surrogate-esc-02-bad",
+      "expect": "invalid",
+      "query": "## Surrogates. Low-high (not a pair). Not legal.\n\nSELECT * {\n    ?s ?p \"\\uDCA1\\uD83C\" .\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/surrogate-esc-03-bad",
+      "expect": "invalid",
+      "query": "## High surrogate. Not legal.\n\nSELECT * {\n    ?s ?p \"Single high surrogate (\\uD83C)\"\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/surrogate-esc-04-bad",
+      "expect": "invalid",
+      "query": "## Low surrogate. Not legal.\n\nSELECT * {\n    ?s ?p \"Single low surrogate (\\uDCA1)\"\n}\n"
+    },
+    {
+      "id": "sparql-1-2-invalid/surrogate-esc-05-bad",
+      "expect": "invalid",
+      "query": "## Surrogate pair in IRI. Not legal.\n\nSELECT * {\n    ?s ?p <http://example/\\uD83C\\uDCA1>\n}\n"
+    },
+    {
+      "id": "sparql-1-2/01.not-not",
+      "expect": "valid",
+      "query": "PREFIX : <http://example/>\nPREFIX xsd:    <http://www.w3.org/2001/XMLSchema#>\n\nSELECT ?v ?ebv {\n  VALUES ?v { true 1 \"a\" false 0 \"\" \"a\"@en \"z\"^^xsd:boolean \"2020-01-01T00:00:00Z\"^^xsd:dateTime :a }\n  BIND(!!?v AS ?ebv)\n}"
+    },
+    {
+      "id": "sparql-1-2/codepoint-esc-05",
+      "expect": "valid",
+      "query": "SELECT ?v {\n  VALUES ?v {\n    # abc👾\n    <http://example/\\u0061\\U00000062\\u0063\\U0001F47E>\n  }\n}\n"
+    },
+    {
+      "id": "sparql-1-2/codepoint-esc-06",
+      "expect": "valid",
+      "query": "SELECT ?v {\n  VALUES ?v {\n    # \"abc👾\"\n    \"\\U00000061\\u0062\\U00000063\\U0001F47E\"\n  }\n}\n"
+    },
+    {
+      "id": "sparql-1-2/codepoint-esc-07",
+      "expect": "valid",
+      "query": "SELECT ?v {\n  VALUES ?v {\n    # \"abc👾\"\n    '\\U00000061\\u0062\\U00000063\\U0001F47E'\n  }\n}\n"
+    },
+    {
+      "id": "sparql-1-2/codepoint-esc-08",
+      "expect": "valid",
+      "query": "# Codepoint escape of special characters in strings\n\nPREFIX ex: <http://example.org/>\n# a\\t\\n\\r\\b\\f\\\"\\'\\\\a\nCONSTRUCT { ex:s ex:p \"a\\u0009\\u000A\\u000D\\u0008\\u000C\\u0022\\u0027\\u005Ca\" } WHERE {}\n"
+    },
+    {
+      "id": "sparql-1-2/codepoint-esc-09",
+      "expect": "valid",
+      "query": "# Codepoint escape are not reused during parsing\n\nSELECT ?v {\n  VALUES ?v {\n    \"abc\\u005Cdef\"\n    \"abc\\u005Ctuv\"\n    \"\\u005CA\"\n    \"\\\\u005C\"\n    \"\\u005C\\u005C\"\n    \"\\\\\\u005C\"\n    \"\\\\\\\\\"\n    \"\\u005Cn\"\n  }\n}\n"
+    },
+    {
+      "id": "sparql-1-2/collection-adjacent-terms-12",
+      "expect": "valid",
+      "query": "PREFIX ex: <http://example.org/>\nSELECT * WHERE {\n  ?s ex:p ( \"a\"@en--ltr ex:b \"c\"@en ex:d <<( ex:e ex:f ex:g )>> ex:h << ex:i ex:j ex:k >> ex:l ) .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/reified-triple-explicit-reifier",
+      "expect": "valid",
+      "query": "SELECT * WHERE { << ?s ?p ?o ~?id >> ?pred ?obj }"
+    },
+    {
+      "id": "sparql-1-2/reified-triple-no-reifier",
+      "expect": "valid",
+      "query": "SELECT * WHERE { << ?s ?p ?o >> ?pred ?obj }"
+    },
+    {
+      "id": "sparql-1-2/reified-triple-tilde-no-id",
+      "expect": "valid",
+      "query": "SELECT * WHERE { << <http://s> <http://p> <http://o> ~ >> <http://pred> ?obj }"
+    },
+    {
+      "id": "sparql-1-2/select-variable-reuse",
+      "expect": "valid",
+      "query": "SELECT (COUNT(?v) AS ?count) (?count + 1 AS ?countPlusOne) WHERE {\n  VALUES ?v { 0 1 2 3 }\n}"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-anonreifier-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?s ?p ?o {| :r ?Z |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-anonreifier-02",
+      "expect": "valid",
+      "query": "PREFIX :        <http://example.com/ns#>\nPREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>\n\nSELECT * {\n   :s :p :o {| :source [ :graph <http://host1/> ;\n                         :date \"2020-01-20\"^^xsd:date\n                       ] ;\n               ?source [ :graph <http://host2/> ;\n                         :date \"2020-12-31\"^^xsd:date\n                       ]\n             |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-anonreifier-03",
+      "expect": "valid",
+      "query": "PREFIX :        <http://example.com/ns#>\nPREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>\n\nSELECT * {\n   :s :p <<:a :b :c>> {| ?q ?z |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-anonreifier-04",
+      "expect": "valid",
+      "query": "PREFIX :        <http://example.com/ns#>\nPREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>\n\nSELECT * {\n   :s :p <<:a :b :c>> {| ?q <<:s1 :p1 ?z>> |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-anonreifier-05",
+      "expect": "valid",
+      "query": "PREFIX :        <http://example.com/ns#>\nPREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>\n\nSELECT * {\n   <<?s :p1 :o1>> ?p ?o {| :r ?Z |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-anonreifier-06",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?s ?p ?o {| :r/:q 'ABC' |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-anonreifier-07",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?s ?p ?o {| :r [ :p1|:p2 'ABC'] |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-anonreifier-08",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT {\n      ?s ?p ?o {| :source ?g |}\n}\nWHERE { GRAPH ?g { ?s ?p ?o } }\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-anonreifier-09",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n  ?s :p ?o {| :q1 ?z |} \n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-anonreifier-multiple-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?s :p ?o {| :r1 ?Z1 |} {| :r2 ?Z2 |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-anonreifier-multiple-02",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?s ?p ?o {| :r1 ?Z1 |} {| :r2 ?Z2 |} {| :r3 ?Z3 |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-anonreifier-multiple-03",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n  ?s :p ?o {| :r1 ?Z1 |} {| :r2 ?Z2 |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-anonreifier-multiple-04",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n  ?s ?p ?o {| :r1 ?Z1 |} {| :r2 ?Z2 |} {| :r3 ?Z3 |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?s ?p ?o ~ :iri {| :r ?Z |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-02",
+      "expect": "valid",
+      "query": "PREFIX :        <http://example.com/ns#>\nPREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>\n\nSELECT * {\n   :s :p :o  ~ :iri {| :source [ :graph <http://host1/> ;\n                         :date \"2020-01-20\"^^xsd:date\n                       ] ;\n                       ?source [ :graph <http://host2/> ;\n                         :date \"2020-12-31\"^^xsd:date\n                       ]\n                    |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-03",
+      "expect": "valid",
+      "query": "PREFIX :        <http://example.com/ns#>\nPREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>\n\nSELECT * {\n   :s :p <<:a :b :c>>  ~ _:bnode {| ?q ?z |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-04",
+      "expect": "valid",
+      "query": "PREFIX :        <http://example.com/ns#>\nPREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>\n\nSELECT * {\n   :s :p <<:a :b :c>> ~ :iri {| ?q <<:s1 :p1 ?z>> |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-05",
+      "expect": "valid",
+      "query": "PREFIX :        <http://example.com/ns#>\nPREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>\n\nSELECT * {\n   <<?s :p1 :o1>> ?p ?o ~ :iri {| :r ?Z |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-06",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?s ?p ?o ~ :iri {| :r/:q 'ABC' |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-07",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?s ?p ?o ~ :iri {| :r [ :p1|:p2 'ABC'] |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-08",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT {\n      ?s ?p ?o ~ :iri {| :source ?g |}\n}\nWHERE { GRAPH ?g { ?s ?p ?o } }\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-09",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n  ?s :p ?o ~ _:bnode {| :q1 ?z |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-multiple-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?s ?p ?o ~ :iri .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-multiple-02",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?s :p ?o ~ :iri1 {| :r1 ?Z1 |} ~:iri2 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-multiple-03",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?s :p ?o ~ :iri1 {| :r1 ?Z1 |} ~:iri2 {| :r2 ?Z2 |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-multiple-04",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?s ?p ?o ~ :iri1 {| :r1 ?Z1 |} ~ :iri2 {| :r2 ?Z2 |} ~ :iri3 {| :r3 ?Z3 |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-multiple-05",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?s ?p ?o ~ :iri1 ~ :iri2 {| :r1 ?Z1 |} {| :r2 ?Z2 |} ~ :iri3 {| :r3 ?Z3 |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-multiple-06",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n  ?s ?p ?o ~ :iri .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-multiple-07",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n  ?s :p ?o ~ :iri1 {| :r1 ?Z1 |} ~:iri2 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-multiple-08",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n  ?s :p ?o ~ :iri1 {| :r1 ?Z1 |} ~:iri2 {| :r2 ?Z2 |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-multiple-09",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n  ?s ?p ?o ~ :iri1 {| :r1 ?Z1 |} ~ :iri2 {| :r2 ?Z2 |} ~ :iri3 {| :r3 ?Z3 |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-annotation-reifier-multiple-10",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n  ?s ?p ?o ~ :iri1 ~ :iri2 {| :r1 ?Z1 |} {| :r2 ?Z2 |} ~ :iri3 {| :r3 ?Z3 |} .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-anonreifier-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    << :a :b :c >> :p1 :o1.\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-anonreifier-02",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    :s :p << :a :b \"c\" >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-anonreifier-03",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    << ?s ?p ?o >> ?Y ?Z .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-anonreifier-04",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    ?S ?P << ?a ?b ?c >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-anonreifier-06",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT { <<:s :p :o >> :q :z }\nWHERE {}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-anonreifier-07",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n   <<?s ?p ?o >> ?q ?z .\n   ?a ?b <<?s ?p ?o >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-anonreifier-08",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * WHERE {\n   << ?s ?p ?o >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-anonreifier-09",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * WHERE {\n   << :s :p :o >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-anonreifier-10",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * WHERE {\n   << :s :p << ?s :p2 :o2 >> >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-anonreifier-11",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n   << ?s ?p ?o >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-anonreifier-12",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n   << :s :p :o >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-anonreifier-13",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n   << :s :p << ?s :p2 :o2 >> >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-reifier-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    << :a :b :c ~ :iri >> :p1 :o1.\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-reifier-02",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    :s :p << :a :b \"c\" ~ :iri >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-reifier-03",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    << ?s ?p ?o ~ _:bnode >> ?Y ?Z .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-reifier-04",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    ?S ?P << ?a ?b ?c ~ :iri >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-reifier-06",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT { <<:s :p :o ~ :iri >> :q :z }\nWHERE {}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-reifier-07",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n   <<?s ?p ?o ~ :iri >> ?q ?z .\n   ?a ?b <<?s ?p ?o ~ _:bnode >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-reifier-08",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * WHERE {\n   << ?s ?p ?o ~ :iri >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-reifier-09",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * WHERE {\n   << :s :p :o ~ :iri >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-reifier-10",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * WHERE {\n   << :s :p << ?s :p2 :o2 ~ :iri2 >> ~ :iri1 >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-reifier-11",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n   << ?s ?p ?o ~ :iri >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-reifier-12",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n   << :s :p :o ~ :iri >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-reifier-13",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n   << :s :p << ?s :p2 :o2 ~ :iri2 >> ~ :iri1 >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-tripleterm-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    <<( :a :b :c )>> :p1 :o1.\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-tripleterm-02",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    :s :p <<( :a :b \"c\" )>> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-tripleterm-03",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    <<( ?s ?p ?o )>> ?Y ?Z .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-tripleterm-04",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    ?S ?P <<( ?a ?b ?c )>> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-tripleterm-05",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    VALUES ?x {\n        <<(:s :p :o )>>\n        <<( :x :q <<(:s :p :o )>> )>>\n    }\n    VALUES (?y ?z) { (<<(:s :p :o )>> 123 )\n                      (123 <<(:s :p :o )>> ) }\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-tripleterm-06",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT { :s :q <<(:s :p :o )>> }\nWHERE {}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-basic-tripleterm-07",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT WHERE {\n   :s ?q <<(?s ?p :o )>> .\n   ?a ?b <<(?s ?p ?o )>> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-bnode-anonreifier-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   <<_:a :p :o >> :q 456 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-bnode-anonreifier-02",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   <<:s :p _:a >> :q 456 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-bnode-anonreifier-03",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    <<[] :p [] >> :q :z .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-bnode-reifier-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   <<_:a :p :o ~ :iri >> :q 456 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-bnode-reifier-02",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   <<:s :p _:a ~ _:bnode >> :q 456 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-bnode-reifier-03",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    <<[] :p [] ~ :iri >> :q :z .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-bnode-tripleterm-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   <<(_:a :p :o )>> :q 456 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-bnode-tripleterm-02",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n   <<(:s :p _:a )>> :q 456 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-bnode-tripleterm-03",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    <<([] :p [] )>> :q :z .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-compound-all",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n\n  <<:x ?R :z >> :p <<:a :b ?C ~ _:bnode >> .\n\n  << <<:x ?R :z >> :p <<(:a :b [] )>> ~ _:bnode >>\n     :q\n  << <<[] ?R :z ~ :iri >> :p <<:a :b [] >> >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-compound-anonreifier",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n\n  <<:x ?R :z >> :p <<:a :b ?C >> .\n\n  << <<:x ?R :z >> :p <<:a :b [] >> >>\n     :q\n  << <<[] ?R :z >> :p <<:a :b [] >> >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-compound-reifier",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n\n  <<:x ?R :z ~ :iri1 >> :p <<:a :b ?C ~ :iri2 >> .\n\n  << <<:x ?R :z ~ _:bnode1 >> :p <<:a :b [] ~ _:bnode1 >> ~ :iri3 >>\n     :q\n  << <<[] ?R :z ~ _:bnode2 >> :p <<:a :b [] ~_:bnode2 >> ~:iri3 >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-compound-tripleterm",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n\n  ?s :p <<(:a :b ?C )>> .\n  ?s\n     :q\n  <<( ?s1 :p <<(:a :b [] )>> )>> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-compound-tripleterm-subject",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n\n  <<(:x ?R :z )>> :p <<(:a :b ?C )>> .\n\n  <<( <<(:x ?R :z )>> :p <<(:a :b [] )>> )>>\n     :q\n  <<( <<([] ?R :z )>> :p <<(:a :b [] )>> )>> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-expr-tripleterm-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?s ?p ?o .\n  BIND(<<(?s ?p ?o)>> AS ?t)\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-expr-tripleterm-03",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?s ?p ?o .\n  BIND(TRIPLE(?s, ?p, ?o) AS ?t1)\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-expr-tripleterm-04",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?s ?p ?o .\n  BIND(TRIPLE(?s, ?p, str(?o)) AS ?t2)\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-expr-tripleterm-05",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ?t :source :g\n  FILTER(isTriple(?t))\n  FILTER(SUBJECT(?t) = :s)\n  FILTER(PREDICATE(?t) = :p)\n  FILTER(OBJECT(?t) = :o)\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-expr-tripleterm-06",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nCONSTRUCT {\n  ?t :graph ?g .\n} WHERE {\n  GRAPH ?g {\n    ?s ?p ?o .\n    BIND(<<(?s ?p  ?o)>> AS ?t)\n  }\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-inside-anonreifier-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    [ ?Q <<:s ?P :o>> ] :b :c .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-inside-anonreifier-02",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ( <<?S1 :p :o1>> <<?S2 :p :o2>> )  :q 123 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-inside-reifier-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    [ ?Q <<:s ?P :o ~ :iri>> ] :b :c .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-inside-reifier-02",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ( <<?S1 :p :o1 ~ :iri >> <<?S2 :p :o2 ~ _:bnode>> )  :q 123 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-inside-tripleterm-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n    [ ?Q <<(:s ?P :o)>> ] :b :c .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-inside-tripleterm-02",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  ( <<(?S1 :p :o1)>> <<(?S2 :p :o2)>> )  :q 123 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-nested-anonreifier-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  <<?S :p :o >> :r :z .\n  << <<?S :p :o >> :r :z >> :q 1 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-nested-anonreifier-02",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  :a :q <<:s :p ?O >> .\n  << :a :q <<:s :p ?O >>>> :r :z .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-nested-reifier-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  <<?S :p :o ~ :iri >> :r :z .\n  << <<?S :p :o ~ :iri >> :r :z ~ _:bnode >> :q 1 .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-nested-reifier-02",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  :a :q <<:s :p ?O ~ :iri >> .\n  << :a :q <<:s :p ?O ~ :iri >> ~ _:bnode>> :r :z .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-nested-tripleterm-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n  :s :r <<(?S :p :o )>> .\n  :s :q <<( :s1 :r <<(?S :p :o )>> )>> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-subject-tripleterm",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nSELECT * {\n\n  <<:x ?R :z >> :p <<:a :b ?C ~ _:bnode >> .\n\n  << <<(:x ?R :z )>> :p <<:a :b [] >> ~ _:bnode >>\n     :q\n  << <<[] ?R :z ~ :iri >> :p <<:a :b [] >> >> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-anonreifier-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nINSERT DATA {\n    << :a :b :c >> :p :o .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-anonreifier-02",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nINSERT DATA {\n    :s :p :o {| :y :z |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-anonreifier-03",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nINSERT {\n    << :a :b :c >> ?P :o2  {| ?Y ?Z |}\n} WHERE {\n   << :a :b :c >> ?P :o1 {| ?Y ?Z |}\n}\n\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-anonreifier-04",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nINSERT {\n    << :a :b :c >> ?P :o2  {| ?Y <<:s1 :p1 ?Z>> |}\n} WHERE {\n   << :a :b :c >> ?P :o1 {| ?Y <<:s1 :p1 ?Z>> |}\n}\n\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-anonreifier-05",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nINSERT {\n    ?S ?P << :a :b ?O >> {| ?Y ?Z |}\n} WHERE {\n   ?S ?P << :a :b ?O >> {| ?Y ?Z |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-anonreifier-06",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nINSERT {\n    ?s :r ?o {| :added 'Property :r' |}\n} WHERE {\n   ?s :p/:q ?o .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-reifier-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nINSERT DATA {\n    << :a :b :c ~ :iri >> :p :o .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-reifier-02",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nINSERT DATA {\n    :s :p :o ~ :iri {| :y :z |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-reifier-03",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nINSERT {\n    << :a :b :c ~ :iri >> ?P :o2  {| ?Y ?Z |}\n} WHERE {\n   << :a :b :c ~ :iri >> ?P :o1 {| ?Y ?Z |}\n}\n\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-reifier-04",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nINSERT {\n    << :a :b :c ~ _:bnode >> ?P :o2  {| ?Y <<:s1 :p1 ?Z ~ :iri>> |}\n} WHERE {\n   << :a :b :c ~ _:bnode >> ?P :o1 {| ?Y <<:s1 :p1 ?Z ~ :iri>> |}\n}\n\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-reifier-05",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nINSERT {\n    ?S ?P << :a :b ?O~ :iri >> {| ?Y ?Z |}\n} WHERE {\n   ?S ?P << :a :b ?O~ :iri >> {| ?Y ?Z |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-reifier-06",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nINSERT {\n    ?s :r ?o~ :iri {| :added 'Property :r' |}\n} WHERE {\n   ?s :p/:q ?o .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-reifier-07",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nDELETE {\n    ?s :r ?o~ :iri {| :added 'Property :r' |}\n} WHERE {\n   ?s :p ?o~ :iri {| :q1+ 'ABC' |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-reifier-08",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nDELETE DATA  {\n    :s :p :o1 ~ :iri  {| :added 'Test' |}\n}\n;\nINSERT DATA  {\n    :s :p :o2 ~ :iri  {| :added 'Test' |}\n}\n\n\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-tripleterm-01",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nINSERT DATA {\n    :s :p <<( :a :b :c )>> .\n}\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-tripleterm-03",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nINSERT {\n    ?S ?P <<( :a :b :c )>>  {| ?Y ?Z |}\n} WHERE {\n   :s ?P <<( :a :b :c )>> {| ?Y ?Z |}\n}\n\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-tripleterm-04",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nINSERT {\n    :s ?P <<( :a :b :c )>>  {| ?Y <<(:s1 :p1 ?Z)>> |}\n} WHERE {\n   ?s ?P <<( :a :b :c )>> {| ?Y <<(:s1 :p1 ?Z)>> |}\n}\n\n"
+    },
+    {
+      "id": "sparql-1-2/sparql-1-2-syntax-update-tripleterm-05",
+      "expect": "valid",
+      "query": "PREFIX : <http://example.com/ns#>\n\nINSERT {\n    ?S ?P <<( :a :b ?O )>> {| ?Y ?Z |}\n} WHERE {\n   ?S ?P <<( :a :b ?O )>> {| ?Y ?Z |}\n}\n"
+    },
+    {
+      "id": "sparql-1-2/unary-minus-12",
+      "expect": "valid",
+      "query": "SELECT * WHERE { FILTER(-?x < 0) }"
+    },
+    {
+      "id": "sparql-1-2/unary-plus-12",
+      "expect": "valid",
+      "query": "SELECT * WHERE { FILTER(+?x > 0) }"
+    },
+    {
+      "id": "sparql-1-2/version-decl",
+      "expect": "valid",
+      "query": "VERSION \"1.2\" SELECT * WHERE { ?s ?p ?o }"
+    },
+    {
+      "id": "sparql-1-2/version-with-prefix",
+      "expect": "valid",
+      "query": "VERSION \"1.1\" PREFIX ex: <http://example.org/> SELECT * WHERE { ?s ?p ?o }"
+    }
+  ]
+}

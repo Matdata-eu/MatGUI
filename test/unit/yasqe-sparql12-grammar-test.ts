@@ -1,54 +1,9 @@
 import * as chai from "chai";
 import { describe, it } from "mocha";
-import { StringStream } from "@codemirror/language";
 
-import sparqlTokenizer, { State } from "../../packages/yasqe/grammar/tokenizer.js";
+import { parse, tokenStyles } from "./sparql-parse-utils.js";
 
 const expect = chai.expect;
-
-interface ParseResult {
-  /** No syntax error was detected (this is what Yasqe shows as valid/invalid) */
-  ok: boolean;
-  /** The query may end here */
-  complete: boolean;
-  /** 1-based line of the first syntax error */
-  errorLine?: number;
-  errorMsg?: string;
-  state: State;
-}
-
-/** Runs the Yasqe tokenizer over a query, line by line, the same way the editor does */
-function parse(query: string): ParseResult {
-  const parser = sparqlTokenizer();
-  const state = parser.startState!(2);
-  const lines = query.split(/\r?\n/);
-  for (let i = 0; i < lines.length; i++) {
-    const stream = new StringStream(lines[i], 4, 2);
-    while (!stream.eol()) {
-      stream.start = stream.pos;
-      parser.token(stream, state);
-      if (stream.pos <= stream.start) stream.pos = stream.start + 1;
-    }
-    if (!state.OK) return { ok: false, complete: false, errorLine: i + 1, errorMsg: state.errorMsg, state };
-  }
-  return { ok: state.OK, complete: state.complete, state };
-}
-
-/** Returns the [text, style] pairs of all non-whitespace tokens */
-function tokenStyles(query: string): Array<[string, string]> {
-  const parser = sparqlTokenizer();
-  const state = parser.startState!(2);
-  const result: Array<[string, string]> = [];
-  for (const line of query.split(/\r?\n/)) {
-    const stream = new StringStream(line, 4, 2);
-    while (!stream.eol()) {
-      stream.start = stream.pos;
-      const style = parser.token(stream, state) || "";
-      if (style !== "ws") result.push([line.slice(stream.start, stream.pos), style]);
-    }
-  }
-  return result;
-}
 
 const PREFIXES = `PREFIX : <http://example.org/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -296,6 +251,37 @@ WHERE {
 }`,
   },
   {
+    name: "explicit reifiers in DELETE templates and DELETE DATA",
+    query: `${PREFIXES}DELETE { ?s :r ?o ~ :iri {| :added "r" |} . << ?s :p ?o ~ ?r >> :q ?z } WHERE { ?s :p ?o ~ ?r {| :q ?z |} } ;
+DELETE DATA { :s :p :o1 ~ :iri {| :added "Test" |} }`,
+  },
+  {
+    name: "implicit reifiers are allowed in INSERT and WHERE",
+    query: `${PREFIXES}INSERT { << ?s :p ?o >> :q 1 . ?s :p ?o {| :q 2 |} } WHERE { << ?s :p ?o >> :q ?z . ?s :p ?o {| :q ?z |} }`,
+  },
+  {
+    name: "variables and prefixed names with characters outside the Basic Multilingual Plane",
+    query: `PREFIX 𝔢𝔵: <http://example.org/>
+SELECT ?🎄🎉 WHERE { ?🎄🎉 𝔢𝔵:p "𓅃 𓃽 𓆟" }`,
+  },
+  {
+    name: "unicode escapes in IRIs and literals",
+    query: `SELECT * WHERE { ?s <http://example.org/\\u00E9\\U0001F600> "\\u00E9 \\U0010FFFF \\t" }`,
+  },
+  {
+    name: "long literal with quotes at the end of a line",
+    query: `${PREFIXES}SELECT * WHERE { :x :p """Long
+""
+literal "
+""", '''
+''
+''' }`,
+  },
+  {
+    name: "keywords without white space in between",
+    query: `SELECTDISTINCT?s{?s?p?o}GROUPBY(?s)LIMIT10OFFSET9VALUES?o{trueundeffalse}`,
+  },
+  {
     name: "blank node property list followed by a property path (was rejected before)",
     query: `${PREFIXES}SELECT * WHERE { [ :p ?o ] :a/:b ?c }`,
   },
@@ -522,6 +508,61 @@ VERSION "1.2"`,
     name: "blank node in a triple term in a DELETE clause",
     query: `${PREFIXES}DELETE { ?r rdf:reifies <<( [] :b :c )>> } WHERE { ?r :p ?o }`,
     errorLine: 4,
+  },
+  {
+    name: "annotation without reifier in a DELETE template",
+    query: `${PREFIXES}DELETE { ?s :r ?o {| :added "r" |} } WHERE { ?s :p ?o }`,
+    errorLine: 4,
+  },
+  {
+    name: "annotation without reifier in DELETE DATA",
+    query: `${PREFIXES}DELETE DATA { :s :p :o1 ~ :r {| :a 1 |} {| :b 2 |} }`,
+    errorLine: 4,
+  },
+  {
+    name: "annotation of a reified triple object without reifier in DELETE WHERE",
+    query: `${PREFIXES}DELETE WHERE { ?s :p << :a :b :c ~ :r >> {| :q ?z |} }`,
+    errorLine: 4,
+  },
+  {
+    name: "reified triple without reifier in a DELETE template",
+    query: `${PREFIXES}DELETE { << ?s :p ?o >> :q ?z } WHERE { ?s :p ?o }`,
+    errorLine: 4,
+  },
+  {
+    name: "empty reifier in DELETE DATA",
+    query: `${PREFIXES}DELETE DATA { :s :p :o ~ }`,
+    errorLine: 4,
+  },
+  {
+    name: "INSERT DATA without white space",
+    query: `${PREFIXES}INSERTDATA { :s :p :o }`,
+    errorLine: 4,
+  },
+  {
+    name: "DELETE WHERE without white space",
+    query: `${PREFIXES}DeleteWhere { :s :p ?o }`,
+    errorLine: 4,
+  },
+  {
+    name: "escaped surrogate pair in a literal",
+    query: `SELECT * WHERE { ?s ?p "\\uD83C\\uDCA1" }`,
+    errorLine: 1,
+  },
+  {
+    name: "escaped lone surrogate in a literal (\\U form)",
+    query: `SELECT * WHERE { ?s ?p "\\U0000DCA1" }`,
+    errorLine: 1,
+  },
+  {
+    name: "escaped surrogate pair in an IRI",
+    query: `SELECT * WHERE { ?s ?p <http://example.org/\\uD83C\\uDCA1> }`,
+    errorLine: 1,
+  },
+  {
+    name: "backslash in an IRI that is not a unicode escape",
+    query: `SELECT * WHERE { ?s ?p <http://example.org/a\\b> }`,
+    errorLine: 1,
   },
   {
     name: "TRIPLE with two arguments",
