@@ -602,7 +602,7 @@ export default class TabSettingsModal {
 
     const sparqlFormatterOption = document.createElement("option");
     sparqlFormatterOption.value = "sparql-formatter";
-    sparqlFormatterOption.textContent = "SPARQL Formatter (external library)";
+    sparqlFormatterOption.textContent = "SPARQL 1.2 Formatter";
     formatterSelect.appendChild(sparqlFormatterOption);
 
     const legacyOption = document.createElement("option");

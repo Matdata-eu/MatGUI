@@ -418,7 +418,7 @@ Keep your SPARQL queries clean and readable with automatic formatting.
 - Format button in the editor toolbar
 - Keyboard shortcut: `Shift+Ctrl+F`
 - Choice of formatting engines:
-  - **sparql-formatter** (default): Standards-compliant, modern formatter
+  - **SPARQL 1.2 Formatter** (default): [@matdata/sparql-formatter](https://github.com/Matdata-eu/sparql-formatter), supports SPARQL 1.2 (triple terms, reifiers, annotations, `VERSION`, ...) and keeps comments where you put them
   - **Legacy formatter**: Original MatGUI formatter
 - Auto-format on query execution (configurable in Settings)
 
