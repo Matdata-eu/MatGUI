@@ -133,6 +133,8 @@ export class Tab extends EventEmitter {
     const meta = this.getManagedQueryMetadata();
     if (!meta) return false;
     if (!meta.lastSavedTextHash) return false;
+    // Edits to a query from a read-only workspace can never be saved back, so they are not "unsaved changes".
+    if (isWorkspaceReadOnly(this.yasgui.persistentConfig.getWorkspace(meta.workspaceId))) return false;
 
     try {
       const current = this.yasqe ? this.yasqe.getValue() : this.persistentJson.yasqe.value;
