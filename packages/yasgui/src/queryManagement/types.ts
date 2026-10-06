@@ -5,6 +5,11 @@ export interface WorkspaceConfigBase {
   label: string;
   description?: string;
   type: BackendType;
+  /**
+   * When true, queries can be browsed and opened from this workspace, but never saved, updated,
+   * renamed, moved or deleted in it. Edits to a query opened from it can only be saved to another workspace.
+   */
+  readOnly?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

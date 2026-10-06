@@ -8,6 +8,7 @@ import { getEndpointToAutoSwitch } from "./openManagedQuery";
 import { hashQueryText } from "./textHash";
 import type { BackendType, VersionRef, ManagedTabMetadata } from "./types";
 import { normalizeQueryFilename } from "./normalizeQueryFilename";
+import { isWorkspaceReadOnly } from "./readOnlyWorkspace";
 import SaveManagedQueryModal from "./SaveManagedQueryModal";
 import QueryHistoryModal from "./QueryHistoryModal";
 
@@ -288,7 +289,7 @@ export default class QueryBrowser {
     for (const w of workspaces) {
       const opt = document.createElement("option");
       opt.value = w.id;
-      opt.textContent = w.label;
+      opt.textContent = isWorkspaceReadOnly(w) ? `${w.label} (read-only)` : w.label;
       this.workspaceSelectEl.appendChild(opt);
     }
 
@@ -1379,7 +1380,10 @@ export default class QueryBrowser {
         `folders:${foldersPart}`,
       ].join(";");
 
-      this.setStatus(rootEntries.length ? "" : "No queries, add one by saving a tab to this workspace.");
+      const emptyStatus = isWorkspaceReadOnly(workspace)
+        ? "No queries in this read-only workspace."
+        : "No queries, add one by saving a tab to this workspace.";
+      this.setStatus(rootEntries.length ? "" : emptyStatus);
       if (signature !== this.lastRenderedSignature) {
         this.lastRenderedSignature = signature;
         this.renderTree(backend);

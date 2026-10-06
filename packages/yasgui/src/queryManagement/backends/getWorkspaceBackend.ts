@@ -2,6 +2,7 @@ import type { WorkspaceConfig } from "../types";
 import type { WorkspaceBackend } from "./WorkspaceBackend";
 import GitWorkspaceBackend from "./GitWorkspaceBackend";
 import SparqlWorkspaceBackend from "./SparqlWorkspaceBackend";
+import ReadOnlyWorkspaceBackend from "./ReadOnlyWorkspaceBackend";
 import { GithubProviderClient } from "./GithubProviderClient";
 import { GitlabProviderClient } from "./GitlabProviderClient";
 import { BitbucketProviderClient } from "./BitbucketProviderClient";
@@ -102,6 +103,16 @@ async function resolveSparqlAuthHeadersWithRefresh(persistentConfig: PersistentC
 }
 
 export function getWorkspaceBackend(
+  config: WorkspaceConfig,
+  options?: {
+    persistentConfig?: PersistentConfig;
+  },
+): WorkspaceBackend {
+  const backend = createWorkspaceBackend(config, options);
+  return config.readOnly ? new ReadOnlyWorkspaceBackend(backend) : backend;
+}
+
+function createWorkspaceBackend(
   config: WorkspaceConfig,
   options?: {
     persistentConfig?: PersistentConfig;
