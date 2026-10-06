@@ -1029,6 +1029,14 @@ This feature is designed for **power users** who want to:
 3. Add one or more workspaces (Git or SPARQL) and choose a **Default workspace**
 4. (Optional) Click **Validate access** to test the configuration and show how many managed queries are already saved in that workspace
 
+**Read-only workspaces:** tick **Read-only** in a workspace's settings (or set `readOnly: true` when adding it through `persistentConfig.addOrUpdateWorkspace`) to protect a shared or published set of queries. Queries in a read-only workspace can be browsed and opened, but:
+
+- the workspace is never offered as a save target, and is marked "(read-only)" in the Query Browser
+- saving a query opened from it (`Ctrl+S`, the save button or the tab menu) opens **Save as**, so the changes can only be stored as a copy in another workspace
+- rename, move and delete are not available in the Query Browser, and renaming the tab only changes the tab label
+
+When every configured workspace is read-only, the save button is hidden.
+
 Note: the recommended type of workspace is SPARQL. It is more feature rich (allows to save endpoints and descriptions) and is much faster. The Git based workspace uses HTTP calls to the Git provider API, several calls are required to read/write queries, which makes it slower.
 
 ##### SPARQL workspaces

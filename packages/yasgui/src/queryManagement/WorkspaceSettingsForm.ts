@@ -176,7 +176,7 @@ ORDER BY ?workspace`;
 
       const nameEl = document.createElement("div");
       addClass(nameEl, "workspaceListLabel");
-      nameEl.textContent = workspace.label || workspace.id;
+      nameEl.textContent = (workspace.label || workspace.id) + (workspace.readOnly ? " (read-only)" : "");
       row.appendChild(nameEl);
 
       const actions = document.createElement("div");
@@ -387,6 +387,18 @@ ORDER BY ?workspace`;
     descriptionInput.placeholder = "Optional description";
     descriptionInput.value = existing?.description || "";
     addClass(descriptionInput, "settingsInput");
+
+    const readOnlyContainer = document.createElement("div");
+    addClass(readOnlyContainer, "checkboxContainer");
+    const readOnlyInput = document.createElement("input");
+    readOnlyInput.type = "checkbox";
+    readOnlyInput.id = "workspaceReadOnly";
+    readOnlyInput.checked = !!existing?.readOnly;
+    const readOnlyLabel = document.createElement("label");
+    readOnlyLabel.htmlFor = "workspaceReadOnly";
+    readOnlyLabel.textContent = "Read-only (queries can be opened, but never saved to this workspace)";
+    readOnlyContainer.appendChild(readOnlyInput);
+    readOnlyContainer.appendChild(readOnlyLabel);
 
     const dynamic = document.createElement("div");
 
@@ -700,7 +712,7 @@ ORDER BY ?workspace`;
       status.textContent = "";
       const getConfig = (dynamic as any).__getConfig as undefined | (() => WorkspaceConfig);
       if (!getConfig) return;
-      const config = getConfig();
+      const config: WorkspaceConfig = { ...getConfig(), readOnly: readOnlyInput.checked || undefined };
 
       if (config.type === "git" && !isNonEmpty(config.auth.token)) {
         status.textContent = "Git token is required.";
@@ -728,6 +740,7 @@ ORDER BY ?workspace`;
     body.appendChild(this.wrapField("Label", labelInput));
     body.appendChild(this.wrapField("Description", descriptionInput));
     body.appendChild(dynamic);
+    body.appendChild(readOnlyContainer);
     body.appendChild(status);
 
     modal.appendChild(header);
