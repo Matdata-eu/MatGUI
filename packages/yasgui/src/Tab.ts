@@ -22,6 +22,7 @@ import type { ManagedTabMetadata } from "./queryManagement/types";
 import { hashQueryText } from "./queryManagement/textHash";
 import SaveManagedQueryModal from "./queryManagement/SaveManagedQueryModal";
 import { saveManagedQuery } from "./queryManagement/saveManagedQuery";
+import { getWritableWorkspaces, isWorkspaceReadOnly } from "./queryManagement/readOnlyWorkspace";
 import { getWorkspaceBackend } from "./queryManagement/backends/getWorkspaceBackend";
 import { asWorkspaceBackendError } from "./queryManagement/backends/errors";
 import { normalizeQueryFilename } from "./queryManagement/normalizeQueryFilename";
@@ -238,6 +239,12 @@ export class Tab extends EventEmitter {
       return;
     }
 
+    // A query from a read-only workspace can never be updated in place; offer to save a copy elsewhere.
+    if (isWorkspaceReadOnly(workspace)) {
+      await this.saveAsManagedQuery();
+      return;
+    }
+
     const backend = getWorkspaceBackend(workspace, { persistentConfig: this.yasgui.persistentConfig });
 
     const expectedVersionTag = (() => {
@@ -295,6 +302,11 @@ export class Tab extends EventEmitter {
   }
 
   public async saveAsManagedQuery(): Promise<void> {
+    if (getWritableWorkspaces(this.yasgui.persistentConfig.getWorkspaces()).length === 0) {
+      window.alert("There is no workspace to save to. Read-only workspaces cannot be saved to.");
+      return;
+    }
+
     const modal = new SaveManagedQueryModal(this.yasgui);
 
     const defaults = this.getDefaultSaveModalValues();
@@ -328,11 +340,17 @@ export class Tab extends EventEmitter {
       window.alert("Selected workspace no longer exists");
       return;
     }
+    if (isWorkspaceReadOnly(workspace)) {
+      window.alert("This workspace is read-only");
+      return;
+    }
 
     const backend = getWorkspaceBackend(workspace, { persistentConfig: this.yasgui.persistentConfig });
     const meta = this.getManagedQueryMetadata();
 
     const expectedVersionTag = (() => {
+      // A version tag only applies when saving over the same query in the same workspace.
+      if (meta?.workspaceId !== workspace.id) return undefined;
       if (!meta?.lastSavedVersionRef) return undefined;
       if (meta.backendType === "git") return (meta.lastSavedVersionRef as any)?.commitSha;
       return (meta.lastSavedVersionRef as any)?.managedQueryVersionIri;
@@ -1036,6 +1054,12 @@ export class Tab extends EventEmitter {
       return;
     }
 
+    // Queries in a read-only workspace cannot be renamed; only the tab label changes.
+    if (isWorkspaceReadOnly(workspace)) {
+      this.setName(nextName);
+      return;
+    }
+
     const backend = getWorkspaceBackend(workspace, { persistentConfig: this.yasgui.persistentConfig });
 
     if (meta.backendType === "sparql") {
@@ -1396,8 +1420,8 @@ export class Tab extends EventEmitter {
   private updateSaveButtonVisibility() {
     if (!this.yasqe) return;
     const workspaces = this.yasgui.persistentConfig.getWorkspaces();
-    const hasWorkspaces = workspaces && workspaces.length > 0;
-    this.yasqe.setSaveButtonVisible(hasWorkspaces);
+    const hasWritableWorkspaces = !!workspaces && getWritableWorkspaces(workspaces).length > 0;
+    this.yasqe.setSaveButtonVisible(hasWritableWorkspaces);
   }
 
   private initSaveManagedQueryIcon() {

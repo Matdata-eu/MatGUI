@@ -2,6 +2,7 @@ import type Yasgui from "../index";
 import { addClass, removeClass } from "@matdata/yasgui-utils";
 import { getWorkspaceBackend } from "./backends/getWorkspaceBackend";
 import { normalizeQueryFilename } from "./normalizeQueryFilename";
+import { getWritableWorkspaces } from "./readOnlyWorkspace";
 import type { FolderEntry, WorkspaceConfig } from "./types";
 
 import "./SaveManagedQueryModal.scss";
@@ -466,9 +467,12 @@ export default class SaveManagedQueryModal {
   }
 
   public async show(defaults?: Partial<SaveManagedQueryModalResult>): Promise<SaveManagedQueryModalResult> {
-    const workspaces = this.yasgui.persistentConfig.getWorkspaces();
+    // Read-only workspaces are never offered as a save target.
+    const workspaces = getWritableWorkspaces(this.yasgui.persistentConfig.getWorkspaces());
+    const isWritable = (id: string | undefined) => !!id && workspaces.some((w) => w.id === id);
     const activeWorkspaceId = this.yasgui.persistentConfig.getActiveWorkspaceId();
-    const selectedWorkspaceId = defaults?.workspaceId || activeWorkspaceId || (workspaces[0]?.id ?? "");
+    const selectedWorkspaceId =
+      [defaults?.workspaceId, activeWorkspaceId].find(isWritable) || (workspaces[0]?.id ?? "");
 
     const orderedWorkspaces = selectedWorkspaceId
       ? [
