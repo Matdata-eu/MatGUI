@@ -126,9 +126,14 @@ function removeExtraCss(result) {
 }
 
 async function buildPackage(name, entryPoint, globalName) {
+  // Prefix emitted assets (fonts, images) with the package name so that
+  // distributeBuildFiles.js, which copies `build/<name>*` into each package,
+  // also ships the files the CSS references.
+  const assetConfig = { ...commonConfig, assetNames: `${name}-[name]-[hash]` };
+
   // IIFE build: exposes a browser global (e.g. `window.Yasgui`) for <script> usage.
   const iifeResult = await esbuild.build({
-    ...commonConfig,
+    ...assetConfig,
     entryPoints: [entryPoint],
     outfile: `build/${name}.min.js`,
     format: "iife",
@@ -145,7 +150,7 @@ async function buildPackage(name, entryPoint, globalName) {
   // ESM build: consumed by bundlers (vite/webpack/esbuild) and Node via `import`.
   // Uses the `.mjs` extension so it is always treated as an ES module.
   const esmResult = await esbuild.build({
-    ...commonConfig,
+    ...assetConfig,
     entryPoints: [entryPoint],
     outfile: `build/${name}.mjs`,
     format: "esm",
@@ -157,7 +162,7 @@ async function buildPackage(name, entryPoint, globalName) {
   // CJS build: consumed by Node's `require`. Uses the `.cjs` extension so it is
   // always treated as CommonJS regardless of the nearest package.json `type`.
   const cjsResult = await esbuild.build({
-    ...commonConfig,
+    ...assetConfig,
     entryPoints: [entryPoint],
     outfile: `build/${name}.cjs`,
     format: "cjs",
