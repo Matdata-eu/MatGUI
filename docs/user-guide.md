@@ -1034,6 +1034,7 @@ This feature is designed for **power users** who want to:
 - the workspace is never offered as a save target, and is marked "(read-only)" in the Query Browser
 - saving a query opened from it (`Ctrl+S`, the save button or the tab menu) opens **Save as**, so the changes can only be stored as a copy in another workspace
 - rename, move and delete are not available in the Query Browser, and renaming the tab only changes the tab label
+- editing a query opened from it does not mark the tab as unsaved, and closing the tab does not ask to save
 
 When every configured workspace is read-only, the save button is hidden.
 
