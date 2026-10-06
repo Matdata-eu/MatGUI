@@ -53,8 +53,8 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.1.0",
     "@matdata/yasgui-graph-plugin": "^1.6.2",
-    "@matdata/yasgui-table-plugin": "^1.5.0",
-    "@matdata/yasgui-geo-plugin": "^1.0.4",
+    "@matdata/yasgui-table-plugin": "^1.5.1",
+    "@matdata/yasgui-geo-plugin": "^1.1.0",
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "@typescript-eslint/parser": "^6.13.2",
     "autoprefixer": "^10.4.21",
