@@ -26,9 +26,10 @@ RUN npm run build
 # Use the official Nginx image to serve the React app
 FROM nginxinc/nginx-unprivileged:alpine
 
-# Copy only JS/CSS from the build output
+# Copy only JS/CSS from the build output, plus the fonts and images the CSS references
 COPY --from=0 /app/build/yasgui.min.js /usr/share/nginx/html/
 COPY --from=0 /app/build/yasgui.min.css /usr/share/nginx/html/
+COPY --from=0 /app/build/yasgui-*.woff2 /app/build/yasgui-*.png /usr/share/nginx/html/
 
 # Copy other static assets
 COPY docker/src/ /usr/share/nginx/html/
