@@ -1381,7 +1381,8 @@ Displays SELECT query results in an interactive, high-performance table with adv
   - **Fit Controls**: Fit table to data width or window width
 - **Smart Formatters**: Auto-render columns based on variable name suffixes — `stars` (star ratings), `percent` (progress bars), `image` (images), `color`/`colour` (color swatches), and `description` (wrapping text)
 - **Decimal Places**: Configure a fixed number of fraction digits for `xsd:float`, `xsd:double`, and `xsd:decimal` literals, or leave unset to show raw values
-- **DESCRIBE Resource**: Ctrl+click (or Cmd+click on macOS) any URI, or right-click it and choose **Describe resource**, to run a background `DESCRIBE <uri>` query and view the triples in a modal; choose **Describe resource (new query)** to replace the editor query instead
+- **Describe Resource**: Ctrl+click (or Cmd+click on macOS) any URI to run a background query for the triples where it is the **subject**, or Ctrl+Shift+click for the triples where it is the **object**, and view them in a modal. Right-click a URI for the same options, or to run them as a new query that replaces the editor query
+- **Describe Navigation**: Ctrl+click (or Ctrl+Shift+click) a URI inside the describe modal to hop to that resource. Use the ◀ / ▶ buttons in the modal header (or `Alt+←` / `Alt+→`) to step back and forward through the resources you visited, and ⏮ to return to the resource you started from
 
 **Controls:**
 
@@ -1420,7 +1421,8 @@ Displays SELECT query results in an interactive, high-performance table with adv
 - Use fit controls to optimize column widths
 - Open the **Display** dropdown to toggle URI mode, datatypes, ellipsis, smart formatters, and set decimal places
 - Use columns named with smart-formatter suffixes (e.g., `ratingStars`, `completionPercent`) for automatic visual formatting
-- Ctrl+click (or Cmd+click) any URI to run a background DESCRIBE query, or right-click the URI for more options
+- Ctrl+click (or Cmd+click) any URI to see its triples as subject, Ctrl+Shift+click to see them as object, or right-click the URI for more options
+- In the describe modal, keep Ctrl+clicking URIs to hop from resource to resource; use ◀ / ▶ (or `Alt+←` / `Alt+→`) to go back and forward, and ⏮ to return to the first resource
 - Use YASR's download button for CSV file export
 - Preferences (column widths, sort state, display options) are saved to localStorage
 
@@ -1698,6 +1700,18 @@ You can override the popup content by including a `?wktLabel` binding in your qu
 
 ---
 
+**Describing Entities:**
+
+Explore the graph behind a feature without losing the map:
+
+- **Ctrl+click** (Cmd+click on macOS) a feature, or an IRI in its popup, to list the triples where that entity is the **subject**.
+- **Ctrl+Shift+click** lists the triples where it is the **object**.
+- The triples are fetched with a background query and shown in a modal, so the map keeps its results. IRIs are abbreviated with the prefixes declared in your query.
+- Ctrl+click (or Ctrl+Shift+click) an IRI inside the modal to hop to that entity.
+- Use the ◀ / ▶ buttons in the modal header (or `Alt+←` / `Alt+→`) to step back and forward through the entities you visited, and ⏮ to return to the entity you started from. Ctrl+clicking a new IRI after going back drops the forward steps, like a browser.
+
+---
+
 **Per-Feature Styling:**
 
 Include a `?wktColor` variable in your SELECT to color individual features:
@@ -1917,6 +1931,8 @@ Navigation and interaction depend on the active plugin. Most plugins support:
 - **Mouse wheel**: Scroll through results
 - **Arrow keys**: Navigate table cells (in Table plugin)
 - **Click**: Select/interact with elements
+- **Ctrl+Click / Ctrl+Shift+Click** (on a URI in the Table or Geo plugin): Show the triples where the URI is the subject / object in a describe modal
+- **Alt+← / Alt+→** (in a describe modal): Go back / forward through the resources you hopped to
 
 ---
 
