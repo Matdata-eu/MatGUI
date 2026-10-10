@@ -157,6 +157,7 @@ This comprehensive guide covers everything developers need to know to integrate,
   - [Configuration Options](#configuration-options-1)
   - [Event API](#event-api)
   - [More Information](#more-information)
+- [Using the Chart Plugin](#using-the-chart-plugin)
 - [Contributing](#contributing)
   - [Getting Started](#getting-started)
   - [Project Structure](#project-structure)
@@ -4439,6 +4440,49 @@ See the [Table Plugin Repository](https://github.com/Matdata-eu/yasgui-table-plu
 
 ---
 
+## Using the Chart Plugin
+
+The Chart Plugin ([`@matdata/yasgui-chart-plugin`](https://www.npmjs.com/package/@matdata/yasgui-chart-plugin)) renders SELECT results with at least one numeric column as bar, stacked bar, horizontal bar, line, area, pie, donut, scatter or histogram charts, built on [Apache ECharts](https://echarts.apache.org/). MatGUI registers it as `Chart`.
+
+### Installation
+
+```bash
+npm install @matdata/yasgui-chart-plugin
+```
+
+```typescript
+import Yasgui from '@matdata/yasgui';
+import ChartPlugin from '@matdata/yasgui-chart-plugin';
+import '@matdata/yasgui-chart-plugin/dist/yasgui-chart-plugin.min.css';
+
+Yasgui.Yasr.registerPlugin('Chart', ChartPlugin);
+```
+
+Or load `dist/yasgui-chart-plugin.min.js` (and its CSS) from a CDN; the bundle registers itself as `Chart` when `window.Yasgui` exists.
+
+### Behaviour
+
+- `canHandleResults()` is true for SELECT results with at least one numeric column. Its priority (5) is below the Table plugin (10), so SELECT results keep opening in the table.
+- The chart type and the category, value and series columns are chosen automatically and can be changed in the plugin's toolbar. The choice is stored with `yasr.storePluginConfig()`, so MatGUI saves it per tab, together with the result's variables; results with other variables fall back to the automatic choice.
+- Ctrl+click on a bar, slice or point runs a background query through `yasr.executeQuery()` and shows the triples of its IRI in the same modal as the Table plugin.
+- `download()` returns a PNG of the chart; the toolbar also exports SVG.
+
+### Options
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `maxRows` | `5000` | Maximum number of result rows plotted |
+
+```typescript
+Yasgui.Yasr.defaults.plugins.Chart = { enabled: true, options: { maxRows: 10000 } };
+```
+
+### More Information
+
+See the [Chart Plugin Repository](https://github.com/Matdata-eu/yasgui-chart-plugin) for the full README and the [online demo](https://matdata-eu.github.io/yasgui-chart-plugin/).
+
+---
+
 ## Additional Resources
 
 - **GitHub Repository**: [https://github.com/Matdata-eu/MatGUI](https://github.com/Matdata-eu/MatGUI)
@@ -4449,6 +4493,7 @@ See the [Table Plugin Repository](https://github.com/Matdata-eu/yasgui-table-plu
 - **Table Plugin**: [https://github.com/Matdata-eu/yasgui-table-plugin](https://github.com/Matdata-eu/yasgui-table-plugin)
 - **Graph Plugin**: [https://github.com/Matdata-eu/yasgui-graph-plugin](https://github.com/Matdata-eu/yasgui-graph-plugin)
 - **Geo Plugin**: [https://github.com/Matdata-eu/yasgui-geo-plugin](https://github.com/Matdata-eu/yasgui-geo-plugin)
+- **Chart Plugin**: [https://github.com/Matdata-eu/yasgui-chart-plugin](https://github.com/Matdata-eu/yasgui-chart-plugin)
 
 ---
 

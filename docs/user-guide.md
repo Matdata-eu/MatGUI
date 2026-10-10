@@ -60,6 +60,7 @@
   - [Response Plugin](#response-plugin)
   - [Graph Plugin](#graph-plugin)
   - [Geo Plugin](#geo-plugin)
+  - [Chart Plugin](#chart-plugin)
   - [Error Plugin](#error-plugin)
   - [Plugin Selection](#plugin-selection)
   - [Describing a Resource](#describing-a-resource)
@@ -1924,6 +1925,76 @@ The plugin handles coordinate reference systems automatically:
 **More Information:**
 
 Visit the [Matgui Geo Plugin repository](https://github.com/Matdata-eu/yasgui-geo-plugin/) for full documentation.
+
+### Chart Plugin
+
+Visualises SELECT results as charts with [Apache ECharts](https://echarts.apache.org/): bar (grouped, stacked or horizontal), line, area, pie, donut, scatter and histogram.
+
+**Best For:**
+
+- Aggregation queries (`COUNT`, `SUM`, `AVG` with `GROUP BY`), e.g. track length per line category or operational points per country
+- Values over time (a date column plus numbers)
+- Comparing two numeric columns (scatter plot)
+- The distribution of one numeric column (histogram)
+
+---
+
+**Getting Started:**
+
+1. Execute a SELECT query that returns at least one numeric column.
+2. Click the **Chart** tab. It is only enabled when the results contain a numeric column; SELECT results still open in the Table by default.
+3. The plugin picks a chart automatically:
+   - a label or IRI column plus numbers gives a **bar chart**
+   - a date column (`xsd:date`, `xsd:dateTime`, `xsd:gYear`, `xsd:gYearMonth`) plus numbers gives a **line chart**
+   - only numeric columns give a **scatter plot** (first column on the x axis), or a **histogram** when there is a single one
+   - "long" results such as `?country ?type ?count` are split into one **series** per `?type`
+
+**Example:**
+
+```sparql
+PREFIX era: <http://data.europa.eu/949/>
+
+SELECT ?country (COUNT(?op) AS ?operationalPoints) WHERE {
+  ?op a era:OperationalPoint ;
+      era:inCountry ?country .
+}
+GROUP BY ?country
+ORDER BY DESC(?operationalPoints)
+```
+
+---
+
+**Toolbar:**
+
+| Control | What it does |
+| --- | --- |
+| **Chart** | Chart type: Bar, Stacked bar, Horizontal bar, Line, Area, Pie, Donut, Scatter, Histogram |
+| **X axis** / **Slices** | Column used for the categories or the x axis |
+| **Values** / **Size** | Numeric column(s) to plot (pie, donut and histogram use one) |
+| **Series** | Column whose values split the data into series |
+| **Auto** | Go back to the automatic chart |
+| **PNG** / **SVG** | Download the chart as an image |
+
+Your choices are saved per tab. When the query returns other variables, the chart starts again from the automatic choice. The download button in the results header also saves the chart as PNG.
+
+**Labels and IRIs:**
+
+- IRIs are shown with their label when the query returns a label column named after them (`?line` with `?lineLabel`, `?line_label` or `?lineName`), otherwise as prefixed names.
+- Hover a bar, slice or point to see its value and full IRI.
+- **Ctrl+click** (Cmd+click on macOS) a bar, slice or point to show the triples of its IRI in a popup, like in the Table and Geo plugins. **Ctrl+Shift+click** shows the triples where the IRI is the object. The popup has the same back/forward navigation.
+
+**Good to know:**
+
+- Rows that repeat a category (and series) are summed.
+- Long category axes get a zoom slider.
+- At most 5,000 rows are plotted; a note says when results are cut.
+- The chart follows the light and dark theme.
+
+---
+
+**More Information:**
+
+Visit the [Chart Plugin repository](https://github.com/Matdata-eu/yasgui-chart-plugin) for full documentation and the [online demo](https://matdata-eu.github.io/yasgui-chart-plugin/).
 
 ### Error Plugin
 
