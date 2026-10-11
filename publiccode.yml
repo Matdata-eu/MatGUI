@@ -1,0 +1,51 @@
+publiccodeYmlVersion: '0'
+name: MatGUI
+url: https://github.com/Matdata-eu/MatGUI
+landingURL: https://matgui.matdata.eu/
+isBasedOn: https://github.com/rdfjs/Yasgui
+softwareVersion: 6.6.0
+releaseDate: '2026-10-07'
+platforms:
+- web
+categories:
+- data-analytics
+- data-visualization
+- knowledge-management
+- geographic-information-systems
+developmentStatus: stable
+softwareType: standalone/web
+organisation:
+  uri: https://matdata.eu
+  name: Matdata
+intendedAudience:
+  scope:
+  - government
+  - science-and-technology
+  - infrastructures
+  - transportation
+description:
+  en:
+    shortDescription: Web-based workbench for querying, exploring and visualising knowledge graphs with SPARQL.
+    longDescription: |
+      MatGUI is a web-based workbench for querying, exploring and visualising knowledge graphs and RDF data with SPARQL. It combines a query editor with a results viewer, so it works as a complete SPARQL IDE in the browser, with nothing to install.
+
+      It began as a fork of YASGUI and has grown well beyond it. Results can be shown as a fast table, on a map, as a graph or as a chart, and the editor formats queries while keeping comments in place. MatGUI can point at any SPARQL endpoint, which makes it a good front end for public administrations that publish Linked Data and want users to explore it without specialist tools. It runs as a hosted website, as a Docker image, or embedded in other web pages through its npm packages.
+    documentation: https://matgui-doc.matdata.eu/
+    features:
+    - SPARQL query editor with autocompletion and formatting
+    - Works with any SPARQL endpoint
+    - Results as a table, map, graph or chart
+    - Multiple query tabs
+    - Available as a website, Docker image and npm packages
+legal:
+  license: MIT
+  mainCopyrightOwner: Matdata and the YASGUI contributors
+maintenance:
+  type: internal
+  contacts:
+  - name: Mathias Vanden Auweele
+    affiliation: Matdata
+localisation:
+  localisationReady: false
+  availableLanguages:
+  - en
