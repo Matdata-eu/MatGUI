@@ -358,6 +358,7 @@ Each tab has its own query bar above the editor:
 | **Explore endpoint** | Opens the side panel on the **Endpoint** view (see [Endpoint Overview](#endpoint-overview))     |
 | **Insert**           | Opens a menu with code snippets and a map to draw a geometry (see [Insert Menu](#insert-menu))   |
 | Version chip         | Shown for saved queries only (see [Version Chip](#version-chip))                                 |
+| Editor tools         | Save (when a workspace is configured), Share, Format and Fullscreen for the editor. On small screens they move into the **⋯** menu |
 | Layout toggle        | Switches between the editor above the results and side by side                                   |
 
 When the query bar gets narrow (a small window, the side-by-side layout or an open side panel), the buttons keep their icon and hide their label. Hover a button to see its name.

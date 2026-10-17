@@ -234,7 +234,8 @@
 }
 
 // Yasqe (editor) theming
-.yasqe {
+.yasqe,
+.yasqe_buttonsHost {
   background-color: var(--yasgui-bg-primary);
 
   .CodeMirror,

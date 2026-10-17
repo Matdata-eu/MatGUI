@@ -1,4 +1,6 @@
-.yasqe {
+// .yasqe_buttonsHost: an element outside the editor that a host (e.g. yasgui) moved .yasqe_buttons into
+.yasqe,
+.yasqe_buttonsHost {
   $queryButtonWidth: 40px;
   $queryButtonHeight: 40px;
 

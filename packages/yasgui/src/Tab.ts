@@ -28,7 +28,7 @@ import { asWorkspaceBackendError } from "./queryManagement/backends/errors";
 import { normalizeQueryFilename } from "./queryManagement/normalizeQueryFilename";
 import { resolveEndpointUrl } from "./urlUtils";
 import InsertMenu from "./InsertMenu";
-import { icon, iconButton, runShortcutLabel } from "./icons";
+import { icon, iconButton, runShortcutLabel, IconName } from "./icons";
 
 export interface PersistedJsonYasr extends YasrPersistentConfig {
   responseSummary: Parser.ResponseSummary;
@@ -90,6 +90,7 @@ export class Tab extends EventEmitter {
   private versionChipEl?: HTMLSpanElement;
   private currentOrientation: "vertical" | "horizontal";
   private orientationToggleButton?: HTMLButtonElement;
+  private editorToolsEl?: HTMLDivElement;
   private verticalResizerEl?: HTMLDivElement;
   private editorWrapperEl?: HTMLDivElement;
 
@@ -1349,6 +1350,8 @@ export class Tab extends EventEmitter {
     // Show/hide save button based on workspace configuration
     this.updateSaveButtonVisibility();
 
+    this.mountEditorTools();
+
     this.yasqe.on("blur", this.handleYasqeBlur);
     this.yasqe.on("query", this.handleYasqeQuery);
     this.yasqe.on("queryBefore", this.handleYasqeQueryBefore);
@@ -1369,6 +1372,47 @@ export class Tab extends EventEmitter {
 
     // Add Ctrl+Click handler for URIs
     this.attachYasqeMouseHandler();
+  }
+
+  /**
+   * Move the editor's own buttons (save, share, format, fullscreen) from their floating spot
+   * inside the editor into the query bar, next to the layout toggle, with Lucide icons.
+   * The elements keep their yasqe classes and handlers, so the share popup and the
+   * save buttons keep working.
+   */
+  private mountEditorTools() {
+    const buttons = this.yasqe?.getWrapperElement()?.querySelector<HTMLDivElement>(".yasqe_buttons");
+    if (!buttons || !this.controlBarEl) return;
+    this.editorToolsEl?.remove();
+    const tools = document.createElement("div");
+    addClass(tools, "yasgui-editorTools", "yasqe_buttonsHost");
+    tools.setAttribute("role", "group");
+    tools.setAttribute("aria-label", "Editor");
+    tools.appendChild(buttons);
+    const setIcon = (selector: string, name: IconName) => {
+      buttons.querySelectorAll<HTMLElement>(selector).forEach((el) => {
+        el.querySelectorAll("i").forEach((i) => i.remove());
+        el.insertAdjacentHTML("afterbegin", icon(name));
+      });
+    };
+    setIcon(".yasqe_saveManagedButton", "database");
+    setIcon(".yasqe_saveRqButton", "fileDown");
+    setIcon(".yasqe_share", "share");
+    setIcon(".yasqe_formatButton", "alignLeft");
+    setIcon(".yasqe_hamburgerButton", "ellipsis");
+    const fullscreenBtn = buttons.querySelector<HTMLElement>(".yasqe_fullscreenButton");
+    if (fullscreenBtn) {
+      fullscreenBtn.querySelectorAll("i").forEach((i) => i.remove());
+      fullscreenBtn.insertAdjacentHTML(
+        "afterbegin",
+        icon("maximize").replace('class="yasgui-icon"', 'class="yasgui-icon fullscreenIcon"') +
+          icon("minimize").replace('class="yasgui-icon"', 'class="yasgui-icon fullscreenExitIcon"'),
+      );
+    }
+    const anchor =
+      this.orientationToggleButton?.parentElement === this.controlBarEl ? this.orientationToggleButton : null;
+    this.controlBarEl.insertBefore(tools, anchor);
+    this.editorToolsEl = tools;
   }
 
   private updateSaveButtonVisibility() {
@@ -1422,6 +1466,8 @@ export class Tab extends EventEmitter {
     this.yasqe?.off("queryAbort", this.updateRunButton);
     this.yasqe?.off("changes", this.updateRunButton);
     this.detachYasqeMouseHandler();
+    this.editorToolsEl?.remove();
+    this.editorToolsEl = undefined;
     this.yasqe?.destroy();
     this.yasqe = undefined;
   }

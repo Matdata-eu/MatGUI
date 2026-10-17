@@ -282,6 +282,87 @@
     }
   }
 
+  // Editor tools (save, share, format, fullscreen), moved from the editor into the query bar
+  .yasgui-queryBar .yasgui-editorTools {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    background: transparent;
+
+    .yasqe_buttons {
+      position: relative;
+      inset: auto;
+      z-index: auto;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+
+      > button,
+      .yasqe_saveWrapper > button {
+        width: 36px;
+        height: 36px;
+        margin: 0;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        border-radius: var(--yasgui-radius-button, 8px);
+        background: transparent;
+        color: var(--yasgui-ink-muted, #56606c);
+        cursor: pointer;
+
+        &:hover {
+          background: var(--yasgui-surface-sunken, #edf0f4);
+          color: var(--yasgui-ink, #1c2633);
+        }
+
+        &:focus-visible {
+          outline: 2px solid var(--yasgui-focus, #044a8c);
+          outline-offset: 2px;
+        }
+      }
+
+      .yasqe_saveWrapper:not([style*="none"]) {
+        display: flex;
+        gap: 2px;
+      }
+
+      .yasqe_fullscreenButton .fullscreenExitIcon {
+        display: none;
+      }
+
+      // Small screens: yasqe swaps these buttons for its own "more" menu
+      > button.yasqe_hamburgerButton {
+        display: none;
+      }
+      @media (max-width: 768px) {
+        > button.yasqe_hamburgerButton {
+          display: inline-flex;
+        }
+      }
+
+      // Popups open below the bar instead of above the floating buttons
+      .yasqe_sharePopup,
+      .yasqe_hamburgerMenu {
+        position: absolute !important;
+        top: calc(100% + 6px) !important;
+        bottom: auto !important;
+        right: 0 !important;
+        left: auto !important;
+      }
+    }
+  }
+
+  .tabPanel:has(.yasqe.fullscreen) .yasgui-editorTools .yasqe_fullscreenButton {
+    .fullscreenIcon {
+      display: none;
+    }
+    .fullscreenExitIcon {
+      display: inline;
+    }
+  }
+
   // Run / Stop
   .yasgui-runButton {
     height: 40px;
