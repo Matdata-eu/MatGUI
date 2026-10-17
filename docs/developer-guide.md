@@ -3221,6 +3221,25 @@ export default class ChartPlugin implements Plugin {
 }
 ```
 
+### Host API for Result Plugins (yasr hostApi v1)
+
+YASR exposes a small host API so plugins share one describe panel and one toolbar style. Feature-detect it with `yasr.hostApi`, never with version strings, and keep your own fallback for older hosts:
+
+```js
+const host = this.yasr?.hostApi;
+if (host?.describe && typeof this.yasr.describe === "function") {
+  this.yasr.describe(iri, { direction: "outgoing", source: "Map" }); // or "incoming"
+} else {
+  /* fall back to the plugin's own describe UI */
+}
+const bar = host?.toolbar && typeof this.yasr.getPluginToolbar === "function" ? this.yasr.getPluginToolbar() : null;
+```
+
+- `yasr.describe(iri, { direction?, source?, newHistory? }): Promise<void>` opens the shared describe panel. It runs a CONSTRUCT query through `yasr.executeQuery` with `Accept: text/turtle` and never rejects; errors show in the panel. `newHistory: false` adds to the panel's back/forward history instead of starting a new one. `yasr.closeDescribe()` closes it, `yasr.isDescribeOpen()` reports its state, and YASR emits `"describe"` with `(yasr, iri, direction)` each time a resource is shown.
+- `yasr.getPluginToolbar()` returns `div.yasr_pluginToolbar`, a full-width bar under the YASR header. YASR empties it before every `draw()` and hides it while it is empty. A plugin that redraws itself must remove its own items first. Build controls inside it with `.yasr_toolbarButton` (toggle with `aria-pressed="true"` or `.is-active`), `.yasr_toolbarSelect` (`<label><span>Label</span><select>`), `.yasr_toolbarSearch` (`<input type="search">`), `.yasr_toolbarGroup` and `.yasr_toolbarSpacer` (a direct child of the slot). Put "View settings" last, as a `.yasr_toolbarButton` with the Lucide `sliders-horizontal` icon.
+- Hosts can set the YASR config hook `openQueryInNewTab(query)` to enable the panel's "Open as query" button. YASGUI sets it to open a new tab on the same endpoint.
+- Style with `var(--yasgui-…, fallback)`. Inside `.yasr`, the `--yasr-ui-*` shorthands (for example `--yasr-ui-brand`, `--yasr-ui-line`) already carry light and dark fallbacks.
+
 ### Plugin Best Practices
 
 1. **Theme Support**: Use CSS custom properties for colors
