@@ -1,0 +1,141 @@
+// Plugin toolbar slot (yasr.getPluginToolbar()) and the shared toolbar classes
+// plugins put on their own controls.
+.yasr {
+  .yasr_pluginToolbar {
+    display: flex;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 8px 12px;
+    box-sizing: border-box;
+    border-bottom: 1px solid var(--yasr-ui-line);
+    color: var(--yasr-ui-ink);
+    font-family: var(--yasr-ui-font);
+    font-size: 14px;
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  .yasr_toolbarGroup {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .yasr_toolbarSpacer {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .yasr_toolbarButton,
+  .yasr_toolbarSelect,
+  .yasr_toolbarSearch {
+    height: 30px;
+    box-sizing: border-box;
+    border: 1px solid var(--yasr-ui-line-strong);
+    border-radius: var(--yasr-ui-radius-button);
+    background: var(--yasr-ui-raised);
+    color: var(--yasr-ui-ink);
+    font-family: var(--yasr-ui-font);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .yasr_toolbarButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+
+    svg {
+      flex-shrink: 0;
+    }
+
+    &:hover:not(:disabled) {
+      background: var(--yasr-ui-sunken);
+      color: var(--yasr-ui-ink);
+      text-decoration: none;
+    }
+
+    &[aria-pressed="true"],
+    &.is-active {
+      background: var(--yasr-ui-brand-soft);
+      border-color: var(--yasr-ui-brand);
+      color: var(--yasr-ui-brand-strong);
+    }
+
+    &:disabled,
+    &.disabled {
+      cursor: default;
+      opacity: 0.5;
+    }
+
+    // Icon only buttons are square
+    &:not(:has(span)):has(svg) {
+      width: 30px;
+      padding: 0;
+    }
+  }
+
+  // A `<label class="yasr_toolbarSelect"><span>Label</span><select>…</select></label>`
+  .yasr_toolbarSelect {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 4px 0 12px;
+    cursor: pointer;
+
+    > span {
+      color: var(--yasr-ui-ink-muted);
+      white-space: nowrap;
+    }
+
+    select {
+      height: 100%;
+      border: none;
+      background: transparent;
+      color: var(--yasr-ui-ink);
+      font: inherit;
+      cursor: pointer;
+      outline: none;
+    }
+
+    select option {
+      background: var(--yasr-ui-raised);
+      color: var(--yasr-ui-ink);
+    }
+
+    &:focus-within {
+      outline: 2px solid var(--yasr-ui-focus);
+      outline-offset: 1px;
+    }
+  }
+
+  .yasr_toolbarSearch {
+    min-width: 160px;
+    padding: 0 10px;
+    font-weight: 400;
+
+    &::placeholder {
+      color: var(--yasr-ui-ink-muted);
+    }
+  }
+
+  .yasr_toolbarButton,
+  .yasr_toolbarSearch {
+    &:focus-visible {
+      outline: 2px solid var(--yasr-ui-focus);
+      outline-offset: 1px;
+    }
+  }
+}
