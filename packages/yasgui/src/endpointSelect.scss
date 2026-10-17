@@ -6,8 +6,10 @@
   }
 
   .endpointPicker {
-    flex: 0 1 480px;
+    // Grows up to 480px; the small basis keeps the query bar from wrapping before it has to
+    flex: 10 1 200px;
     min-width: 200px;
+    max-width: 480px;
     height: 40px;
     display: flex;
     align-items: center;
@@ -25,8 +27,9 @@
     }
 
     @media (max-width: 768px) {
-      flex: 1 1 auto;
+      flex: 1 1 150px;
       min-width: 0;
+      max-width: none;
       height: 38px;
       padding-left: 10px;
     }

@@ -187,8 +187,13 @@
     flex-shrink: 0;
     gap: 8px;
     min-height: 60px;
-    padding: 0 16px;
+    padding: 10px 16px;
     box-sizing: border-box;
+    // When the bar is too narrow (side-by-side layout), the editor tools wrap to a second line on the
+    // right instead of ending up behind the results
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 6px;
     position: relative; // For dropdown positioning
     container-type: inline-size; // The bar is narrower than the viewport in the side-by-side layout
     background: var(--yasgui-surface, transparent);
@@ -277,9 +282,21 @@
       }
     }
 
+    // Side-by-side layout: a narrower endpoint picker leaves room for the saved version and the
+    // editor tools, so they don't end up behind the results
+    @container (max-width: 760px) {
+      .endpointPicker {
+        flex-basis: 150px;
+        min-width: 150px;
+      }
+      .yasgui-runButton__shortcut {
+        display: none;
+      }
+    }
+
     @media (max-width: 768px) {
       gap: 6px;
-      padding: 0 12px;
+      padding: 8px 12px;
       min-height: 56px;
 
       .yasgui-runButton__shortcut {
@@ -425,9 +442,12 @@
   // Saved version of a managed query
   .yasgui-versionChip {
     height: 26px;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
+    // Gives up its width (with an ellipsis; the tooltip has the details) before the bar wraps
+    flex: 1 1 56px;
+    min-width: 56px;
+    max-width: max-content;
+    overflow: hidden;
+    text-overflow: ellipsis;
     padding: 0 10px;
     border-radius: 999px;
     background: var(--yasgui-brand-soft, #e3eefa);
@@ -435,6 +455,8 @@
     font-size: 13px;
     font-weight: 600;
     white-space: nowrap;
+    line-height: 26px;
+    box-sizing: border-box;
 
     &.dirty {
       background: var(--yasgui-surface-sunken, #edf0f4);
