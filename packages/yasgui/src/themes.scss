@@ -2,107 +2,154 @@
 // Supports light (default) and dark themes
 
 :root {
-  // Light theme colors (default)
+  // MatData design tokens (light). New code uses these; plugins use them with a fallback,
+  // e.g. var(--yasgui-brand, #0563bb).
+  --yasgui-surface: #f5f7fa;
+  --yasgui-surface-raised: #ffffff;
+  --yasgui-surface-sunken: #edf0f4;
+  --yasgui-line: #e3e7ec;
+  --yasgui-line-strong: #808893;
+  --yasgui-ink: #1c2633;
+  --yasgui-ink-muted: #56606c;
+  --yasgui-brand: #0563bb;
+  --yasgui-brand-strong: #044a8c;
+  --yasgui-on-brand: #ffffff;
+  --yasgui-brand-soft: #e3eefa;
+  --yasgui-highlight: #f2b300;
+  --yasgui-highlight-ink: #6e4d00;
+  --yasgui-danger: #b42318;
+  --yasgui-focus: #044a8c;
+  --yasgui-radius-sm: 6px;
+  --yasgui-radius-md: 10px;
+  --yasgui-radius-lg: 16px;
+  --yasgui-radius-button: 8px;
+  --yasgui-shadow-soft: 0 1px 2px rgba(28, 38, 51, 0.04), 0 4px 16px rgba(28, 38, 51, 0.05);
+  --yasgui-shadow-raised: 0 2px 4px rgba(28, 38, 51, 0.05), 0 12px 32px rgba(28, 38, 51, 0.08);
+  // Barlow and JetBrains Mono are used when the page provides them (Yasgui loads no web fonts itself)
+  --yasgui-font-family: Barlow, "Helvetica Neue", Arial, sans-serif;
+  --yasgui-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  // Original Yasgui variables, with MatData values
   --yasgui-bg-primary: #ffffff;
-  --yasgui-bg-secondary: #f7f7f7;
-  --yasgui-bg-tertiary: #eee;
-  --yasgui-bg-quaternary: #e0e0e0;
-  --yasgui-text-primary: rgba(0, 0, 0, 0.87);
-  --yasgui-text-secondary: #505050;
-  --yasgui-text-muted: #999;
-  --yasgui-border-color: #ddd;
-  --yasgui-border-color-secondary: rgba(0, 0, 0, 0.26);
-  --yasgui-border-color-light: #d1d1d1;
-  --yasgui-link-color: #337ab7;
-  --yasgui-link-hover: #2a6496;
-  --yasgui-accent-color: #337ab7;
-  --yasgui-accent-bg: #e8f0fe;
-  --yasgui-button-text: #505050;
-  --yasgui-button-hover: #000;
-  --yasgui-chip-bg: #f5f5f5;
-  --yasgui-chip-text: #505050;
+  --yasgui-bg-secondary: #f5f7fa;
+  --yasgui-bg-tertiary: #edf0f4;
+  --yasgui-bg-quaternary: #e3e7ec;
+  --yasgui-text-primary: #1c2633;
+  --yasgui-text-secondary: #56606c;
+  --yasgui-text-muted: #6a7380;
+  --yasgui-border-color: #e3e7ec;
+  --yasgui-border-color-secondary: #808893;
+  --yasgui-border-color-light: #e3e7ec;
+  --yasgui-link-color: #0563bb;
+  --yasgui-link-hover: #044a8c;
+  --yasgui-accent-color: #0563bb;
+  --yasgui-accent-bg: #e3eefa;
+  --yasgui-button-text: #56606c;
+  --yasgui-button-hover: #1c2633; // text colour of a hovered button
+  --yasgui-chip-bg: #edf0f4;
+  --yasgui-chip-text: #56606c;
   --yasgui-tab-bg: #ffffff;
-  --yasgui-tab-bg-active: #f9f9f9;
-  --yasgui-tab-border: #ddd;
-  --yasgui-tab-managed: #a4cbed;
-  --yasgui-input-border: rgba(0, 0, 0, 0.26);
-  --yasgui-input-focus: #337ab7;
-  --yasgui-label-color: rgba(0, 0, 0, 0.54);
-  --yasgui-tooltip-bg: rgba(0, 0, 0, 1);
-  --yasgui-tooltip-text: #fff;
-  --yasgui-error-color: #d32f2f;
-  --yasgui-notification-bg: #eee;
-  --yasgui-notification-text: #999;
-  --yasgui-help-bg: #dff0ff;
-  --yasgui-help-text: #428bca;
-  --yasgui-fallback-bg: #f7f7f7;
-  --yasgui-fallback-border: #d1d1d1;
-  --yasgui-resize-handle: #d1d1d1;
-  --yasgui-nav-bg: #eee;
-  --yasgui-match-highlight-bg: #dbdeed;
+  --yasgui-tab-bg-active: #ffffff;
+  --yasgui-tab-border: #e3e7ec;
+  --yasgui-tab-managed: #0563bb; // marker of tabs holding a saved (workspace) query
+  --yasgui-input-border: #808893;
+  --yasgui-input-focus: #044a8c;
+  --yasgui-label-color: #56606c;
+  --yasgui-tooltip-bg: #1c2633;
+  --yasgui-tooltip-text: #ffffff;
+  --yasgui-error-color: #b42318;
+  --yasgui-notification-bg: #edf0f4;
+  --yasgui-notification-text: #56606c;
+  --yasgui-help-bg: #e3eefa;
+  --yasgui-help-text: #044a8c;
+  --yasgui-fallback-bg: #f5f7fa;
+  --yasgui-fallback-border: #e3e7ec;
+  --yasgui-resize-handle: #c5ccd4;
+  --yasgui-nav-bg: #edf0f4;
+  --yasgui-match-highlight-bg: #e3eefa;
 
   // Minimum heights
   --yasgui-yasr-min-height: 400px; // Minimum height for yasr
 
-  --yasgui-endpoint-button-bg: #337ab7;
-  --yasgui-endpoint-button-border: #337ab7;
+  --yasgui-endpoint-button-bg: #0563bb;
+  --yasgui-endpoint-button-border: #0563bb;
   --yasgui-endpoint-button-text: #ffffff;
-  --yasgui-endpoint-button-hover-bg: #286090;
-  --yasgui-endpoint-button-hover-border: #286090;
-  --yasgui-endpoint-button-focus: #5cb3fd;
+  --yasgui-endpoint-button-hover-bg: #044a8c;
+  --yasgui-endpoint-button-hover-border: #044a8c;
+  --yasgui-endpoint-button-focus: #93c5f6;
 }
 
 [data-theme="dark"] {
-  // Dark theme colors - GitHub Dark Default inspired
-  --yasgui-bg-primary: #0d1117;
-  --yasgui-bg-secondary: #161b22;
-  --yasgui-bg-tertiary: #21262d;
-  --yasgui-bg-quaternary: #30363d;
-  --yasgui-text-primary: #c9d1d9;
-  --yasgui-text-secondary: #b1bac4;
-  --yasgui-text-muted: #8b949e;
-  --yasgui-border-color: #30363d;
-  --yasgui-border-color-secondary: rgba(240, 246, 252, 0.1);
-  --yasgui-border-color-light: #30363d;
-  --yasgui-link-color: #58a6ff;
-  --yasgui-link-hover: #79c0ff;
-  --yasgui-accent-color: #58a6ff;
-  --yasgui-accent-bg: #1c2d41;
-  --yasgui-button-text: #c9d1d9;
-  --yasgui-button-hover: #f0f6fc;
-  --yasgui-chip-bg: #21262d;
-  --yasgui-chip-text: #c9d1d9;
-  --yasgui-tab-bg: #0d1117;
-  --yasgui-tab-bg-active: #161b22;
-  --yasgui-tab-border: #30363d;
-  --yasgui-tab-managed: #1c2d41;
-  --yasgui-input-border: #30363d;
-  --yasgui-input-focus: #58a6ff;
-  --yasgui-label-color: #8b949e;
-  --yasgui-tooltip-bg: #161b22;
-  --yasgui-tooltip-text: #c9d1d9;
-  --yasgui-error-color: #f85149;
-  --yasgui-notification-bg: #21262d;
-  --yasgui-notification-text: #8b949e;
-  --yasgui-help-bg: #1c2d41;
-  --yasgui-help-text: #58a6ff;
-  --yasgui-fallback-bg: #161b22;
-  --yasgui-fallback-border: #30363d;
-  --yasgui-resize-handle: #30363d;
-  --yasgui-nav-bg: #161b22;
-  --yasgui-match-highlight-bg: #1f6feb;
-  --yasgui-endpoint-button-bg: #238636;
-  --yasgui-endpoint-button-border: #238636;
-  --yasgui-endpoint-button-text: #ffffff;
-  --yasgui-endpoint-button-hover-bg: #2ea043;
-  --yasgui-endpoint-button-hover-border: #2ea043;
-  --yasgui-endpoint-button-focus: #58a6ff;
+  // MatData design tokens (dark)
+  --yasgui-surface: #0d141c;
+  --yasgui-surface-raised: #16202b;
+  --yasgui-surface-sunken: #0a1016;
+  --yasgui-line: #26323e;
+  --yasgui-line-strong: #6f7e8c;
+  --yasgui-ink: #eef1ef;
+  --yasgui-ink-muted: #a3afba;
+  --yasgui-brand: #5aa8f2;
+  --yasgui-brand-strong: #93c5f6;
+  --yasgui-on-brand: #04172b;
+  --yasgui-brand-soft: #0e2a48;
+  --yasgui-highlight: #f5c242;
+  --yasgui-highlight-ink: #f5c242;
+  --yasgui-danger: #f97066;
+  --yasgui-focus: #93c5f6;
+  --yasgui-shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --yasgui-shadow-raised: 0 2px 8px rgba(0, 0, 0, 0.5);
+
+  // Original Yasgui variables, with MatData values
+  --yasgui-bg-primary: #16202b;
+  --yasgui-bg-secondary: #0d141c;
+  --yasgui-bg-tertiary: #0a1016;
+  --yasgui-bg-quaternary: #26323e;
+  --yasgui-text-primary: #eef1ef;
+  --yasgui-text-secondary: #a3afba;
+  --yasgui-text-muted: #8593a0;
+  --yasgui-border-color: #26323e;
+  --yasgui-border-color-secondary: #6f7e8c;
+  --yasgui-border-color-light: #26323e;
+  --yasgui-link-color: #5aa8f2;
+  --yasgui-link-hover: #93c5f6;
+  --yasgui-accent-color: #5aa8f2;
+  --yasgui-accent-bg: #0e2a48;
+  --yasgui-button-text: #a3afba;
+  --yasgui-button-hover: #eef1ef; // text colour of a hovered button
+  --yasgui-chip-bg: #0a1016;
+  --yasgui-chip-text: #a3afba;
+  --yasgui-tab-bg: #16202b;
+  --yasgui-tab-bg-active: #16202b;
+  --yasgui-tab-border: #26323e;
+  --yasgui-tab-managed: #5aa8f2;
+  --yasgui-input-border: #6f7e8c;
+  --yasgui-input-focus: #93c5f6;
+  --yasgui-label-color: #a3afba;
+  --yasgui-tooltip-bg: #0a1016;
+  --yasgui-tooltip-text: #eef1ef;
+  --yasgui-error-color: #f97066;
+  --yasgui-notification-bg: #0a1016;
+  --yasgui-notification-text: #a3afba;
+  --yasgui-help-bg: #0e2a48;
+  --yasgui-help-text: #93c5f6;
+  --yasgui-fallback-bg: #0d141c;
+  --yasgui-fallback-border: #26323e;
+  --yasgui-resize-handle: #3a4856;
+  --yasgui-nav-bg: #0a1016;
+  --yasgui-match-highlight-bg: #0e2a48;
+  --yasgui-endpoint-button-bg: #5aa8f2;
+  --yasgui-endpoint-button-border: #5aa8f2;
+  --yasgui-endpoint-button-text: #04172b;
+  --yasgui-endpoint-button-hover-bg: #93c5f6;
+  --yasgui-endpoint-button-hover-border: #93c5f6;
+  --yasgui-endpoint-button-focus: #93c5f6;
 }
 
 // Apply theme colors to Yasgui components
 .yasgui {
-  background-color: var(--yasgui-bg-primary);
+  background-color: var(--yasgui-surface);
   color: var(--yasgui-text-primary);
+  font-family: var(--yasgui-font-family);
 
   a {
     color: var(--yasgui-link-color);
@@ -113,37 +160,15 @@
     }
   }
 
-  // Tabs styling
+  // Tabs styling (top bar)
   .tabsList {
-    background: var(--yasgui-bg-primary);
-    border-bottom: 1px solid var(--yasgui-border-color);
+    background: var(--yasgui-surface-raised);
+    border-bottom: 1px solid var(--yasgui-line);
   }
 
   .tab {
     background: var(--yasgui-tab-bg);
-    color: var(--yasgui-text-primary);
     border-color: var(--yasgui-tab-border);
-
-    a {
-      color: var(--yasgui-text-primary);
-    }
-
-    &.active {
-      background: var(--yasgui-tab-bg-active);
-      border-bottom-color: var(--yasgui-tab-bg-active);
-
-      a {
-        color: var(--yasgui-text-primary);
-      }
-    }
-
-    &:hover:not(.active) {
-      background: var(--yasgui-bg-secondary);
-
-      a {
-        color: var(--yasgui-text-primary);
-      }
-    }
   }
 
   // Text fields
@@ -169,44 +194,16 @@
     }
   }
 
-  // Theme toggle button
-  .themeToggle {
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    padding: 6px 8px;
-    color: var(--yasgui-button-text);
-    fill: var(--yasgui-button-text);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    margin-left: 5px;
-
-    &:hover {
-      color: var(--yasgui-button-hover);
-      background: var(--yasgui-bg-secondary);
-    }
-  }
-
-  // Endpoint textbox theming
+  // Endpoint field theming (the field itself is borderless inside the endpoint picker)
   .autocomplete {
-    background-color: var(--yasgui-bg-primary) !important;
+    background-color: transparent !important;
     color: var(--yasgui-text-primary) !important;
-    border-color: var(--yasgui-border-color) !important;
-
-    &:hover {
-      border-color: var(--yasgui-border-color-light) !important;
-    }
-
-    &:focus {
-      border-color: var(--yasgui-accent-color) !important;
-    }
+    border-color: transparent !important;
   }
 
   .autocompleteList {
-    background: var(--yasgui-bg-primary) !important;
-    border-color: var(--yasgui-border-color) !important;
+    background: transparent !important;
+    border-color: transparent !important;
 
     .autoComplete_result {
       color: var(--yasgui-text-primary);
