@@ -102,7 +102,7 @@ Our ecosystem already includes successful external plugins that serve as excelle
 - **[@matdata/yasgui-table-plugin](https://www.npmjs.com/package/@matdata/yasgui-table-plugin)** - Table visualization
 - **[@matdata/yasgui-graph-plugin](https://www.npmjs.com/package/@matdata/yasgui-graph-plugin)** - Graph/network visualization  
 - **[@matdata/yasgui-chart-plugin](https://www.npmjs.com/package/@matdata/yasgui-chart-plugin)** - Charts for SELECT results  
-- **[yasgui-geo-tg](https://www.npmjs.com/package/yasgui-geo-tg)** - Geographic data on maps
+- **[@matdata/yasgui-geo-plugin](https://www.npmjs.com/package/@matdata/yasgui-geo-plugin)** - Geographic data on maps
 
 #### 🔧 Creating Your Own Plugin
 
