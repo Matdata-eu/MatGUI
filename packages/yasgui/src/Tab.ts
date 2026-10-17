@@ -1807,10 +1807,14 @@ export class Tab extends EventEmitter {
     this.rootEl.appendChild(this.verticalResizerEl);
   }
 
+  // Pointer position and editor width when the drag started, so the split follows the pointer exactly
+  private verticalDragStart?: { x: number; width: number };
   private initVerticalDrag = (event: MouseEvent) => {
     // Don't select text while dragging
     event.preventDefault();
     if (this.verticalResizerEl) addClass(this.verticalResizerEl, "resizing");
+    if (this.editorWrapperEl)
+      this.verticalDragStart = { x: event.clientX, width: this.editorWrapperEl.getBoundingClientRect().width };
     document.documentElement.addEventListener("mousemove", this.doVerticalDrag, false);
     document.documentElement.addEventListener("mouseup", this.stopVerticalDrag, false);
   };
@@ -1836,7 +1840,9 @@ export class Tab extends EventEmitter {
   private doVerticalDrag = (event: MouseEvent) => {
     if (!this.editorWrapperEl || !this.rootEl) return;
 
-    const offset = this.calculateVerticalDragOffset(event);
+    const offset = this.verticalDragStart
+      ? this.verticalDragStart.width + event.clientX - this.verticalDragStart.x
+      : this.calculateVerticalDragOffset(event);
     const totalWidth = this.rootEl.offsetWidth;
 
     // Ensure minimum widths (at least 200px for each panel)
@@ -1850,6 +1856,7 @@ export class Tab extends EventEmitter {
 
   private stopVerticalDrag = () => {
     if (this.verticalResizerEl) removeClass(this.verticalResizerEl, "resizing");
+    this.verticalDragStart = undefined;
     document.documentElement.removeEventListener("mousemove", this.doVerticalDrag, false);
     document.documentElement.removeEventListener("mouseup", this.stopVerticalDrag, false);
 

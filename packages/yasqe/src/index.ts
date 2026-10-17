@@ -1493,9 +1493,13 @@ export class Yasqe extends EditorFacade {
     this.horizontalResizeWrapper.addEventListener("dblclick", this.expandEditor);
     this.rootEl.appendChild(this.horizontalResizeWrapper);
   }
+  // Pointer position and editor height when the drag started: the editor grows or shrinks by exactly
+  // as much as the pointer moves, so it doesn't jump on the first move
+  private dragStart?: { y: number; height: number };
   private initDrag = (event: MouseEvent) => {
     // Don't select text while dragging
     event.preventDefault();
+    this.dragStart = { y: event.clientY, height: this.getWrapperElement().getBoundingClientRect().height };
     addClass(this.horizontalResizeWrapper, "resizing");
     document.documentElement.addEventListener("mousemove", this.doDrag, false);
     document.documentElement.addEventListener("mouseup", this.stopDrag, false);
@@ -1513,10 +1517,14 @@ export class Yasqe extends EditorFacade {
     return event.clientY - parentOffset - this.rootEl.offsetTop + scrollOffset;
   }
   private doDrag = (event: MouseEvent) => {
-    this.getWrapperElement().style.height = this.calculateDragOffset(event, this.rootEl) + "px";
+    const height = this.dragStart
+      ? this.dragStart.height + event.clientY - this.dragStart.y
+      : this.calculateDragOffset(event, this.rootEl);
+    this.getWrapperElement().style.height = Math.max(60, Math.round(height)) + "px";
   };
   private stopDrag = () => {
     removeClass(this.horizontalResizeWrapper, "resizing");
+    this.dragStart = undefined;
     document.documentElement.removeEventListener("mousemove", this.doDrag, false);
     document.documentElement.removeEventListener("mouseup", this.stopDrag, false);
     this.emit("resize", this.getWrapperElement().style.height);
