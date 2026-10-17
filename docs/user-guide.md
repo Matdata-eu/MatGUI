@@ -1966,14 +1966,16 @@ ORDER BY DESC(?operationalPoints)
 
 **Toolbar:**
 
+The chart's controls sit in the shared toolbar under the results header:
+
 | Control | What it does |
 | --- | --- |
-| **Chart** | Chart type: Bar, Stacked bar, Horizontal bar, Line, Area, Pie, Donut, Scatter, Histogram |
+| **Type** | Chart type: Bar, Stacked bar, Horizontal bar, Line, Area, Pie, Donut, Scatter, Histogram |
 | **X axis** / **Slices** | Column used for the categories or the x axis |
 | **Values** / **Size** | Numeric column(s) to plot (pie, donut and histogram use one) |
 | **Series** | Column whose values split the data into series |
-| **Auto** | Go back to the automatic chart |
-| **PNG** / **SVG** | Download the chart as an image |
+
+The **View settings** menu at the far right of the toolbar has **Automatic chart** (go back to the automatic chart) and **Download PNG** / **Download SVG**.
 
 Your choices are saved per tab. When the query returns other variables, the chart starts again from the automatic choice. The download button in the results header also saves the chart as PNG.
 
@@ -1981,7 +1983,7 @@ Your choices are saved per tab. When the query returns other variables, the char
 
 - IRIs are shown with their label when the query returns a label column named after them (`?line` with `?lineLabel`, `?line_label` or `?lineName`), otherwise as prefixed names.
 - Hover a bar, slice or point to see its value and full IRI.
-- **Ctrl+click** (Cmd+click on macOS) a bar, slice or point to show the triples of its IRI in a popup, like in the Table and Geo plugins. **Ctrl+Shift+click** shows the triples where the IRI is the object. The popup has the same back/forward navigation.
+- **Ctrl+click** (Cmd+click on macOS) a bar, slice or point to show the triples of its IRI in the [describe panel](#describing-a-resource), like in the Table, Geo and Graph plugins. **Ctrl+Shift+click** shows the triples where the IRI is the object.
 
 **Good to know:**
 
@@ -2048,7 +2050,7 @@ Matgui automatically selects the most appropriate plugin based on:
 
 ### Describing a Resource
 
-When a result view lets you describe a resource (for example Ctrl+click on an IRI in the table, or on a feature in the map, or a node in the graph), its triples open in the describe panel on the right of the results. On narrow screens the panel slides over the results instead. The panel shows the resource's label, its IRI and its types, and a list of its properties. Use **Outgoing** and **Incoming** to switch between the triples where the resource is the subject and those where it is the object (incoming triples are limited to the first 1000). Click any resource in the panel to describe it in turn, or Shift+click to see its incoming triples. The back and forward buttons (or Alt+Left and Alt+Right while the panel has focus) walk through the resources you visited. The **Raw** tab shows the response exactly as the endpoint returned it. **Open as query** opens the query behind the panel in a new tab, and **Copy IRI** copies the resource's IRI. Press Escape or the close button to close the panel. "Opened from …" tells you which view opened it. Prefixes from your query are used to shorten IRIs.
+When a result view lets you describe a resource (for example Ctrl+click on an IRI in the table, or on a feature in the map, a node in the graph or a bar in a chart), its triples open in the describe panel on the right of the results. On narrow screens the panel slides over the results instead. The panel shows the resource's label, its IRI and its types, and a list of its properties. Use **Outgoing** and **Incoming** to switch between the triples where the resource is the subject and those where it is the object (incoming triples are limited to the first 1000). Click any resource in the panel to describe it in turn, or Shift+click to see its incoming triples. The back and forward buttons (or Alt+Left and Alt+Right while the panel has focus) walk through the resources you visited. The **Raw** tab shows the response exactly as the endpoint returned it. **Open as query** opens the query behind the panel in a new tab, and **Copy IRI** copies the resource's IRI. Press Escape or the close button to close the panel. "Opened from …" tells you which view opened it. Prefixes from your query are used to shorten IRIs.
 
 Every view now shows its controls in the same toolbar under the result header, with **View settings** at the far right. Plugin versions that predate this keep their own toolbar and describe window.
 

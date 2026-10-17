@@ -4463,9 +4463,9 @@ Or load `dist/yasgui-chart-plugin.min.js` (and its CSS) from a CDN; the bundle r
 ### Behaviour
 
 - `canHandleResults()` is true for SELECT results with at least one numeric column. Its priority (5) is below the Table plugin (10), so SELECT results keep opening in the table.
-- The chart type and the category, value and series columns are chosen automatically and can be changed in the plugin's toolbar. The choice is stored with `yasr.storePluginConfig()`, so MatGUI saves it per tab, together with the result's variables; results with other variables fall back to the automatic choice.
-- Ctrl+click on a bar, slice or point runs a background query through `yasr.executeQuery()` and shows the triples of its IRI in the same modal as the Table plugin.
-- `download()` returns a PNG of the chart; the toolbar also exports SVG.
+- The chart type and the category, value and series columns are chosen automatically and can be changed with the pickers the plugin puts in the shared toolbar (`yasr.getPluginToolbar()`); **Automatic chart** and the PNG/SVG downloads are in its **View settings** menu. The choice is stored with `yasr.storePluginConfig()`, so MatGUI saves it per tab, together with the result's variables; results with other variables fall back to the automatic choice.
+- Ctrl+click on a bar, slice or point opens its IRI in the shared describe panel through `yasr.describe(iri, { direction, source: 'Chart' })` (Ctrl+Shift+click for incoming triples). Without the YASR host API the plugin falls back to its own toolbar and describe modal.
+- `download()` returns a PNG of the chart; the View settings menu also exports SVG.
 
 ### Options
 
