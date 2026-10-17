@@ -7,6 +7,7 @@ import * as OAuth2Utils from "./OAuth2Utils";
 import PersistentConfig from "./PersistentConfig";
 import { deduplicatePrefixes } from "./prefixUtils";
 import { WorkspaceSettingsForm } from "./queryManagement/WorkspaceSettingsForm";
+import { icon, IconName } from "./icons";
 
 const AcceptOptionsMap: { key: string; value: string }[] = [
   { key: "JSON", value: "application/sparql-results+json" },
@@ -35,10 +36,7 @@ export default class TabSettingsModal {
   private tab: Tab;
   private modalOverlay!: HTMLElement;
   private modalContent!: HTMLElement;
-  private settingsButton!: HTMLButtonElement;
-  private themeToggleButton!: HTMLButtonElement;
-  private prefixButton!: HTMLButtonElement;
-  private mapButton!: HTMLButtonElement;
+  private hamburgerContainer!: HTMLElement;
   private prefixTextarea!: HTMLTextAreaElement;
   private autoCaptureCheckbox!: HTMLInputElement;
   private hamburgerMenuButton!: HTMLButtonElement;
@@ -58,67 +56,20 @@ export default class TabSettingsModal {
   }
 
   private init(controlBarEl: HTMLElement) {
-    // Settings button
-    this.settingsButton = document.createElement("button");
-    addClass(this.settingsButton, "tabContextButton", "desktopOnly");
-    this.settingsButton.setAttribute("aria-label", "Settings");
-    this.settingsButton.title = "Settings";
-    this.settingsButton.innerHTML = '<i class="fas fa-cog"></i>';
-    this.settingsButton.onclick = () => this.open();
-    controlBarEl.appendChild(this.settingsButton);
-
-    // Theme toggle button (if enabled)
-    if (this.tab.yasgui.config.showThemeToggle) {
-      this.themeToggleButton = document.createElement("button");
-      addClass(this.themeToggleButton, "tabContextButton", "themeToggle", "desktopOnly");
-      this.themeToggleButton.setAttribute("aria-label", "Toggle between light and dark theme");
-      this.themeToggleButton.title = "Toggle theme";
-      this.themeToggleButton.innerHTML = this.getThemeToggleIcon();
-      this.themeToggleButton.addEventListener("click", () => {
-        this.tab.yasgui.toggleTheme();
-        this.themeToggleButton.innerHTML = this.getThemeToggleIcon();
-      });
-      controlBarEl.appendChild(this.themeToggleButton);
-    }
-
-    // Prefix button
-    this.prefixButton = document.createElement("button");
-    this.prefixButton.setAttribute("aria-label", "Insert Prefixes");
-    this.prefixButton.title = "Insert saved prefixes into query";
-    this.prefixButton.innerHTML = '<i class="fas fa-arrow-up-right-from-square"></i>';
-    addClass(this.prefixButton, "tabContextButton", "prefixButton", "desktopOnly");
-    controlBarEl.appendChild(this.prefixButton);
-    this.prefixButton.onclick = () => this.insertPrefixesIntoQuery();
-
-    // Map button
-    this.mapButton = document.createElement("button");
-    this.mapButton.setAttribute("aria-label", "Open map");
-    this.mapButton.title = "Open map";
-    this.mapButton.innerHTML = '<i class="fas fa-map-location-dot"></i>';
-    addClass(this.mapButton, "tabContextButton", "desktopOnly");
-    controlBarEl.appendChild(this.mapButton);
-    this.mapButton.onclick = (event: MouseEvent) => this.openMapWidget(event);
-
-    // Describe endpoint button
-    if (this.tab.yasgui.config.endpointDescribe?.enabled) {
-      const describeButton = document.createElement("button");
-      describeButton.setAttribute("aria-label", "Describe endpoint");
-      describeButton.title = "Describe endpoint (F8)";
-      describeButton.innerHTML = '<i class="fas fa-magnifying-glass-chart"></i>';
-      addClass(describeButton, "tabContextButton", "describeEndpointButton", "desktopOnly");
-      describeButton.onclick = () => this.tab.yasgui.endpointDescribe?.toggle();
-      controlBarEl.appendChild(describeButton);
-    }
-
-    // Hamburger menu button and dropdown (mobile only)
+    // Settings and the theme toggle live in the top bar of Yasgui; Prefixes, Explore endpoint and
+    // the map are labelled buttons of the query bar (see Tab). On narrow screens they move into this menu.
     const hamburgerContainer = document.createElement("div");
     addClass(hamburgerContainer, "hamburgerContainer", "mobileOnly");
+    this.hamburgerContainer = hamburgerContainer;
 
     this.hamburgerMenuButton = document.createElement("button");
+    this.hamburgerMenuButton.type = "button";
     addClass(this.hamburgerMenuButton, "tabContextButton", "hamburgerMenuButton");
     this.hamburgerMenuButton.setAttribute("aria-label", "Menu");
+    this.hamburgerMenuButton.setAttribute("aria-haspopup", "true");
+    this.hamburgerMenuButton.setAttribute("aria-expanded", "false");
     this.hamburgerMenuButton.title = "Open menu";
-    this.hamburgerMenuButton.innerHTML = '<i class="fas fa-bars"></i>';
+    this.hamburgerMenuButton.innerHTML = icon("menu", 20);
     this.hamburgerMenuButton.onclick = (e) => {
       e.stopPropagation();
       this.toggleHamburgerMenu();
@@ -131,17 +82,34 @@ export default class TabSettingsModal {
     controlBarEl.appendChild(hamburgerContainer);
 
     // Close hamburger menu when clicking outside
-    document.addEventListener("click", (e) => {
-      if (
-        this.isHamburgerOpen &&
-        !this.hamburgerDropdown.contains(e.target as Node) &&
-        e.target !== this.hamburgerMenuButton
-      ) {
-        this.closeHamburgerMenu();
-      }
-    });
+    document.addEventListener("click", this.handleDocumentClick);
 
     this.createModal();
+  }
+
+  /** The mobile menu of the query bar */
+  public getHamburgerElement(): HTMLElement {
+    return this.hamburgerContainer;
+  }
+
+  private handleDocumentClick = (e: MouseEvent) => {
+    if (
+      this.isHamburgerOpen &&
+      !this.hamburgerDropdown.contains(e.target as Node) &&
+      !this.hamburgerMenuButton.contains(e.target as Node)
+    ) {
+      this.closeHamburgerMenu();
+    }
+  };
+
+  private menuItem(iconName: IconName, label: string, onClick: (event: MouseEvent) => void, ...classes: string[]) {
+    const item = document.createElement("button");
+    item.type = "button";
+    addClass(item, "hamburgerMenuItem", ...classes);
+    item.innerHTML = icon(iconName, 18) + "<span></span>";
+    (item.querySelector("span") as HTMLElement).textContent = label;
+    item.onclick = onClick;
+    return item;
   }
 
   private createHamburgerDropdown(hamburgerContainer: HTMLElement) {
@@ -149,61 +117,54 @@ export default class TabSettingsModal {
     addClass(this.hamburgerDropdown, "hamburgerDropdown");
     this.hamburgerDropdown.style.display = "none";
 
-    // Settings menu item
-    const settingsItem = document.createElement("button");
-    addClass(settingsItem, "hamburgerMenuItem");
-    settingsItem.innerHTML = '<i class="fas fa-cog"></i><span>Settings</span>';
-    settingsItem.onclick = () => {
-      this.open();
-      this.closeHamburgerMenu();
-    };
-    this.hamburgerDropdown.appendChild(settingsItem);
-
-    // Prefix menu item
-    const prefixItem = document.createElement("button");
-    addClass(prefixItem, "hamburgerMenuItem");
-    prefixItem.innerHTML = '<i class="fas fa-arrow-up-right-from-square"></i><span>Insert Prefixes</span>';
-    prefixItem.onclick = () => {
-      this.insertPrefixesIntoQuery();
-      this.closeHamburgerMenu();
-    };
-    this.hamburgerDropdown.appendChild(prefixItem);
-
-    const mapItem = document.createElement("button");
-    addClass(mapItem, "hamburgerMenuItem");
-    mapItem.innerHTML = '<i class="fas fa-map-location-dot"></i><span>Open map</span>';
-    mapItem.onclick = (event) => {
-      this.openMapWidget(event);
-      this.closeHamburgerMenu();
-    };
-    this.hamburgerDropdown.appendChild(mapItem);
+    this.hamburgerDropdown.appendChild(
+      this.menuItem("tag", "Prefixes", () => {
+        this.insertPrefixes();
+        this.closeHamburgerMenu();
+      }),
+    );
 
     if (this.tab.yasgui.config.endpointDescribe?.enabled) {
-      const describeItem = document.createElement("button");
-      addClass(describeItem, "hamburgerMenuItem");
-      describeItem.innerHTML = '<i class="fas fa-magnifying-glass-chart"></i><span>Describe endpoint</span>';
-      describeItem.onclick = () => {
-        this.tab.yasgui.endpointDescribe?.toggle();
-        this.closeHamburgerMenu();
-      };
-      this.hamburgerDropdown.appendChild(describeItem);
+      this.hamburgerDropdown.appendChild(
+        this.menuItem("compass", "Explore endpoint", () => {
+          this.tab.yasgui.endpointDescribe?.toggle();
+          this.closeHamburgerMenu();
+        }),
+      );
     }
+
+    this.hamburgerDropdown.appendChild(
+      this.menuItem("fileText", "Saved queries", () => {
+        this.tab.yasgui.queryBrowser.open();
+        this.closeHamburgerMenu();
+      }),
+    );
+
+    this.hamburgerDropdown.appendChild(
+      this.menuItem("map", "Geometry from a map", (event) => {
+        this.openMapWidget(event);
+        this.closeHamburgerMenu();
+      }),
+    );
 
     // Theme toggle menu item (if enabled)
     if (this.tab.yasgui.config.showThemeToggle) {
-      const themeItem = document.createElement("button");
-      addClass(themeItem, "hamburgerMenuItem", "themeMenuItem");
-      themeItem.innerHTML = this.getThemeToggleIcon() + "<span>Toggle Theme</span>";
-      themeItem.onclick = () => {
-        this.tab.yasgui.toggleTheme();
-        themeItem.innerHTML = this.getThemeToggleIcon() + "<span>Toggle Theme</span>";
-        // Keep menu open for theme toggle so user can see the change
-      };
+      const themeItem = this.menuItem(
+        this.tab.yasgui.getTheme() === "dark" ? "sun" : "moon",
+        "Switch theme",
+        () => {
+          this.tab.yasgui.toggleTheme();
+          themeItem.querySelector("svg")!.outerHTML = icon(this.tab.yasgui.getTheme() === "dark" ? "sun" : "moon", 18);
+          // Keep menu open for theme toggle so user can see the change
+        },
+        "themeMenuItem",
+      );
       this.hamburgerDropdown.appendChild(themeItem);
     }
 
     // Layout orientation menu item
     const layoutItem = document.createElement("button");
+    layoutItem.type = "button";
     addClass(layoutItem, "hamburgerMenuItem", "layoutMenuItem");
     this.updateLayoutMenuItemContent(layoutItem);
     layoutItem.onclick = () => {
@@ -213,15 +174,21 @@ export default class TabSettingsModal {
     };
     this.hamburgerDropdown.appendChild(layoutItem);
 
+    this.hamburgerDropdown.appendChild(
+      this.menuItem("settings", "Settings", () => {
+        this.open();
+        this.closeHamburgerMenu();
+      }),
+    );
+
     hamburgerContainer.appendChild(this.hamburgerDropdown);
   }
 
   private updateLayoutMenuItemContent(layoutItem: HTMLButtonElement) {
     const orientation = this.tab.getCurrentOrientation();
-    const icon =
-      orientation === "vertical" ? '<i class="fas fa-grip-lines-vertical"></i>' : '<i class="fas fa-grip-lines"></i>';
-    const label = orientation === "vertical" ? "Horizontal Layout" : "Vertical Layout";
-    layoutItem.innerHTML = icon + "<span>" + label + "</span>";
+    const label = orientation === "vertical" ? "Side-by-side layout" : "Stacked layout";
+    layoutItem.innerHTML = icon(orientation === "vertical" ? "columns" : "rows", 18) + "<span></span>";
+    (layoutItem.querySelector("span") as HTMLElement).textContent = label;
   }
 
   private toggleHamburgerMenu() {
@@ -236,12 +203,14 @@ export default class TabSettingsModal {
     this.isHamburgerOpen = true;
     this.hamburgerDropdown.style.display = "block";
     addClass(this.hamburgerMenuButton, "active");
+    this.hamburgerMenuButton.setAttribute("aria-expanded", "true");
   }
 
   private closeHamburgerMenu() {
     this.isHamburgerOpen = false;
     this.hamburgerDropdown.style.display = "none";
     removeClass(this.hamburgerMenuButton, "active");
+    this.hamburgerMenuButton.setAttribute("aria-expanded", "false");
   }
 
   private createModal() {
@@ -710,7 +679,7 @@ export default class TabSettingsModal {
     // Read from global config
     const persistedValue = this.tab.yasgui.persistentConfig.getShowSnippetsBar();
     snippetsBarCheckbox.checked =
-      persistedValue !== undefined ? persistedValue : this.tab.yasgui.config.showSnippetsBar !== false;
+      persistedValue !== undefined ? persistedValue : this.tab.yasgui.config.showSnippetsBar === true;
 
     const snippetsBarLabel = document.createElement("label");
     snippetsBarLabel.htmlFor = "showSnippetsBar";
@@ -718,7 +687,7 @@ export default class TabSettingsModal {
 
     const snippetsBarHelp = document.createElement("div");
     snippetsBarHelp.textContent =
-      "Display the code snippets bar above the editor for quick insertion of common SPARQL patterns.";
+      "Display the code snippets bar above the editor for quick insertion of common SPARQL patterns. The same snippets are always available from the Insert menu of the query bar.";
     addClass(snippetsBarHelp, "settingsHelp");
     snippetsBarHelp.style.marginTop = "5px";
 
@@ -1648,7 +1617,12 @@ export default class TabSettingsModal {
     return select;
   }
 
-  public open() {
+  /**
+   * Open the settings modal, optionally on a section:
+   * "request", "endpoints", "workspaces", "prefix", "editor", "importexport", "shortcuts" or "about"
+   */
+  public open(section?: string) {
+    if (section) this.switchTab(section);
     this.loadSettings();
     // Reload editor settings in case yasqe wasn't available during init
     const editorContent = this.modalContent.querySelector("#editor-content");
@@ -1805,7 +1779,8 @@ export default class TabSettingsModal {
     this.close();
   }
 
-  private insertPrefixesIntoQuery() {
+  /** Insert the saved prefixes (Settings > Prefixes) at the top of the query */
+  public insertPrefixes() {
     const yasqe = this.tab.getYasqe();
     if (!yasqe) return;
 
@@ -1847,7 +1822,8 @@ export default class TabSettingsModal {
     yasqe.focus();
   }
 
-  private openMapWidget(event?: MouseEvent) {
+  /** Open the map to draw a geometry and insert it as a WKT literal */
+  public openMapWidget(event?: MouseEvent) {
     const yasqe = this.tab.getYasqe();
     if (!yasqe) return;
     const anchorPoint = event ? { x: event.clientX, y: event.clientY } : undefined;
@@ -1880,13 +1856,6 @@ export default class TabSettingsModal {
 
   // Old endpoint buttons functionality has been merged into drawEndpointsSettings
   // Keeping this for reference if needed for backwards compatibility
-
-  private getThemeToggleIcon(): string {
-    const currentTheme = this.tab.yasgui.getTheme();
-    // In dark mode, show lightbulb icon (clicking will switch to light)
-    // In light mode, show moon icon (clicking will switch to dark)
-    return currentTheme === "dark" ? '<i class="fas fa-lightbulb"></i>' : '<i class="fas fa-moon"></i>';
-  }
 
   private drawImportExportSettings(container: HTMLElement) {
     // Export Section
@@ -2362,6 +2331,7 @@ export default class TabSettingsModal {
   }
 
   public destroy() {
+    document.removeEventListener("click", this.handleDocumentClick);
     if (this.modalOverlay && this.modalOverlay.parentNode) {
       this.modalOverlay.parentNode.removeChild(this.modalOverlay);
     }
