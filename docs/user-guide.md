@@ -1975,7 +1975,7 @@ The chart's controls sit in the shared toolbar under the results header:
 | **Values** / **Size** | Numeric column(s) to plot (pie, donut and histogram use one) |
 | **Series** | Column whose values split the data into series |
 
-The **View settings** menu at the far right of the toolbar has **Automatic chart** (go back to the automatic chart) and **Download PNG** / **Download SVG**.
+The **View settings** menu at the far right of the toolbar has **Automatic chart** (go back to the automatic chart) and **Download PNG** / **Download SVG**. It also has **Shorten IRIs with prefixes** (on by default): IRIs without a label column show as prefixed names, using the prefixes from your query and a few well-known ones such as `wd:` and `rdfs:`. Turn it off to see full IRIs. This setting arrives with the next chart plugin release.
 
 Your choices are saved per tab. When the query returns other variables, the chart starts again from the automatic choice. The download button in the results header also saves the chart as PNG.
 
