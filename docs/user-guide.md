@@ -22,6 +22,16 @@
   - [YASQE (Query Editor)](#yasqe-query-editor)
   - [YASR (Results Viewer)](#yasr-results-viewer)
   - [YASGUI (Main Interface)](#yasgui-main-interface)
+- [The Interface](#the-interface)
+  - [Top Bar](#top-bar)
+  - [Query Bar](#query-bar)
+  - [Endpoint Picker](#endpoint-picker)
+  - [Run and Stop](#run-and-stop)
+  - [Insert Menu](#insert-menu)
+  - [Side Panel](#side-panel)
+  - [Version Chip](#version-chip)
+  - [Small Screens](#small-screens)
+  - [Fonts and Colors](#fonts-and-colors)
 - [Features](#features)
   - [Themes](#themes)
   - [Layout Orientation](#layout-orientation)
@@ -183,7 +193,7 @@ Then access at `http://localhost:3000`
 
 1. **Select an Endpoint**: Enter a SPARQL endpoint URL in the endpoint field (or use the default)
 2. **Write a Query**: Type your SPARQL query in the editor
-3. **Execute**: Click the "Execute" button or press `Ctrl+Enter`
+3. **Execute**: Click **Run** in the query bar or press `Ctrl+Enter` (`Cmd+Enter` on a Mac)
 4. **View Results**: Results appear in the results viewer below
 
 **Example Query:**
@@ -216,7 +226,7 @@ Matgui can query SPARQL endpoints running on your local machine (e.g., Apache Je
    - Example: `http://localhost:3030/g/`
    - Example: `http://127.0.0.1:3030/dataset/query`
 
-2. **Execute Your Query**: Click Execute or press `Ctrl+Enter`
+2. **Execute Your Query**: Click **Run** or press `Ctrl+Enter`
 
 3. **Grant Browser Permission**: Your browser will show a permission request to access the local endpoint
 
@@ -321,6 +331,102 @@ The container that brings YASQE and YASR together with additional functionality.
 
 ---
 
+## The Interface
+
+The MatGUI window has three horizontal layers: the **top bar** with your query tabs, the **query bar** of the active tab, and the editor with the results below it (or next to it, see [Layout Orientation](#layout-orientation)). A **side panel** on the left holds your saved queries and the overview of the current endpoint.
+
+### Top Bar
+
+From left to right:
+
+- **Panel**: opens and closes the [side panel](#side-panel)
+- **Query tabs**: one tab per query. The active tab is underlined in amber. Tabs that hold a saved (managed) query show a small dot before their name; the dot turns amber when the query has unsaved changes. Hover a tab to show its close button (×), click **+** to add a tab
+- **Help** (?): opens the MatGUI user guide in a new browser tab
+- **Theme** (sun / moon): switches between the light and dark theme
+- **Settings** (gear): opens the settings of the active tab
+
+### Query Bar
+
+Each tab has its own query bar above the editor:
+
+| Control              | What it does                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
+| Endpoint picker      | Shows the label and URL of the endpoint the query runs against; click it to switch (see below)  |
+| **Run**              | Runs the query. Becomes **Stop** while the query runs                                            |
+| **Prefixes**         | Inserts your saved prefix declarations into the query (see [Prefix Management](#prefix-management)) |
+| **Explore endpoint** | Opens the side panel on the **Endpoint** view (see [Endpoint Overview](#endpoint-overview))     |
+| **Insert**           | Opens a menu with code snippets and a map to draw a geometry (see [Insert Menu](#insert-menu))   |
+| Version chip         | Shown for saved queries only (see [Version Chip](#version-chip))                                 |
+| Layout toggle        | Switches between the editor above the results and side by side                                   |
+
+When the query bar gets narrow (a small window, the side-by-side layout or an open side panel), the buttons keep their icon and hide their label. Hover a button to see its name.
+
+### Endpoint Picker
+
+The endpoint picker shows the label of the current endpoint (when it has one) followed by its URL. Click it, or tab to it and start typing, to open the endpoint dropdown:
+
+- **Quick switch**: your favourite endpoints, one click away. This group lists the endpoint buttons configured by the site (that you did not disable) and the endpoints you marked **Show as button** in the settings. The current endpoint is highlighted
+- **Endpoints**: the endpoints you used before, filtered while you type. Hover an entry and click × to remove it from your history
+- **Manage endpoints**: opens the **Endpoints** section of the settings
+
+Type a URL and press `Enter` to use an endpoint that is not in the list. Press `Esc` to close the dropdown without changing anything.
+
+### Run and Stop
+
+**Run** sits next to the endpoint picker and shows the shortcut (`Ctrl ↵`, or `⌘ ↵` on a Mac). While a query runs, the button turns into **Stop**: click it to cancel the request. When the query contains a syntax error, the play icon is replaced by an amber warning icon and the tooltip says so; you can still run the query.
+
+### Insert Menu
+
+**Insert** gathers everything you can add to your query:
+
+- A search field to find a snippet by name or group
+- The code snippets, grouped as configured (for example *Query types* or *Patterns*). Click a group to expand it, click a snippet to insert it at the cursor
+- **Geometry from a map**: draw a point, line or polygon and insert it as a WKT literal
+
+Use the arrow keys to move through the menu and `Esc` to close it.
+
+The snippets bar above the editor, which earlier versions showed by default, is now hidden by default. Turn it back on with **Show code snippets bar** in Settings → Editor if you prefer one-click snippet buttons.
+
+### Side Panel
+
+The side panel on the left has two views, selected with the tabs at its top:
+
+- **Queries**: the query browser for your workspaces. Pick a workspace, search, open a saved query in a new tab, or save the current tab with **Save current tab**
+- **Endpoint**: the endpoint overview of the current endpoint (see [Endpoint Overview](#endpoint-overview))
+
+Open the panel with **Panel** in the top bar (it opens on the view you used last), with **Explore endpoint** in the query bar, or with `F8` (which toggles the Endpoint view).
+
+The buttons at the top right of the panel:
+
+- **Pin**: keeps the panel open while you work in the editor, also after you reload the page. An unpinned panel closes when you open a query from it, and steps aside when you click into the editor
+- **Collapse** («): shrinks the panel to a narrow bar with one button per view. Click a button to expand the panel again
+- **Close** (×): closes the panel. `Esc` closes an unpinned panel too
+
+Drag the right edge of the panel to change its width; double-click the edge to restore the default width. The view, the width and the pinned state are remembered.
+
+### Version Chip
+
+Tabs that hold a saved (managed) query show a chip in the query bar:
+
+- **Saved · 1a2b3c4** (Git workspaces) or **Saved**: the tab matches the saved version. Hover the chip to see when and by whom it was saved
+- **Unsaved changes**: you changed the query since it was last saved
+- **Read-only**: the query comes from a read-only workspace
+
+### Small Screens
+
+On screens narrower than about 770 pixels:
+
+- The query bar keeps the endpoint picker, **Run** and **Insert**; the other actions move into the menu button (☰) at the end of the query bar: Prefixes, Explore endpoint, Saved queries, Geometry from a map, Switch theme, the layout toggle and Settings
+- The side panel opens over the editor instead of next to it
+
+### Fonts and Colors
+
+MatGUI uses the MatData colors: a calm blue for actions, an amber highlight for the active tab and the panel tabs, and neutral greys for surfaces and lines, in both the light and the dark theme.
+
+The interface prefers the **Barlow** font and the editor prefers **JetBrains Mono**. MatGUI does not download fonts by itself: if your browser or the page that embeds MatGUI provides these fonts they are used, otherwise MatGUI falls back to the standard fonts of your system. Site owners can load them, see the Developer Guide.
+
+---
+
 ## Features
 
 ### Themes
@@ -331,15 +437,16 @@ MatGUI supports both light and dark themes, allowing you to customize the appear
 
 - **Light Theme**: Default bright theme suitable for well-lit environments with high contrast and blue accents
 - **Dark Theme**: Easy-on-the-eyes dark theme with Material Palenight syntax highlighting and cyan accents
-- **Theme Toggle**: Quick switching between themes via UI button in the tab bar
+- **Theme Toggle**: Quick switching between themes via the theme button at the right of the top bar
 - **Persistence**: Your theme preference is automatically saved in browser storage
 - **System Preference**: Automatically detects and applies your system's theme preference on first visit
 
 **How to Change Theme:**
 
-- Click the theme toggle button in the top-right area of the tab bar
-  - **Light Mode**: Shows a sun icon (☀️) - clicking switches to dark mode
-  - **Dark Mode**: Shows a moon icon (🌙) - clicking switches to light mode
+- Click the theme button at the right of the top bar
+  - **Light Mode**: Shows a moon icon - clicking switches to dark mode
+  - **Dark Mode**: Shows a sun icon - clicking switches to light mode
+- On small screens, use **Switch theme** in the query bar menu (☰)
 - Your theme preference persists across page reloads and browser sessions
 
 **Theme Details:**
@@ -349,20 +456,20 @@ Light Theme characteristics:
 - Clean, bright interface with high contrast
 - Default CodeMirror syntax highlighting
 - White backgrounds with dark text
-- Blue accent color (#337ab7)
+- MatData blue accent color (#0563bb) and amber highlight (#f2b300)
 
 Dark Theme characteristics:
 
 - Dark backgrounds with light text
 - GitHub Dark CodeMirror theme for syntax highlighting (customizable)
 - Reduced eye strain in low-light environments
-- Cyan accent color (#4fc3f7)
+- Light blue accent color and amber highlight
 
 **Editor Theme Customization:**
 
 You can customize the syntax highlighting theme separately for light and dark modes:
 
-1. Click the Settings button (⚙) in the control bar
+1. Click the Settings button (gear icon) at the right of the top bar
 2. Navigate to the "Editor" tab
 3. Select your preferred theme for light mode from the dropdown
 4. Select your preferred theme for dark mode from the dropdown
@@ -406,8 +513,8 @@ MAtGUI offers two layout options to optimize screen space:
 
 **How to Change Layout:**
 
-- Click the layout toggle button in the control bar (next to the endpoint selector)
-- Icon shows stacked rectangles (vertical) or side-by-side rectangles (horizontal)
+- Click the layout toggle button at the right end of the query bar
+- The icon shows the layout you switch to: two columns (side by side) or two rows (stacked)
 - Layout preference is saved automatically
 
 ### Query Formatting
@@ -431,7 +538,7 @@ Keep your SPARQL queries clean and readable with automatic formatting.
 
 **Configuration:**
 
-- Open Settings (⚙ icon) to:
+- Open Settings (gear icon in the top bar) to:
   - Select your preferred formatter
   - Enable/disable auto-format on query execution
   - Both settings are saved persistently
@@ -469,7 +576,7 @@ WHERE {
 
 **Configuration:**
 
-- Open Settings (⚙ icon) → Editor tab
+- Open Settings (gear icon in the top bar) → Editor tab
 - Toggle "Validate CONSTRUCT query variables" checkbox
 - Enabled by default
 - Setting is saved persistently
@@ -483,11 +590,13 @@ WHERE {
 
 ### Code Snippets
 
-Quickly insert common SPARQL patterns and query types using the code snippets bar.
+Quickly insert common SPARQL patterns and query types with the **Insert** menu of the query bar (see [Insert Menu](#insert-menu)) or, when you turn it on, the code snippets bar above the editor.
 
 **Features:**
 
-- **Quick insertion**: Click a snippet button to insert code at your cursor position
+- **Insert menu**: All snippets in one searchable menu, grouped by their group name
+- **Snippets bar (optional)**: Hidden by default. Turn it on with **Show code snippets bar** in Settings → Editor to get one button per snippet above the editor
+- **Quick insertion**: Click a snippet to insert code at your cursor position
 - **Default snippets**: Includes 5 useful SPARQL snippets (SELECT, CONSTRUCT, ASK, FILTER, OPTIONAL)
 - **Dropdown grouping**: When more than 10 snippets are configured, they are grouped in dropdown menus
 - **Customizable**: Developers can configure custom snippets
@@ -496,7 +605,7 @@ Quickly insert common SPARQL patterns and query types using the code snippets ba
 **How to Use:**
 
 1. Position your cursor where you want to insert code
-2. Click a snippet button in the snippets bar (above the editor)
+2. Click **Insert** in the query bar and pick a snippet (or click a snippet button in the snippets bar, when it is shown)
 3. The code is inserted at your cursor position
 4. Continue editing as needed
 
@@ -517,7 +626,7 @@ When more than 10 snippets are configured, they are organized into dropdown menu
 
 **Configuration:**
 
-- Snippets bar visibility is saved in user preferences
+- Snippets bar visibility is saved in user preferences. It is off by default; a choice you made earlier is kept
 - Developers can configure custom snippets with label, code, and group properties
 - The bar is hidden automatically when no snippets are configured
 
@@ -545,7 +654,7 @@ Simplify query writing with reusable prefix declarations.
 
 - **Saved Prefixes**: Define commonly-used prefixes once, reuse everywhere
 - **Auto-capture**: MatGUI automatically captures new prefixes from your queries
-- **PREFIX Button**: Insert saved prefixes into your query with one click
+- **Prefixes Button**: Insert saved prefixes into your query with one click
 - **Prefix Autocomplete**: Type a prefix (e.g., `PREFIX foaf:`) and MatGUI suggests the full URI from prefix.cc
 
 **Default Prefixes:**
@@ -556,8 +665,8 @@ MatGUI includes standard prefixes like:
 
 **How to Use:**
 
-1. Click the "PREFIX" button to insert all saved prefixes
-2. Open Settings (⚙) to manage your prefix collection
+1. Click **Prefixes** in the query bar to insert all saved prefixes
+2. Open Settings (gear icon in the top bar) to manage your prefix collection
 3. Enable/disable auto-capture in Settings
 
 **Auto-completion:**
@@ -569,62 +678,45 @@ PREFIX foaf: <  # Auto-suggests http://xmlns.com/foaf/0.1/
 
 ### Endpoint Quick Switch
 
-The endpoint quick switch buttons feature allows you to quickly switch between different SPARQL endpoints with a single click. You can use predefined endpoints or add your own custom buttons.
+Quick switch endpoints let you change the SPARQL endpoint of a tab with a single click. They are listed in the **Quick switch** group at the top of the endpoint dropdown (see [Endpoint Picker](#endpoint-picker)).
 
 **Features:**
 
-- **One-click switching**: Instantly switch to a different SPARQL endpoint
-- **Developer-configured buttons**: Administrators can configure endpoint buttons during initialization
-- **User-configurable buttons**: Enable/disable developer-configured buttons or add your own
-- **Persistent storage**: Custom buttons and preferences are saved in local storage
-- **Fully themed**: Buttons automatically adapt to light and dark themes
-- **Accessible**: Buttons are fully accessible with ARIA labels
+- **One-click switching**: Open the endpoint picker and click a quick switch endpoint
+- **Developer-configured endpoints**: Administrators can configure quick switch endpoints (`endpointButtons`) during initialization
+- **Your own endpoints**: Mark any endpoint with a label as **Show as button** in the settings
+- **Persistent storage**: Your endpoints and preferences are saved in local storage
+- **Fully themed**: The dropdown adapts to the light and dark themes
+- **Accessible**: The dropdown can be used with the keyboard
 
-**Developer-Configured Endpoint Buttons:**
+**Developer-Configured Endpoints:**
 
 If the developer has configured endpoint buttons when initializing MatGUI, you can manage them through the Settings interface:
 
-1. Click the Settings button (⚙) in the control bar
-2. Navigate to the "Endpoints" tab
-3. Look for the "Developer-Configured Endpoint Buttons" section at the top
-4. Toggle the "Enabled" checkbox for each button to show or hide it
+1. Open the endpoint picker and click **Manage endpoints**, or click the Settings button (gear icon) at the right of the top bar and go to the "Endpoints" section
+2. Look for the "Developer-Configured Endpoint Buttons" section at the top
+3. Toggle the "Enabled" checkbox for each one to show or hide it in the Quick switch group
 
-This allows you to customize which developer-configured buttons appear in your toolbar without losing the configuration.
+**How to Add Your Own Quick Switch Endpoints:**
 
-**How to Add Custom Endpoints:**
-
-1. Click the Settings button (⚙) in the control bar
-2. Navigate to the "Endpoints" tab
-3. Scroll to the "SPARQL Endpoints" section
-4. Enter an endpoint URL in the "Add New Endpoint" field
-5. Click "+ Add Endpoint"
-6. Optionally add a label and enable "Show as Button"
-7. Changes are saved automatically
+1. Open the endpoint picker and click **Manage endpoints**
+2. Scroll to the "SPARQL Endpoints" section
+3. Enter an endpoint URL in the "Add New Endpoint" field
+4. Click "+ Add Endpoint"
+5. Add a label and enable "Show as Button"
+6. Changes are saved automatically
 
 Custom endpoint configurations persist across browser sessions. You can delete endpoints by clicking the "Delete" button.
 
 **How to Switch Endpoints:**
 
-- Buttons are displayed next to the endpoint textbox in the control bar
-- Click any endpoint button to immediately update the endpoint field
+- Click the endpoint picker in the query bar
+- Click an endpoint in the **Quick switch** group
 - The endpoint change triggers the same behavior as manually entering an endpoint
 - The new endpoint is used for all subsequent queries
+- The label of the endpoint is shown in the picker, followed by its URL
 
-**Overflow Dropdown for Limited Space:**
-When the control bar is too narrow to display all endpoint buttons (e.g., when resizing the window or having many endpoints), buttons that don't fit are automatically grouped into an overflow dropdown menu:
-
-- A "more" button (⋯) appears at the end of the visible buttons
-- Click the overflow button to reveal a dropdown with the hidden endpoint buttons
-- The dropdown automatically adjusts as you resize the window
-- All endpoint buttons remain accessible even in constrained spaces
-- The overflow button only appears when needed and stays visible as long as there is room for it
-
-**Behavior:**
-
-- Clicking a button updates the endpoint textbox with the configured endpoint
-- The endpoint change is immediate and doesn't require confirmation
-- Multiple buttons can be displayed for different endpoints
-- Each button shows its label for easy identification
+> Earlier versions showed these endpoints as buttons next to the endpoint field, with an overflow menu (⋯) when they did not fit. They now live in the endpoint dropdown, so the query bar stays tidy however many endpoints you add.
 
 ### Configuration Import/Export
 
@@ -658,7 +750,7 @@ Matgui uses a custom RDF ontology to represent configuration:
 
 **How to Export Configuration:**
 
-1. Click the Settings button (⚙) in the control bar
+1. Click the Settings button (gear icon) at the right of the top bar
 2. Navigate to the "Import/Export" tab
 3. Choose export method:
    - **📋 Copy to Clipboard**: Copies configuration as RDF Turtle text
@@ -667,7 +759,7 @@ Matgui uses a custom RDF ontology to represent configuration:
 
 **How to Import Configuration:**
 
-1. Click the Settings button (⚙) in the control bar
+1. Click the Settings button (gear icon) at the right of the top bar
 2. Navigate to the "Import/Export" tab
 3. Choose import method:
    - **Drag & drop**: Drag a `.ttl` file onto the drop zone
@@ -729,7 +821,7 @@ Ctrl+clicking on `http://dbpedia.org/resource/European_Union` automatically quer
 
 ### Endpoint Overview
 
-Get to know an unfamiliar SPARQL endpoint while you write your queries. Click the **Describe endpoint** button in the control bar or press `F8` to open the **Endpoint overview** panel next to the editor.
+Get to know an unfamiliar SPARQL endpoint while you write your queries. Click **Explore endpoint** in the query bar or press `F8` to open the **Endpoint** view of the [side panel](#side-panel), next to the editor.
 
 **Service description and VoID**
 
@@ -769,11 +861,13 @@ Results are remembered per endpoint, also when you execute other queries, switch
 
 **Keeping the panel out of the way**
 
-- **Move out of the way** (») collapses the panel to a thin bar at the side of the screen. Click the bar to expand it again.
-- An unpinned panel collapses automatically when you click into the query editor.
+The endpoint overview lives in the side panel, so it shares the panel's controls:
+
+- **Collapse** («) shrinks the panel to a narrow bar at the left of the screen. Click the Endpoint button on the bar to expand it again.
+- An unpinned panel steps aside when you click into the query editor.
 - The **pin** button pins the panel: it stays open while you write queries and is restored when you reload the page.
-- Drag the left edge of the panel to change its width.
-- On small screens the panel opens as a sheet at the bottom of the screen.
+- Drag the right edge of the panel to change its width.
+- On small screens the panel opens over the editor.
 
 ### Query Tabs
 
@@ -797,7 +891,7 @@ Manage multiple queries simultaneously with tabs.
 - **New Tab**: Click the "+" button in the tab bar
 - **Rename**: Double-click the tab name
 - **Duplicate**: Right-click and select "Duplicate"
-- **Close**: Click the "×" on the tab or use the context menu
+- **Close**: Hover the tab and click its "×", or use the context menu
 - **Reorder**: Drag and drop tabs to rearrange
 
 ### Settings Modal
@@ -806,7 +900,9 @@ Access comprehensive configuration options through the Settings modal.
 
 **How to Open:**
 
-- Click the settings button (⚙) in the control bar
+- Click the settings button (gear icon) at the right of the top bar
+- Or choose **Settings** in the query bar menu (☰) on small screens
+- **Manage endpoints** in the endpoint dropdown opens the Endpoints section directly
 
 **Settings Sections:**
 
@@ -829,7 +925,7 @@ Access comprehensive configuration options through the Settings modal.
 - **Developer-Configured Endpoint Buttons**: Enable/disable developer-configured buttons
 - **SPARQL Endpoints**: Manage all your endpoints in one place
 - Configure authentication per endpoint
-- Add labels and create quick-switch buttons
+- Add labels and add endpoints to the Quick switch group of the endpoint dropdown
 - Automatically tracks accessed endpoints
 
 **Formatting Tab:**
@@ -852,7 +948,7 @@ MatGUI automatically tracks all SPARQL endpoints you access and lets you manage 
 
 **Accessing the Endpoints Manager:**
 
-1. **Open Settings**: Click the settings icon (⚙️) in the control bar
+1. **Open Settings**: Click **Manage endpoints** in the endpoint dropdown, or the settings icon (gear) at the right of the top bar
 2. **Navigate to Endpoints**: Click on the "Endpoints" tab in the settings modal
 
 **Developer-Configured Endpoint Buttons:**
@@ -861,7 +957,7 @@ If the developer has configured endpoint buttons during initialization, you'll s
 
 - **Label**: The display name for the button
 - **Endpoint**: The SPARQL endpoint URL
-- **Enabled**: Toggle to show/hide the button in the toolbar
+- **Enabled**: Toggle to show/hide the endpoint in the Quick switch group
 
 You can enable or disable any developer-configured button by checking or unchecking the "Enabled" checkbox. Your preferences are saved locally and persist across sessions.
 
@@ -871,7 +967,7 @@ The SPARQL Endpoints table shows:
 
 - **Endpoint**: The URL of the SPARQL endpoint
 - **Label**: Optional friendly name for the endpoint
-- **Button**: Checkbox to show endpoint as a quick-switch button (requires label)
+- **Button**: Checkbox to list the endpoint in the Quick switch group of the endpoint dropdown (requires label)
 - **Authentication**: Configure authentication (Basic, Bearer, API Key, OAuth2)
 - **Actions**: Delete endpoint from the list
 
@@ -880,7 +976,7 @@ The SPARQL Endpoints table shows:
 1. Find your endpoint in the list (or add a new one)
 2. Enter a label (e.g., "DBpedia", "Wikidata")
 3. Check the "Button" checkbox
-4. The endpoint will now appear as a button in the control bar
+4. The endpoint will now appear in the Quick switch group of the endpoint dropdown
 
 **Configuring Authentication:**
 
@@ -1024,7 +1120,7 @@ This feature is designed for **power users** who want to:
 
 **Configure workspaces:**
 
-1. Open **Settings** (⚙) for a tab
+1. Open **Settings** (gear icon in the top bar)
 2. Go to the **Workspaces** tab
 3. Add one or more workspaces (Git or SPARQL) and choose a **Default workspace**
 4. (Optional) Click **Validate access** to test the configuration and show how many managed queries are already saved in that workspace
@@ -1223,13 +1319,14 @@ The token must have access to the specific repository you're configuring as a wo
 
 **Browse and open managed queries:**
 
-- Open the **Query Browser** from the per-tab control bar
+- Click **Panel** in the top bar and select the **Queries** view of the side panel (the query browser)
 - Navigate folders and select a query to open it in a new tab
+- Pin the panel to keep it open while you open several queries
 - SPARQL based workspace only: the endpoint is automatically switched to the one saved with the managed query
 
 **Save as managed query:**
 
-- Use the tab context menu action **Save as managed query**
+- Use the tab context menu action **Save as managed query**, or **Save current tab** at the bottom of the Queries view
 - Saving the same query text does not create a new version; changing text creates a new version
 
 **Copy URI of a managed query:**
@@ -1892,6 +1989,7 @@ Master Matgui with these keyboard shortcuts for faster querying.
 | `Ctrl+Shift+D`              | Duplicate current line           |
 | `Ctrl+Shift+K`              | Delete current line              |
 | `Esc`                       | Remove focus from editor         |
+| `Esc` (side panel, menu)    | Close the menu, or the unpinned side panel |
 | `Ctrl+Click` (on URI)       | Explore outgoing URI connections |
 | `Ctrl+Shift+Click` (on URI) | Explore incoming URI connections |
 
@@ -1902,7 +2000,7 @@ Master Matgui with these keyboard shortcuts for faster querying.
 | `F11`    | Toggle YASQE (editor) fullscreen         |
 | `F10`    | Toggle YASR (results) fullscreen         |
 | `F9`     | Switch between YASQE and YASR fullscreen |
-| `F8`     | Toggle the endpoint overview panel       |
+| `F8`     | Toggle the Endpoint view of the side panel |
 | `Esc`    | Exit fullscreen mode                     |
 
 ### Matgui Tabs

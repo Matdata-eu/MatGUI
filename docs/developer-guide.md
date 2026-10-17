@@ -696,6 +696,13 @@ interface Config {
 
   // "Describe endpoint" panel (see Endpoint Describe Configuration)
   endpointDescribe: EndpointDescribeConfig;
+
+  // Show the snippets bar above the editor. The snippets are always available
+  // in the Insert menu of the query bar; a user's saved choice takes precedence
+  showSnippetsBar?: boolean;  // default: false
+
+  // Page opened by the help button of the top bar; false hides the button
+  helpUrl?: string | false;  // default: 'https://matgui-doc.matdata.eu/docs/user-guide'
 }
 ```
 
@@ -777,7 +784,9 @@ interface YasqeConfig {
   foldGutter: boolean;  // default: true
 
   // Show query button
-  showQueryButton: boolean;  // default: true
+  showQueryButton: boolean;  // default: true. Yasgui hides the editor's own button and
+                             // shows Run in its query bar; `yasqe: { showQueryButton: false }`
+                             // in the Yasgui config hides that Run button too
 
   // Show share button
   showShareButton: boolean;  // default: false
@@ -858,8 +867,13 @@ interface YasqeConfig {
   
   // Code snippets
   snippets: Snippet[];           // default: 5 SPARQL snippets
-  showSnippetsBar: boolean;      // default: true
+  showSnippetsBar: boolean;      // default: true (standalone Yasqe)
 }
+```
+
+> In Yasgui the snippets are offered in the **Insert** menu of the query bar and the snippets bar is hidden by default (Yasgui option `showSnippetsBar`, default `false`). Set `showSnippetsBar: true` in the Yasgui configuration to show the bar as before.
+
+```typescript
 ```
 
 **Basic Example:**
@@ -1931,8 +1945,8 @@ const yasgui = new Yasgui(document.getElementById("yasgui"), {
 
 **Behavior:**
 
-- Buttons are displayed next to the endpoint textbox in the controlbar
-- Clicking a button immediately updates the endpoint textbox with the configured endpoint
+- The endpoints are listed in the **Quick switch** group of the endpoint dropdown of the query bar (they were shown as buttons next to the endpoint field before; the configuration is unchanged)
+- Clicking one immediately updates the endpoint of the tab
 - The endpoint change triggers the same behavior as manually entering an endpoint
 - Buttons are fully accessible with ARIA labels
 
@@ -1949,7 +1963,7 @@ Custom buttons are persisted in local storage and will appear alongside the conf
 
 **CSS Customization:**
 
-You can customize button appearance using CSS variables:
+These variables are still defined for backwards compatibility, but the quick switch entries now follow the theme tokens (`--yasgui-brand`, `--yasgui-surface-sunken`, ...) described under [Theme Configuration](#theme-configuration):
 
 ```css
 :root {
@@ -2102,7 +2116,40 @@ You can customize theme colors by overriding CSS custom properties:
 }
 ```
 
-**Available CSS Custom Properties:**
+**Design tokens:**
+
+The MatData look is defined by a small set of tokens, in `:root` (light) and `[data-theme="dark"]`. New components and plugins use these, with a fallback value (`var(--yasgui-brand, #0563bb)`):
+
+```css
+--yasgui-surface          /* page background */
+--yasgui-surface-raised   /* cards, panels, menus */
+--yasgui-surface-sunken   /* hover backgrounds, inputs */
+--yasgui-line             /* dividers */
+--yasgui-line-strong      /* input borders */
+--yasgui-ink              /* text */
+--yasgui-ink-muted        /* secondary text, icons */
+--yasgui-brand            /* primary actions (Run), links */
+--yasgui-brand-strong     /* hover / pressed */
+--yasgui-brand-soft       /* selected backgrounds */
+--yasgui-on-brand         /* text on --yasgui-brand */
+--yasgui-highlight        /* amber: active tab, unsaved marker */
+--yasgui-highlight-ink
+--yasgui-danger
+--yasgui-focus            /* focus ring */
+--yasgui-radius-sm / -md / -lg / -button
+--yasgui-shadow-soft / --yasgui-shadow-raised
+--yasgui-font-family      /* Barlow, then system sans-serif */
+--yasgui-font-mono        /* JetBrains Mono, then system monospace */
+```
+
+**Fonts:** Yasgui does not load web fonts itself, so embedding it never triggers an unexpected network request. Barlow and JetBrains Mono are first in the font stacks and are used when the page provides them, for example:
+
+```html
+<link rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+```
+
+**Available CSS Custom Properties (original names, still supported):**
 
 ```css
 --yasgui-bg-primary       /* Primary background color */
@@ -2246,6 +2293,31 @@ yasgui.endpointDescribe?.collapse();        // collapse it to a thin bar
 yasgui.endpointDescribe?.close();
 ```
 
+##### `sidePanel: SidePanel`
+
+The left side panel of the redesigned interface. It hosts the query browser (view `"queries"`) and, when enabled, the endpoint overview (view `"endpoint"`). Its state (open, collapsed, pinned, view, width) is saved in the persistent configuration.
+
+```javascript
+yasgui.sidePanel.show("queries");     // open the panel on a view
+yasgui.sidePanel.toggle("endpoint");  // what F8 does
+yasgui.sidePanel.setPinned(true);     // keep it open, also after a reload
+yasgui.sidePanel.collapse();          // shrink it to a rail
+yasgui.sidePanel.close();
+const off = yasgui.sidePanel.onChange((state) => console.log(state)); // returns an unsubscribe function
+```
+
+The older entry points keep working and now drive the side panel:
+
+| Old API                                   | Now                                              |
+| ----------------------------------------- | ------------------------------------------------ |
+| `yasgui.queryBrowser.open/close/toggle()` | opens/closes the **Queries** view                |
+| `yasgui.endpointDescribe.open/close/toggle()` | opens/closes the **Endpoint** view           |
+| `yasgui.endpointDescribe.collapse()`      | collapses the side panel to its rail             |
+| `yasgui.endpointDescribe.setPinned(b)`    | pins the side panel                              |
+| `runQuery`, `runCategory`, `syncEndpoint` | unchanged                                        |
+
+A pinned describe panel saved by an earlier version is restored as the pinned Endpoint view.
+
 ### Tab Class
 
 Represents a query tab.
@@ -2274,6 +2346,14 @@ Get tab ID.
 
 ```javascript
 const id = tab.getId();
+```
+
+##### `openSettings(section?: string): void`
+
+Open the settings modal of this tab, optionally on a section (for example `"endpoints"`).
+
+```javascript
+tab.openSettings("endpoints");
 ```
 
 ##### `getYasqe(): Yasqe`
@@ -2378,6 +2458,14 @@ yasqe.query()
   .then(response => console.log('Results:', response))
   .catch(err => console.error('Error:', err));
 ```
+
+##### `isQueryRunning(): boolean`
+
+Whether a query of this editor is running (used by the Run/Stop button of Yasgui).
+
+##### `insertSnippet(code: string): void`
+
+Insert a snippet at the cursor, as the snippets bar and the Insert menu of Yasgui do.
 
 ##### `abortQuery(): void`
 
