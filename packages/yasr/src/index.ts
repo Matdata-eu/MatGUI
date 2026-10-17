@@ -6,8 +6,14 @@ import { Storage as YStorage, removeClass, addClass, hasClass } from "@matdata/y
 import Parser from "./parsers";
 export { default as Parser } from "./parsers";
 import { addScript, addCss, sanitize } from "./helpers";
+import { DescribePanel } from "./describe/DescribePanel";
+import type { DescribeOptions } from "./describe/DescribePanel";
+import type { DescribeDirection } from "./describe/resourceQuery";
 
 import "./main.scss";
+import "./scss/tokens.scss";
+import "./scss/toolbar.scss";
+import "./scss/describe.scss";
 
 export interface PersistentConfig {
   selectedPlugin?: string;
@@ -23,11 +29,27 @@ export interface Yasr {
   emit(event: "drawn", instance: Yasr, plugin: Plugin<any>): boolean;
   on(event: "toggle-help", listener: (instance: Yasr) => void): this;
   emit(event: "toggle-help", instance: Yasr): boolean;
+  on(event: "describe", listener: (instance: Yasr, iri: string, direction: DescribeDirection) => void): this;
+  emit(event: "describe", instance: Yasr, iri: string, direction: DescribeDirection): boolean;
+}
+
+/**
+ * Capabilities of the yasr host that plugins can feature-detect.
+ * Plugins should check `yasr.hostApi?.describe` / `yasr.hostApi?.toolbar`, never version strings.
+ */
+export interface YasrHostApi {
+  readonly version: 1;
+  /** `yasr.describe()` / `yasr.closeDescribe()` and the "describe" event are available. */
+  readonly describe: true;
+  /** `yasr.getPluginToolbar()` and the shared `.yasr_toolbar*` classes are available. */
+  readonly toolbar: true;
 }
 export class Yasr extends EventEmitter {
   public results?: Parser;
   public rootEl: HTMLDivElement;
   public headerEl: HTMLDivElement;
+  /** Toolbar slot for the drawn plugin, see [[getPluginToolbar]]. */
+  public pluginToolbarEl: HTMLDivElement;
   public fallbackInfoEl: HTMLDivElement;
   public resultsEl: HTMLDivElement;
   public pluginControls!: HTMLDivElement;
@@ -53,6 +75,10 @@ export class Yasr extends EventEmitter {
   // Utils
   public utils = { addScript: addScript, addCSS: addCss, sanitize: sanitize };
 
+  /** Host capabilities for feature detection by plugins. */
+  public readonly hostApi: YasrHostApi = Object.freeze({ version: 1, describe: true, toolbar: true } as const);
+  private describePanel: DescribePanel | undefined;
+
   constructor(parent: HTMLElement, conf: Partial<Config> = {}, data?: any) {
     super();
     if (!parent) throw new Error("No parent passed as argument. Dont know where to draw YASR");
@@ -67,6 +93,10 @@ export class Yasr extends EventEmitter {
     this.headerEl = document.createElement("div");
     this.headerEl.className = "yasr_header";
     this.rootEl.appendChild(this.headerEl);
+    this.pluginToolbarEl = document.createElement("div");
+    this.pluginToolbarEl.className = "yasr_pluginToolbar";
+    this.pluginToolbarEl.setAttribute("role", "toolbar");
+    this.rootEl.appendChild(this.pluginToolbarEl);
     this.fallbackInfoEl = document.createElement("div");
     this.fallbackInfoEl.className = "yasr_fallback_info";
     this.rootEl.appendChild(this.fallbackInfoEl);
@@ -191,6 +221,7 @@ export class Yasr extends EventEmitter {
       while (this.pluginControls.firstChild) {
         this.pluginControls.firstChild.remove();
       }
+      this.emptyPluginToolbar();
       this.plugins[this.drawnPlugin].destroy?.();
     }
     let pluginToDraw: string | undefined;
@@ -220,6 +251,8 @@ export class Yasr extends EventEmitter {
             // shortly after each other, and the plugin uses an initialize function
             // as a result, things can be rendered _twice_
             while (this.resultsEl.firstChild) this.resultsEl.firstChild.remove();
+            this.emptyPluginToolbar();
+            this.updatePluginToolbarLabel(pluginToDraw);
             await this.plugins[pluginToDraw].draw(this.config.plugins[pluginToDraw].dynamicConfig);
             this.emit("drawn", this, this.plugins[pluginToDraw]);
             this.updateExportHeaders();
@@ -229,6 +262,7 @@ export class Yasr extends EventEmitter {
         (_e) => console.error,
       );
     } else {
+      this.emptyPluginToolbar();
       this.resultsEl.textContent = "cannot render result";
       this.updateExportHeaders();
       this.updatePluginSelectors(compatiblePlugins);
@@ -239,9 +273,55 @@ export class Yasr extends EventEmitter {
     this.draw();
   }
   public destroy() {
+    this.describePanel?.destroy();
     if (this.drawnPlugin) this.plugins[this.drawnPlugin]?.destroy?.();
     this.removeAllListeners();
     this.rootEl.remove();
+  }
+
+  /**
+   * The toolbar slot for the drawn plugin: a full-width `div.yasr_pluginToolbar`
+   * directly under the yasr header. yasr empties it before every plugin `draw()`
+   * and hides it while it is empty, so plugins that don't use it change nothing.
+   * Style controls inside it with the shared classes `yasr_toolbarButton`,
+   * `yasr_toolbarSelect`, `yasr_toolbarSearch`, `yasr_toolbarGroup` and `yasr_toolbarSpacer`.
+   */
+  public getPluginToolbar(): HTMLDivElement {
+    return this.pluginToolbarEl;
+  }
+
+  private emptyPluginToolbar() {
+    while (this.pluginToolbarEl.firstChild) this.pluginToolbarEl.firstChild.remove();
+  }
+
+  private updatePluginToolbarLabel(pluginName: string) {
+    const label = this.plugins[pluginName]?.label || pluginName;
+    this.pluginToolbarEl.setAttribute("aria-label", `${label} view options`);
+  }
+
+  /**
+   * Show a resource in the shared describe panel: a side panel with the triples
+   * in which `iri` is the subject (`direction: "outgoing"`, default) or the
+   * object (`"incoming"`), fetched through [[executeQuery]]. The panel has its
+   * own back/forward history; `newHistory: false` adds to it instead of starting
+   * a new one. `source` names the calling view ("Opened from Map").
+   *
+   * Resolves once the triples are shown (or the request failed or was superseded).
+   * Emits "describe" (yasr, iri, direction) each time a resource is shown.
+   */
+  public describe(iri: string, options?: DescribeOptions): Promise<void> {
+    if (!this.describePanel) this.describePanel = new DescribePanel(this);
+    return this.describePanel.describe(iri, options);
+  }
+
+  /** Close the shared describe panel (no-op when it is closed). */
+  public closeDescribe(): void {
+    this.describePanel?.close();
+  }
+
+  /** Whether the shared describe panel is open. */
+  public isDescribeOpen(): boolean {
+    return !!this.describePanel?.isOpen();
   }
 
   getPrefixes(): Prefixes {
@@ -772,6 +852,12 @@ export interface Config {
    * @returns A Promise that resolves to the raw query response.
    */
   executeQuery?: (query: string, options?: PluginQueryOptions) => Promise<any>;
+
+  /**
+   * Optional hook to open a SPARQL query in a new query tab. MatGUI sets it so
+   * the describe panel can offer "Open as query"; the button is hidden when unset.
+   */
+  openQueryInNewTab?: (query: string) => void;
 }
 
 export function registerPlugin(name: string, plugin: typeof Plugin, enable = true) {
@@ -792,6 +878,8 @@ Yasr.registerPlugin("response", YasrPluginResponse.default as any);
 Yasr.registerPlugin("error", YasrPluginError.default as any);
 
 export type { Plugin, DownloadInfo } from "./plugins";
+export type { DescribeOptions } from "./describe/DescribePanel";
+export type { DescribeDirection } from "./describe/resourceQuery";
 export { buildSubjectOfQuery, buildObjectOfQuery } from "./plugins/response/uriUtils";
 
 export default Yasr;
