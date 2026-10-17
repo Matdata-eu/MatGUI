@@ -9,11 +9,13 @@ import { addScript, addCss, sanitize } from "./helpers";
 import { DescribePanel } from "./describe/DescribePanel";
 import type { DescribeOptions } from "./describe/DescribePanel";
 import type { DescribeDirection } from "./describe/resourceQuery";
+import { icon, type IconName } from "./describe/icons";
 
 import "./main.scss";
 import "./scss/tokens.scss";
 import "./scss/toolbar.scss";
 import "./scss/describe.scss";
+import "./scss/header.scss";
 
 export interface PersistentConfig {
   selectedPlugin?: string;
@@ -189,10 +191,13 @@ export class Yasr extends EventEmitter {
             addClass(this.pluginSelectorsEl.querySelector(".select_" + pluginName), "disabled");
           }
         }
+        const selector = this.pluginSelectorsEl.querySelector(".select_" + pluginName);
         if (pluginName === this.getSelectedPluginName()) {
-          addClass(this.pluginSelectorsEl.querySelector(".select_" + pluginName), "selected");
+          addClass(selector, "selected");
+          selector?.setAttribute("aria-selected", "true");
         } else {
-          removeClass(this.pluginSelectorsEl.querySelector(".select_" + pluginName), "selected");
+          removeClass(selector, "selected");
+          selector?.setAttribute("aria-selected", "false");
         }
       }
     }
@@ -354,6 +359,8 @@ export class Yasr extends EventEmitter {
   drawPluginSelectors() {
     this.pluginSelectorsEl = document.createElement("ul");
     this.pluginSelectorsEl.className = "yasr_btnGroup";
+    this.pluginSelectorsEl.setAttribute("role", "tablist");
+    this.pluginSelectorsEl.setAttribute("aria-label", "Result views");
     const pluginOrder = this.config.pluginOrder;
     Object.keys(this.config.plugins)
       .sort()
@@ -374,6 +381,7 @@ export class Yasr extends EventEmitter {
       button.title = name;
       button.type = "button";
       button.setAttribute("aria-label", `Shows ${name} view`);
+      button.setAttribute("role", "tab");
       if (plugin.getIcon) {
         const icon = plugin.getIcon();
         if (icon) {
@@ -387,6 +395,7 @@ export class Yasr extends EventEmitter {
       button.appendChild(nameEl);
       button.addEventListener("click", () => this.selectPlugin(pluginName));
       const li = document.createElement("li");
+      li.setAttribute("role", "presentation");
       li.appendChild(button);
       this.pluginSelectorsEl.appendChild(li);
     }
@@ -450,23 +459,20 @@ export class Yasr extends EventEmitter {
     // Guard: only create buttons once
     if (this.historyBackBtn && this.historyForwardBtn) return;
 
-    const createBtn = (ariaLabel: string, iconClass: string, title: string): HTMLButtonElement => {
+    const createBtn = (ariaLabel: string, iconName: IconName, title: string): HTMLButtonElement => {
       const btn = document.createElement("button");
       addClass(btn, "yasr_btn", "yasr_btn_history", "btn_icon");
       btn.setAttribute("aria-label", ariaLabel);
       btn.title = title;
       btn.disabled = true;
-      const icon = document.createElement("i");
-      addClass(icon, "fas", iconClass);
-      icon.setAttribute("aria-hidden", "true");
-      btn.appendChild(icon);
+      btn.appendChild(icon(iconName));
       return btn;
     };
 
-    this.historyBackBtn = createBtn("Previous result", "fa-chevron-left", "Previous result");
+    this.historyBackBtn = createBtn("Previous result", "chevron-left", "Previous result");
     this.historyBackBtn.addEventListener("click", () => this.navigateHistory(-1));
 
-    this.historyForwardBtn = createBtn("Next result", "fa-chevron-right", "Next result");
+    this.historyForwardBtn = createBtn("Next result", "chevron-right", "Next result");
     this.historyForwardBtn.addEventListener("click", () => this.navigateHistory(1));
 
     this.headerEl.appendChild(this.historyBackBtn);
@@ -491,15 +497,15 @@ export class Yasr extends EventEmitter {
   private downloadBtn: HTMLAnchorElement | undefined;
   private drawDownloadIcon() {
     this.downloadBtn = document.createElement("a");
-    addClass(this.downloadBtn, "yasr_btn", "yasr_downloadIcon", "btn_icon");
+    addClass(this.downloadBtn, "yasr_btn", "yasr_downloadIcon");
     this.downloadBtn.download = ""; // should default to the file name of the blob
     this.downloadBtn.setAttribute("aria-label", "Download Results");
     this.downloadBtn.setAttribute("tabindex", "0"); // anchor elements with no href are not automatically included in the tabindex
     this.downloadBtn.setAttribute("role", "button");
-    const iconEl = document.createElement("i");
-    addClass(iconEl, "fas", "fa-download");
-    iconEl.setAttribute("aria-hidden", "true");
-    this.downloadBtn.appendChild(iconEl);
+    this.downloadBtn.appendChild(icon("download"));
+    const labelEl = document.createElement("span");
+    labelEl.textContent = "Download";
+    this.downloadBtn.appendChild(labelEl);
     this.downloadBtn.addEventListener("click", () => {
       if (hasClass(this.downloadBtn, "disabled")) return;
       this.download();
@@ -578,18 +584,12 @@ export class Yasr extends EventEmitter {
     this.fullscreenBtn.setAttribute("tabindex", "0");
     this.fullscreenBtn.setAttribute("role", "button");
 
-    const fullscreenIcon = document.createElement("i");
-    addClass(fullscreenIcon, "fas");
-    addClass(fullscreenIcon, "fa-expand");
-    addClass(fullscreenIcon, "fullscreenIcon");
-    fullscreenIcon.setAttribute("aria-hidden", "true");
+    const fullscreenIcon = icon("maximize");
+    fullscreenIcon.classList.add("fullscreenIcon");
     this.fullscreenBtn.appendChild(fullscreenIcon);
 
-    const fullscreenExitIcon = document.createElement("i");
-    addClass(fullscreenExitIcon, "fas");
-    addClass(fullscreenExitIcon, "fa-compress");
-    addClass(fullscreenExitIcon, "fullscreenExitIcon");
-    fullscreenExitIcon.setAttribute("aria-hidden", "true");
+    const fullscreenExitIcon = icon("minimize");
+    fullscreenExitIcon.classList.add("fullscreenExitIcon");
     this.fullscreenBtn.appendChild(fullscreenExitIcon);
 
     this.fullscreenBtn.title = "Toggle fullscreen (F10)";
@@ -646,10 +646,8 @@ export class Yasr extends EventEmitter {
   private documentationLink!: HTMLAnchorElement;
   private drawDocumentationButton() {
     this.documentationLink = document.createElement("a");
-    addClass(this.documentationLink, "yasr_btn", "yasr_external_ref_btn");
-    const icon = document.createElement("i");
-    addClass(icon, "fas", "fa-circle-question");
-    this.documentationLink.appendChild(icon);
+    addClass(this.documentationLink, "yasr_btn", "yasr_external_ref_btn", "btn_icon");
+    this.documentationLink.appendChild(icon("circle-help"));
     this.documentationLink.href = "https://matgui-doc.matdata.eu/docs/user-guide";
     this.documentationLink.target = "_blank";
     this.documentationLink.rel = "noopener noreferrer";
