@@ -17,6 +17,7 @@ import {
 } from "./describeQueries";
 import { EndpointMetadata, fetchEndpointMetadata, VoidDataset } from "./metadataSources";
 import { describeQueryError, isPartialResponse } from "./responseUtils";
+import type SidePanel from "../sidePanel/SidePanel";
 import "./EndpointDescribePanel.scss";
 
 export interface EndpointDescribeConfig {
@@ -105,6 +106,8 @@ export default class EndpointDescribePanel {
   private activeCount = 0;
   private metadataController: AbortController | undefined;
   private renderedEndpoint: string | undefined | null = null;
+  /** Set when the overview is shown as the "Endpoint" view of the side panel */
+  private host?: SidePanel;
 
   constructor(yasgui: Yasgui) {
     this.yasgui = yasgui;
@@ -139,10 +142,43 @@ export default class EndpointDescribePanel {
     this.draw();
     this.registerListeners();
 
+    if (yasgui.sidePanel) {
+      this.attachToSidePanel(yasgui.sidePanel);
+      return;
+    }
     const ui = this.store.getUiState();
     // Only a pinned panel is restored on load
     if (ui.pinned && ui.open) this.open();
     else this.applyState(false);
+  }
+
+  /**
+   * Show the overview as the "Endpoint" view of the side panel.
+   * The public methods (open, close, toggle, collapse, setPinned) then delegate to the panel.
+   */
+  private attachToSidePanel(sidePanel: SidePanel) {
+    this.host = sidePanel;
+    const legacy = { ...this.store.getUiState() };
+    sidePanel.addView("endpoint", "Endpoint", "compass").appendChild(this.rootEl);
+    this.rootEl.removeAttribute("role");
+    sidePanel.onChange(() => this.syncWithHost());
+    sidePanel.restore(legacy);
+    this.syncWithHost();
+  }
+
+  /** Mirror the side panel state in the panel classes and the stored UI state */
+  private syncWithHost() {
+    const host = this.host;
+    if (!host) return;
+    const open = host.isOpen() && host.getView() === "endpoint";
+    const collapsed = open && host.isCollapsed();
+    const pinned = host.isPinned();
+    const ui = this.store.getUiState();
+    if (ui.open !== open || ui.collapsed !== collapsed || ui.pinned !== pinned) {
+      this.store.setUiState({ open, collapsed, pinned });
+    }
+    this.applyState(false);
+    if (open && !collapsed) this.syncEndpoint();
   }
 
   public getElement(): HTMLDivElement {
@@ -154,28 +190,48 @@ export default class EndpointDescribePanel {
   }
 
   public open() {
+    if (this.host) {
+      this.host.show("endpoint");
+      return;
+    }
     this.store.setUiState({ open: true, collapsed: false });
     this.applyState();
     this.syncEndpoint();
   }
 
   public close() {
+    if (this.host) {
+      if (this.host.getView() === "endpoint") this.host.close();
+      return;
+    }
     this.store.setUiState({ open: false });
     this.applyState();
   }
 
   public toggle() {
+    if (this.host) {
+      this.host.toggle("endpoint");
+      return;
+    }
     const ui = this.store.getUiState();
     if (ui.open && !ui.collapsed) this.close();
     else this.open();
   }
 
   public collapse() {
+    if (this.host) {
+      if (this.host.getView() === "endpoint") this.host.collapse();
+      return;
+    }
     this.store.setUiState({ collapsed: true });
     this.applyState();
   }
 
   public setPinned(pinned: boolean) {
+    if (this.host) {
+      this.host.setPinned(pinned);
+      return;
+    }
     this.store.setUiState({ pinned });
     this.applyState(false);
   }
@@ -264,6 +320,8 @@ export default class EndpointDescribePanel {
     });
     // An unpinned panel moves out of the way when the user starts writing a query
     this.yasgui.tabPanelsEl.addEventListener("focusin", (event) => {
+      // The side panel handles this itself
+      if (this.host) return;
       const ui = this.store.getUiState();
       if (!ui.open || ui.pinned || ui.collapsed) return;
       const target = event.target as HTMLElement | null;
@@ -276,7 +334,7 @@ export default class EndpointDescribePanel {
     this.rootEl.classList.toggle("open", ui.open);
     this.rootEl.classList.toggle("collapsed", ui.open && ui.collapsed);
     this.rootEl.classList.toggle("pinned", ui.pinned);
-    this.drawerEl.style.width = `${Math.max(MIN_WIDTH, ui.width)}px`;
+    if (!this.host) this.drawerEl.style.width = `${Math.max(MIN_WIDTH, ui.width)}px`;
     this.pinButton.setAttribute("aria-pressed", String(ui.pinned));
     this.pinButton.title = ui.pinned ? "Unpin panel" : "Pin panel (keep it open)";
     if (refreshTab) this.refreshActiveTab();
@@ -316,9 +374,9 @@ export default class EndpointDescribePanel {
     refreshButton.addEventListener("click", () => this.refreshMetadata());
     this.pinButton = iconButton("fa-thumbtack", "Pin panel (keep it open)", "yasgui-describe__pin");
     this.pinButton.addEventListener("click", () => this.setPinned(!this.store.getUiState().pinned));
-    const collapseButton = iconButton("fa-angles-right", "Move out of the way");
+    const collapseButton = iconButton("fa-angles-right", "Move out of the way", "yasgui-describe__collapse");
     collapseButton.addEventListener("click", () => this.collapse());
-    const closeButton = iconButton("fa-xmark", "Close");
+    const closeButton = iconButton("fa-xmark", "Close", "yasgui-describe__close");
     closeButton.addEventListener("click", () => this.close());
     buttons.append(refreshButton, this.pinButton, collapseButton, closeButton);
     headerTop.append(title, buttons);

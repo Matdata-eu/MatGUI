@@ -11,6 +11,9 @@ import { normalizeQueryFilename } from "./normalizeQueryFilename";
 import { isWorkspaceReadOnly } from "./readOnlyWorkspace";
 import SaveManagedQueryModal from "./SaveManagedQueryModal";
 import QueryHistoryModal from "./QueryHistoryModal";
+import type SidePanel from "../sidePanel/SidePanel";
+import { getWritableWorkspaces } from "./readOnlyWorkspace";
+import { icon } from "../icons";
 
 import "./QueryBrowser.scss";
 
@@ -56,6 +59,10 @@ export default class QueryBrowser {
   private queryContextMenuCleanup?: () => void;
 
   private queryHistoryModal?: QueryHistoryModal;
+
+  /** Set when the browser is shown as the "Queries" view of the side panel instead of an overlay drawer */
+  private host?: SidePanel;
+  private saveTabButton?: HTMLButtonElement;
 
   private entrySignature(entry: FolderEntry): string {
     const parent = entry.parentId || "";
@@ -209,7 +216,8 @@ export default class QueryBrowser {
     });
 
     document.addEventListener("keydown", (e) => {
-      if (!this.isOpen) return;
+      // The side panel handles Escape itself
+      if (!this.isOpen || this.host) return;
       if (e.key === "Escape") {
         e.preventDefault();
         this.close();
@@ -223,7 +231,68 @@ export default class QueryBrowser {
     return this.rootEl;
   }
 
+  /**
+   * Show the query browser as the "Queries" view of the side panel.
+   * `open`, `close` and `toggle` then delegate to the panel.
+   */
+  public attachToSidePanel(sidePanel: SidePanel, container: HTMLElement) {
+    this.host = sidePanel;
+    this.drawerEl.removeAttribute("role");
+    this.drawerEl.removeAttribute("aria-modal");
+    container.appendChild(this.drawerEl);
+    // The tooltip is position: fixed; keep it out of the hidden overlay root
+    sidePanel.getElement().appendChild(this.tooltipEl);
+
+    this.saveTabButton = document.createElement("button");
+    this.saveTabButton.type = "button";
+    addClass(this.saveTabButton, "yasgui-query-browser__saveTab");
+    this.saveTabButton.innerHTML = `${icon("save", 16)}<span>Save current tab</span>`;
+    this.saveTabButton.title = "Save the query of the current tab to a workspace (Ctrl+S)";
+    this.saveTabButton.addEventListener("click", () => {
+      void this.yasgui.getTab()?.saveManagedQueryOrSaveAsManagedQuery();
+    });
+    this.footerEl.textContent = "";
+    this.footerEl.appendChild(this.saveTabButton);
+    this.updateSaveTabButton();
+
+    sidePanel.onChange(() => {
+      const visible = sidePanel.isViewVisible("queries");
+      if (visible && !this.isOpen) {
+        this.isOpen = true;
+        this.updateSaveTabButton();
+        void this.refresh();
+      } else if (!visible && this.isOpen) {
+        this.isOpen = false;
+        this.closeQueryContextMenu();
+        this.hideTooltip();
+      }
+    });
+    if (sidePanel.isViewVisible("queries")) {
+      this.isOpen = true;
+      void this.refresh();
+    }
+  }
+
+  private updateSaveTabButton() {
+    if (!this.saveTabButton) return;
+    this.saveTabButton.hidden = getWritableWorkspaces(this.getWorkspaces()).length === 0;
+  }
+
+  /** Close after a query was opened: a pinned side panel stays open */
+  private closeAfterOpen() {
+    if (this.host) {
+      if (!this.host.isPinned()) this.close();
+      return;
+    }
+    this.close();
+  }
+
   public open(openerEl?: HTMLElement) {
+    if (this.host) {
+      this.openerEl = openerEl;
+      this.host.show("queries");
+      return;
+    }
     this.openerEl = openerEl;
     this.isOpen = true;
     this.rootEl.style.display = "flex";
@@ -238,6 +307,15 @@ export default class QueryBrowser {
   }
 
   public close() {
+    if (this.host) {
+      if (this.host.getView() === "queries") this.host.close();
+      this.closeQueryContextMenu();
+      if (this.openerEl) {
+        this.openerEl.focus();
+        this.openerEl = undefined;
+      }
+      return;
+    }
     this.isOpen = false;
     removeClass(this.rootEl, "open");
     this.rootEl.setAttribute("aria-hidden", "true");
@@ -251,6 +329,11 @@ export default class QueryBrowser {
   }
 
   public toggle(openerEl?: HTMLElement) {
+    if (this.host) {
+      if (this.host.isViewVisible("queries")) this.close();
+      else this.open(openerEl);
+      return;
+    }
     if (this.isOpen) this.close();
     else this.open(openerEl);
   }
@@ -377,7 +460,7 @@ export default class QueryBrowser {
 
     const title = document.createElement("h3");
     addClass(title, "yasgui-query-browser__empty-title");
-    title.textContent = "No Workspaces Configured";
+    title.textContent = "No workspaces configured";
 
     const description = document.createElement("p");
     addClass(description, "yasgui-query-browser__empty-description");
@@ -390,7 +473,7 @@ export default class QueryBrowser {
     const addWorkspaceBtn = document.createElement("button");
     addClass(addWorkspaceBtn, "yasgui-query-browser__empty-button");
     addClass(addWorkspaceBtn, "yasgui-query-browser__empty-button--primary");
-    addWorkspaceBtn.textContent = "Add Workspace";
+    addWorkspaceBtn.textContent = "Add workspace";
     addWorkspaceBtn.addEventListener("click", () => {
       this.close();
       const tab = this.yasgui.getTab();
@@ -1123,7 +1206,7 @@ export default class QueryBrowser {
 
         await this.openManagedQueryInNewTab(backend, backend.type, entry.id, entry.label);
 
-        this.close();
+        this.closeAfterOpen();
       };
 
       row.addEventListener("keydown", (e) => {
@@ -1268,7 +1351,7 @@ export default class QueryBrowser {
           const activate = async () => {
             await this.openManagedQueryInNewTab(backend, backend.type, entry.id, entry.label);
 
-            this.close();
+            this.closeAfterOpen();
           };
 
           row.addEventListener("keydown", (e) => {
@@ -1292,6 +1375,7 @@ export default class QueryBrowser {
 
   public async refresh() {
     const runId = ++this.refreshRunId;
+    this.updateSaveTabButton();
     this.ensureWorkspaceSelection();
     this.renderWorkspaceSelect();
 

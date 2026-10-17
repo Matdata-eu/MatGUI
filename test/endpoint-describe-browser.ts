@@ -205,7 +205,8 @@ describe("Endpoint describe panel", function () {
   it("restores a pinned panel and its results after a reload", async function () {
     await openPanel();
     await runClasses();
-    await page.click(".yasgui-describe__pin");
+    // The panel is hosted by the side panel, whose pin replaces the describe pin
+    await page.click(".yasgui-sidePanel__pin");
     await page.reload({ waitUntil: "networkidle2" });
     await page.waitForSelector(".yasgui-describe.open.pinned .yasgui-describe__drawer", { visible: true });
     await page.waitForSelector('.yasgui-describe__query[data-query-id="classes"] table');
@@ -234,8 +235,10 @@ describe("Endpoint describe panel", function () {
   it("collapses an unpinned panel when the editor gets focus", async function () {
     await openPanel();
     await page.click(".tabPanel.active .yasqe .cm-content");
-    await page.waitForSelector(".yasgui-describe.collapsed .yasgui-describe__rail", { visible: true });
-    await page.click(".yasgui-describe__rail");
+    // The side panel collapses to its rail; its Endpoint button expands it again
+    await page.waitForSelector(".yasgui-sidePanel.collapsed .yasgui-sidePanel__rail", { visible: true });
+    await page.waitForSelector(".yasgui-describe.collapsed");
+    await page.click('.yasgui-sidePanel__railButton[data-view="endpoint"]');
     await page.waitForSelector(".yasgui-describe:not(.collapsed) .yasgui-describe__drawer", { visible: true });
   });
 });

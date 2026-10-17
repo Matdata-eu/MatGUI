@@ -1,0 +1,352 @@
+// Left side panel: Queries (query browser) and Endpoint (endpoint overview)
+.yasgui {
+  > div.yasgui-main {
+    position: relative;
+  }
+
+  .yasgui-sidePanel {
+    display: none;
+    position: relative;
+    flex: 0 0 auto;
+    min-height: 0;
+    background: var(--yasgui-surface-raised, #ffffff);
+    border-right: 1px solid var(--yasgui-line, #e3e7ec);
+    color: var(--yasgui-ink, #1c2633);
+    font-family: var(--yasgui-font-family, inherit);
+    font-size: 15px;
+
+    &.open {
+      display: flex;
+    }
+
+    &.resizing {
+      user-select: none;
+      cursor: col-resize;
+    }
+
+    &__rail {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      width: 48px;
+      padding: 8px 0;
+      box-sizing: border-box;
+
+      > :first-child {
+        margin-bottom: 8px;
+      }
+    }
+
+    &.collapsed {
+      .yasgui-sidePanel__rail {
+        display: flex;
+      }
+
+      .yasgui-sidePanel__body,
+      .yasgui-sidePanel__resizer {
+        display: none;
+      }
+    }
+
+    &__body {
+      display: flex;
+      flex-direction: column;
+      width: var(--yasgui-side-panel-width, 340px);
+      min-width: 0;
+      min-height: 0;
+    }
+
+    &__header {
+      height: 44px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: stretch;
+      gap: 4px;
+      padding: 0 6px 0 8px;
+      border-bottom: 1px solid var(--yasgui-line, #e3e7ec);
+    }
+
+    &__tabs {
+      display: flex;
+      align-items: stretch;
+      flex: 1;
+      min-width: 0;
+    }
+
+    &__tab {
+      border: none;
+      background: transparent;
+      padding: 0 10px;
+      font: inherit;
+      font-weight: 600;
+      color: var(--yasgui-ink-muted, #56606c);
+      cursor: pointer;
+      white-space: nowrap;
+
+      &[aria-selected="true"] {
+        color: var(--yasgui-ink, #1c2633);
+        box-shadow: inset 0 -3px 0 var(--yasgui-highlight, #f2b300);
+      }
+
+      &:hover {
+        color: var(--yasgui-ink, #1c2633);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--yasgui-focus, #044a8c);
+        outline-offset: -2px;
+        border-radius: var(--yasgui-radius-sm, 6px);
+      }
+    }
+
+    // A single view: its tab works as the panel title
+    &:not(.hasTabs) .yasgui-sidePanel__tab {
+      cursor: default;
+    }
+
+    &__actions {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    &__action,
+    &__railButton {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: none;
+      border-radius: var(--yasgui-radius-sm, 6px);
+      background: transparent;
+      color: var(--yasgui-ink-muted, #56606c);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+
+      &:hover {
+        background: var(--yasgui-surface-sunken, #edf0f4);
+        color: var(--yasgui-ink, #1c2633);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--yasgui-focus, #044a8c);
+        outline-offset: 1px;
+      }
+    }
+
+    &__railButton {
+      width: 36px;
+      height: 36px;
+
+      &[aria-pressed="true"] {
+        background: var(--yasgui-brand-soft, #e3eefa);
+        color: var(--yasgui-brand-strong, #044a8c);
+      }
+    }
+
+    &.pinned .yasgui-sidePanel__pin {
+      color: var(--yasgui-brand, #0563bb);
+      background: var(--yasgui-brand-soft, #e3eefa);
+    }
+
+    &__views {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    &__view {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+
+      &[hidden] {
+        display: none;
+      }
+    }
+
+    &__resizer {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: -3px;
+      width: 6px;
+      cursor: col-resize;
+      z-index: 2;
+
+      &:hover {
+        background: var(--yasgui-brand, #0563bb);
+        opacity: 0.4;
+      }
+    }
+
+    // The query browser, docked in the panel instead of drawn as an overlay drawer
+    .yasgui-query-browser__drawer {
+      flex: 1;
+      width: auto;
+      max-width: none;
+      height: auto;
+      min-height: 0;
+      border-left: none;
+      background: transparent;
+    }
+
+    .yasgui-query-browser__header {
+      border-bottom: none;
+      padding: 14px 14px 8px;
+    }
+
+    .yasgui-query-browser__header-top {
+      display: none;
+    }
+
+    .yasgui-query-browser__header-controls {
+      flex-direction: column;
+
+      select,
+      input {
+        flex: 0 0 auto;
+        height: 36px;
+        box-sizing: border-box;
+        padding: 0 10px;
+        font: inherit;
+        border-radius: var(--yasgui-radius-sm, 6px);
+        border: 1px solid var(--yasgui-line-strong, #808893);
+        background: var(--yasgui-surface-raised, #ffffff);
+        color: var(--yasgui-ink, #1c2633);
+      }
+
+      input {
+        border-color: var(--yasgui-line, #e3e7ec);
+        background: var(--yasgui-surface, #f5f7fa);
+      }
+
+      select:focus-visible,
+      input:focus-visible {
+        outline: 2px solid var(--yasgui-focus, #044a8c);
+        outline-offset: 1px;
+      }
+    }
+
+    .yasgui-query-browser__body {
+      padding: 4px 8px 12px;
+    }
+
+    .yasgui-query-browser__footer {
+      padding: 12px 14px;
+      border-top: 1px solid var(--yasgui-line, #e3e7ec);
+      display: flex;
+      gap: 8px;
+
+      &:empty {
+        display: none;
+      }
+    }
+
+    .yasgui-query-browser__saveTab {
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 14px;
+      border-radius: var(--yasgui-radius-button, 8px);
+      border: 1px solid var(--yasgui-line-strong, #808893);
+      background: transparent;
+      color: var(--yasgui-ink, #1c2633);
+      font: inherit;
+      font-weight: 500;
+      cursor: pointer;
+
+      &:hover {
+        background: var(--yasgui-surface-sunken, #edf0f4);
+      }
+
+      &[hidden] {
+        display: none;
+      }
+    }
+
+    .yasgui-query-browser__empty-button--primary {
+      background: var(--yasgui-brand, #0563bb);
+      color: var(--yasgui-on-brand, #ffffff);
+      border-radius: var(--yasgui-radius-button, 8px);
+      font: inherit;
+      font-weight: 600;
+
+      &:hover {
+        background: var(--yasgui-brand-strong, #044a8c);
+      }
+    }
+
+    .yasgui-query-browser__empty-state a {
+      color: var(--yasgui-link, var(--yasgui-brand, #0563bb));
+    }
+
+    // The endpoint overview, docked in the panel
+    .yasgui-describe {
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
+      border-left: none;
+      background: transparent;
+    }
+
+    .yasgui-describe__drawer {
+      flex: 1;
+      min-width: 0;
+      width: auto !important;
+      max-width: none;
+    }
+
+    .yasgui-describe__resizer,
+    .yasgui-describe__rail,
+    .yasgui-describe__title,
+    .yasgui-describe__pin,
+    .yasgui-describe__collapse,
+    .yasgui-describe__close {
+      display: none;
+    }
+
+    .yasgui-describe__header {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 12px 14px;
+    }
+
+    .yasgui-describe__header-top {
+      order: 2;
+    }
+
+    .yasgui-describe__endpoint {
+      order: 1;
+      flex: 1;
+      min-width: 0;
+      margin-top: 0;
+    }
+  }
+
+  // Narrow screens: the panel floats over the content
+  @media (max-width: 768px) {
+    .yasgui-sidePanel.open:not(.collapsed) {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 20;
+      box-shadow: var(--yasgui-shadow-raised, 0 2px 4px rgba(28, 38, 51, 0.05), 0 12px 32px rgba(28, 38, 51, 0.08));
+    }
+
+    .yasgui-sidePanel__body {
+      width: min(var(--yasgui-side-panel-width, 340px), 88vw);
+    }
+
+    .yasgui-sidePanel__resizer {
+      display: none;
+    }
+  }
+}
