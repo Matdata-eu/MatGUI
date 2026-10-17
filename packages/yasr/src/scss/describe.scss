@@ -209,6 +209,7 @@
   .yasr_describe_body {
     flex: 1;
     min-height: 0;
+    overflow: auto;
     display: flex;
     flex-direction: column;
   }
@@ -352,6 +353,7 @@
 
   .yasr_describe_error {
     display: flex;
+    flex-shrink: 0;
     align-items: flex-start;
     gap: 8px;
     margin-bottom: 12px;
