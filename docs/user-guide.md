@@ -62,6 +62,7 @@
   - [Geo Plugin](#geo-plugin)
   - [Error Plugin](#error-plugin)
   - [Plugin Selection](#plugin-selection)
+  - [Describing a Resource](#describing-a-resource)
 - [Keyboard Shortcuts](#keyboard-shortcuts)
   - [Query Editor (YASQE)](#query-editor-yasqe)
   - [Fullscreen](#fullscreen)
@@ -1972,6 +1973,12 @@ Matgui automatically selects the most appropriate plugin based on:
 - Your selection is saved per tab
 
 ---
+
+### Describing a Resource
+
+When a result view lets you describe a resource (for example Ctrl+click on an IRI in the table, or on a feature in the map, or a node in the graph), its triples open in the describe panel on the right of the results. On narrow screens the panel slides over the results instead. The panel shows the resource's label, its IRI and its types, and a list of its properties. Use **Outgoing** and **Incoming** to switch between the triples where the resource is the subject and those where it is the object (incoming triples are limited to the first 1000). Click any resource in the panel to describe it in turn, or Shift+click to see its incoming triples. The back and forward buttons (or Alt+Left and Alt+Right while the panel has focus) walk through the resources you visited. The **Raw** tab shows the response exactly as the endpoint returned it. **Open as query** opens the query behind the panel in a new tab, and **Copy IRI** copies the resource's IRI. Press Escape or the close button to close the panel. "Opened from …" tells you which view opened it. Prefixes from your query are used to shorten IRIs.
+
+Every view now shows its controls in the same toolbar under the result header, with **View settings** at the far right. Plugin versions that predate this keep their own toolbar and describe window.
 
 ## Keyboard Shortcuts
 
