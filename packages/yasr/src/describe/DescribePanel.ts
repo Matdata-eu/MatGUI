@@ -42,6 +42,9 @@ export interface DescribeOptions {
   newHistory?: boolean;
 }
 
+/** Types shown in the panel head before the rest is folded behind "…". */
+const MAX_VISIBLE_TYPES = 3;
+
 type PanelState =
   | { state: "loading" }
   | { state: "results"; result: DescribeParseResult }
@@ -349,10 +352,22 @@ export class DescribePanel {
     if (types.length) {
       const typeList = document.createElement("div");
       typeList.className = "yasr_describe_types";
-      for (const type of types) {
+      const addPill = (type: string) => {
         const pill = this.button("yasr_describe_type", `Describe ${type}`, undefined, this.displayIri(type, prefixes));
         pill.addEventListener("click", (e) => this.hop(type, e));
         typeList.appendChild(pill);
+      };
+      // Many types would push the triples down: show the first few and a "…" to expand
+      types.slice(0, MAX_VISIBLE_TYPES).forEach(addPill);
+      const hidden = types.slice(MAX_VISIBLE_TYPES);
+      if (hidden.length) {
+        const more = this.button("yasr_describe_type yasr_describe_typeMore", `Show ${hidden.length} more types`, undefined, "…");
+        more.setAttribute("aria-label", `Show ${hidden.length} more types`);
+        more.addEventListener("click", () => {
+          more.remove();
+          hidden.forEach(addPill);
+        });
+        typeList.appendChild(more);
       }
       head.appendChild(typeList);
     }

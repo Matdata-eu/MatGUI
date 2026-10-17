@@ -175,6 +175,18 @@
     }
   }
 
+  .yasr_describe_typeMore {
+    background: var(--yasr-ui-brand-soft);
+    color: var(--yasr-ui-brand-strong);
+    font-family: var(--yasr-ui-font) !important;
+    font-weight: 600;
+
+    &:hover {
+      background: var(--yasr-ui-brand);
+      color: var(--yasr-ui-on-brand);
+    }
+  }
+
   .yasr_describe_direction {
     display: flex;
     flex-shrink: 0;
