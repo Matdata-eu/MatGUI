@@ -49,7 +49,7 @@
     "@matdata/yasgui-utils": "^4.6.1",
     "leaflet": "^1.9.4",
     "lodash-es": "^4.17.15",
-    "query-string": "^6.10.1"
+    "query-string": "^9.5.1"
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.21",
