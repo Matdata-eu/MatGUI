@@ -27,6 +27,8 @@ import { getWorkspaceBackend } from "./queryManagement/backends/getWorkspaceBack
 import { asWorkspaceBackendError } from "./queryManagement/backends/errors";
 import { normalizeQueryFilename } from "./queryManagement/normalizeQueryFilename";
 import { resolveEndpointUrl } from "./urlUtils";
+import InsertMenu from "./InsertMenu";
+import { icon, iconButton, runShortcutLabel } from "./icons";
 
 export interface PersistedJsonYasr extends YasrPersistentConfig {
   responseSummary: Parser.ResponseSummary;
@@ -81,12 +83,11 @@ export class Tab extends EventEmitter {
   private yasqeWrapperEl: HTMLDivElement | undefined;
   private yasrWrapperEl: HTMLDivElement | undefined;
   private endpointSelect: EndpointSelect | undefined;
-  private endpointButtonsContainer: HTMLDivElement | undefined;
-  private endpointOverflowButton: HTMLButtonElement | undefined;
-  private endpointOverflowDropdown: HTMLDivElement | undefined;
-  private endpointButtonConfigs: Array<{ endpoint: string; label: string }> = [];
-  private resizeObserver: ResizeObserver | undefined;
   private settingsModal?: TabSettingsModal;
+  private runButton?: HTMLButtonElement;
+  private describeButton?: HTMLButtonElement;
+  private insertMenu?: InsertMenu;
+  private versionChipEl?: HTMLSpanElement;
   private currentOrientation: "vertical" | "horizontal";
   private orientationToggleButton?: HTMLButtonElement;
   private verticalResizerEl?: HTMLDivElement;
@@ -602,22 +603,166 @@ export class Tab extends EventEmitter {
     return this.persistentJson.requestConfig;
   }
 
+  /**
+   * The query bar of the tab: endpoint picker, Run, Prefixes, Explore endpoint, Insert and the layout toggle.
+   * It keeps the `controlbar` class of the former icon-only control bar.
+   */
   private initControlbar() {
-    this.initOrientationToggle();
+    if (!this.controlBarEl) return;
+    const bar = this.controlBarEl;
+    addClass(bar, "yasgui-queryBar");
+    bar.setAttribute("role", "toolbar");
+    bar.setAttribute("aria-label", "Query");
+    // The mobile menu was added by the settings modal; it goes to the end of the bar
+    const mobileMenu = this.settingsModal?.getHamburgerElement();
+
     this.initEndpointSelectField();
-    this.initEndpointButtons();
-    if (this.yasgui.config.endpointInfo && this.controlBarEl) {
-      this.controlBarEl.appendChild(this.yasgui.config.endpointInfo());
+    this.initRunButton();
+
+    const divider = document.createElement("div");
+    addClass(divider, "yasgui-queryBar__divider", "desktopOnly");
+    bar.appendChild(divider);
+
+    const prefixButton = iconButton("tag", "Prefixes", {
+      className: "yasgui-queryBarButton tabContextButton prefixButton desktopOnly",
+      showLabel: true,
+      title: "Insert your saved prefixes into the query",
+    });
+    prefixButton.addEventListener("click", () => this.settingsModal?.insertPrefixes());
+    bar.appendChild(prefixButton);
+
+    if (this.yasgui.config.endpointDescribe?.enabled) {
+      this.describeButton = iconButton("compass", "Explore endpoint", {
+        className: "yasgui-queryBarButton tabContextButton describeEndpointButton desktopOnly",
+        showLabel: true,
+        title: "Explore the endpoint: service description, VoID and overview queries (F8)",
+      });
+      this.describeButton.setAttribute("aria-pressed", "false");
+      this.describeButton.addEventListener("click", () => this.yasgui.endpointDescribe?.toggle());
+      bar.appendChild(this.describeButton);
+      this.yasgui.sidePanel?.onChange(this.updateDescribeButton);
+      this.updateDescribeButton();
     }
+
+    this.insertMenu = new InsertMenu(this, bar, (event) => this.settingsModal?.openMapWidget(event));
+
+    const spacer = document.createElement("div");
+    addClass(spacer, "yasgui-queryBar__spacer");
+    bar.appendChild(spacer);
+
+    this.versionChipEl = document.createElement("span");
+    addClass(this.versionChipEl, "yasgui-versionChip", "desktopOnly");
+    this.versionChipEl.hidden = true;
+    bar.appendChild(this.versionChipEl);
+    this.on("change", this.updateVersionChip);
+    this.updateVersionChip();
+
+    if (this.yasgui.config.endpointInfo) {
+      bar.appendChild(this.yasgui.config.endpointInfo());
+    }
+    this.initOrientationToggle();
+    if (mobileMenu) bar.appendChild(mobileMenu);
+    this.initEndpointButtons();
+  }
+
+  private updateDescribeButton = () => {
+    if (!this.describeButton) return;
+    const visible = !!this.yasgui.sidePanel?.isViewVisible("endpoint");
+    this.describeButton.setAttribute("aria-pressed", String(visible));
+    this.describeButton.classList.toggle("active", visible);
+  };
+
+  /**
+   * Run button next to the endpoint: runs the query, or stops it while it runs
+   */
+  private initRunButton() {
+    if (!this.controlBarEl) return;
+    // An embedder that switched off the Run button of the editor gets no Run button in the query bar either
+    if (this.yasgui.config.yasqe?.showQueryButton === false) return;
+    const button = document.createElement("button");
+    button.type = "button";
+    addClass(button, "yasgui-runButton");
+    button.addEventListener("click", () => {
+      const yasqe = this.yasqe;
+      if (!yasqe || yasqe.config.queryingDisabled) return;
+      if (yasqe.isQueryRunning()) {
+        yasqe.abortQuery();
+      } else {
+        this.query().catch(() => {});
+      }
+    });
+    this.runButton = button;
+    this.controlBarEl.appendChild(button);
+    this.updateRunButton();
+  }
+
+  private updateRunButton = () => {
+    const button = this.runButton;
+    if (!button) return;
+    const yasqe = this.yasqe;
+    const running = !!yasqe?.isQueryRunning();
+    const invalid = !!yasqe && !yasqe.queryValid;
+    const disabledReason = yasqe?.config.queryingDisabled;
+    const state = running ? "running" : invalid ? "invalid" : "ready";
+    if (button.dataset.state === state && button.disabled === !!disabledReason) return;
+    button.dataset.state = state;
+    button.classList.toggle("running", running);
+    button.classList.toggle("invalid", invalid && !running);
+    button.disabled = !!disabledReason;
+    if (running) {
+      button.innerHTML = `${icon("stop", 16)}<span class="yasgui-btnLabel">Stop</span>`;
+      button.title = "Stop the running query";
+      button.setAttribute("aria-label", "Stop query");
+    } else {
+      button.innerHTML = `${icon(invalid ? "alert" : "play", 16, invalid ? 2 : 1.75)}<span class="yasgui-btnLabel">Run</span><kbd class="yasgui-runButton__shortcut">${runShortcutLabel()}</kbd>`;
+      button.title =
+        disabledReason || (invalid ? "The query has syntax errors. Run it anyway" : "Run query (Ctrl+Enter)");
+      button.setAttribute("aria-label", "Run query");
+    }
+  };
+
+  /**
+   * Saved version of a managed (workspace) query, shown in the query bar
+   */
+  private updateVersionChip = () => {
+    const chip = this.versionChipEl;
+    if (!chip) return;
+    const meta = this.getManagedQueryMetadata();
+    if (!meta) {
+      chip.hidden = true;
+      return;
+    }
+    const workspace = this.yasgui.persistentConfig.getWorkspace(meta.workspaceId);
+    const ref = meta.lastSavedVersionRef as any;
+    const version: string | undefined = ref?.commitSha
+      ? String(ref.commitSha).substring(0, 7)
+      : ref?.managedQueryVersionIri
+        ? String(ref.managedQueryVersionIri).split(/[/#]/).filter(Boolean).pop()
+        : undefined;
+    const readOnly = isWorkspaceReadOnly(workspace);
+    const dirty = this.hasUnsavedManagedChanges();
+    chip.hidden = false;
+    chip.classList.toggle("dirty", dirty);
+    chip.textContent = dirty ? "Unsaved changes" : version ? `Saved · ${version}` : readOnly ? "Read-only" : "Saved";
+    const details = [
+      workspace ? `Workspace: ${workspace.label}` : undefined,
+      version ? `Version: ${ref?.commitSha || ref?.managedQueryVersionIri}` : undefined,
+      readOnly ? "Read-only workspace" : undefined,
+    ].filter(Boolean);
+    chip.title = details.join("\n");
+  };
+
+  /** Open the settings modal of this tab, optionally on a section (e.g. "endpoints") */
+  public openSettings(section?: string) {
+    this.settingsModal?.open(section);
   }
 
   private initOrientationToggle() {
     if (!this.controlBarEl) return;
 
     this.orientationToggleButton = document.createElement("button");
-    this.orientationToggleButton.className = "tabContextButton orientationToggle desktopOnly";
-    this.orientationToggleButton.setAttribute("aria-label", "Toggle layout orientation");
-    this.orientationToggleButton.title = "Toggle layout orientation";
+    this.orientationToggleButton.type = "button";
+    this.orientationToggleButton.className = "yasgui-queryBarIconButton tabContextButton orientationToggle desktopOnly";
 
     this.updateOrientationToggleIcon();
 
@@ -632,13 +777,17 @@ export class Tab extends EventEmitter {
     if (!this.orientationToggleButton) return;
 
     // Show the icon for the layout we'll switch TO (not the current layout)
-    // fa-columns for horizontal (side-by-side), fa-grip-lines for vertical (stacked)
-    this.orientationToggleButton.innerHTML =
-      this.currentOrientation === "vertical"
-        ? '<i class="fas fa-grip-lines-vertical"></i>'
-        : '<i class="fas fa-grip-lines"></i>';
-    this.orientationToggleButton.title =
-      this.currentOrientation === "vertical" ? "Switch to horizontal layout" : "Switch to vertical layout";
+    const toHorizontal = this.currentOrientation === "vertical";
+    this.orientationToggleButton.innerHTML = icon(toHorizontal ? "columns" : "rows");
+    const label = toHorizontal ? "Switch to side-by-side layout" : "Switch to stacked layout";
+    this.orientationToggleButton.title = label;
+    this.orientationToggleButton.setAttribute("aria-label", label);
+  }
+
+  /** Keep the layout item of the mobile menu in sync */
+  private updateMobileMenu() {
+    const item = this.controlBarEl?.querySelector(".layoutMenuItem span");
+    if (item) item.textContent = this.currentOrientation === "vertical" ? "Side-by-side layout" : "Stacked layout";
   }
 
   public toggleOrientation() {
@@ -670,6 +819,7 @@ export class Tab extends EventEmitter {
         if (tab.orientationToggleButton) {
           tab.updateOrientationToggleIcon();
         }
+        tab.updateMobileMenu();
 
         // Reset editor wrapper width when switching orientations
         if (tab.editorWrapperEl) {
@@ -721,209 +871,19 @@ export class Tab extends EventEmitter {
     this.endpointSelect.on("remove", (endpoint, endpointHistory) => {
       this.setEndpoint(endpoint, endpointHistory);
     });
+    this.endpointSelect.on("manage", () => this.openSettings("endpoints"));
   }
 
   private initEndpointButtons() {
-    if (!this.controlBarEl) throw new Error("Need to initialize wrapper elements before drawing endpoint buttons");
-
-    // Create container if it doesn't exist
-    if (!this.endpointButtonsContainer) {
-      this.endpointButtonsContainer = document.createElement("div");
-      addClass(this.endpointButtonsContainer, "endpointButtonsContainer");
-      this.controlBarEl.appendChild(this.endpointButtonsContainer);
-    }
-
     this.refreshEndpointButtons();
-    this.initEndpointButtonsResizeObserver();
   }
 
-  private initEndpointButtonsResizeObserver() {
-    if (!this.controlBarEl || !this.endpointButtonsContainer) return;
-
-    // Clean up existing observer
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-    }
-
-    // Create resize observer to detect when we need to show overflow
-    this.resizeObserver = new ResizeObserver(() => {
-      this.updateEndpointButtonsOverflow();
-    });
-
-    this.resizeObserver.observe(this.controlBarEl);
-  }
-
-  private updateEndpointButtonsOverflow() {
-    if (!this.endpointButtonsContainer || !this.controlBarEl) return;
-
-    // Get all actual endpoint buttons (not the overflow button)
-    const buttons = Array.from(
-      this.endpointButtonsContainer.querySelectorAll(".endpointButton:not(.endpointOverflowBtn)"),
-    ) as HTMLButtonElement[];
-
-    if (buttons.length === 0) {
-      this.hideOverflowButton();
-      return;
-    }
-
-    // Get the container's available width
-    const containerRect = this.controlBarEl.getBoundingClientRect();
-    const containerWidth = containerRect.width;
-
-    // Calculate the space used by other elements (endpoint select, settings buttons, etc.)
-    const endpointButtonsRect = this.endpointButtonsContainer.getBoundingClientRect();
-    const buttonsContainerLeft = endpointButtonsRect.left - containerRect.left;
-
-    // Estimate available space for endpoint buttons (leave some margin for overflow button)
-    const overflowButtonWidth = 40; // Approximate width of overflow button
-    const availableWidth = containerWidth - buttonsContainerLeft - overflowButtonWidth - 20; // 20px margin
-
-    // Make all buttons temporarily visible to measure
-    buttons.forEach((btn) => btn.classList.remove("endpointButtonHidden"));
-
-    // Check if buttons overflow
-    let totalWidth = 0;
-    let overflowIndex = -1;
-
-    for (let i = 0; i < buttons.length; i++) {
-      const btn = buttons[i];
-      const btnWidth = btn.offsetWidth + 4; // Include gap
-      totalWidth += btnWidth;
-
-      if (totalWidth > availableWidth && overflowIndex === -1) {
-        overflowIndex = i;
-      }
-    }
-
-    if (overflowIndex === -1) {
-      // All buttons fit, hide overflow button
-      this.hideOverflowButton();
-      buttons.forEach((btn) => btn.classList.remove("endpointButtonHidden"));
-    } else {
-      // Some buttons need to go into overflow
-      buttons.forEach((btn, index) => {
-        if (index >= overflowIndex) {
-          btn.classList.add("endpointButtonHidden");
-        } else {
-          btn.classList.remove("endpointButtonHidden");
-        }
-      });
-      this.showOverflowButton(overflowIndex);
-    }
-  }
-
-  private showOverflowButton(overflowStartIndex: number) {
-    if (!this.endpointButtonsContainer) return;
-
-    // Create overflow button if it doesn't exist
-    if (!this.endpointOverflowButton) {
-      this.endpointOverflowButton = document.createElement("button");
-      addClass(this.endpointOverflowButton, "endpointOverflowBtn");
-      this.endpointOverflowButton.innerHTML = '<i class="fas fa-ellipsis-vertical"></i>';
-      this.endpointOverflowButton.title = "More endpoints";
-      this.endpointOverflowButton.setAttribute("aria-label", "More endpoint options");
-      this.endpointOverflowButton.setAttribute("aria-haspopup", "true");
-      this.endpointOverflowButton.setAttribute("aria-expanded", "false");
-
-      this.endpointOverflowButton.addEventListener("click", (e) => {
-        e.stopPropagation();
-        this.toggleOverflowDropdown();
-      });
-
-      this.endpointButtonsContainer.appendChild(this.endpointOverflowButton);
-    }
-
-    // Update the overflow button's data with which buttons are hidden
-    this.endpointOverflowButton.dataset.overflowStart = String(overflowStartIndex);
-    this.endpointOverflowButton.style.display = "flex";
-  }
-
-  private hideOverflowButton() {
-    if (this.endpointOverflowButton) {
-      this.endpointOverflowButton.style.display = "none";
-    }
-    this.closeOverflowDropdown();
-  }
-
-  private toggleOverflowDropdown() {
-    if (this.endpointOverflowDropdown && this.endpointOverflowDropdown.style.display !== "none") {
-      this.closeOverflowDropdown();
-    } else {
-      this.openOverflowDropdown();
-    }
-  }
-
-  private openOverflowDropdown() {
-    if (!this.endpointOverflowButton || !this.endpointButtonsContainer) return;
-
-    const overflowStartIndex = parseInt(this.endpointOverflowButton.dataset.overflowStart || "0", 10);
-    const overflowButtons = this.endpointButtonConfigs.slice(overflowStartIndex);
-
-    if (overflowButtons.length === 0) return;
-
-    // Create dropdown if it doesn't exist
-    if (!this.endpointOverflowDropdown) {
-      this.endpointOverflowDropdown = document.createElement("div");
-      addClass(this.endpointOverflowDropdown, "endpointOverflowDropdown");
-      this.endpointButtonsContainer.appendChild(this.endpointOverflowDropdown);
-    }
-
-    // Clear and populate dropdown
-    this.endpointOverflowDropdown.innerHTML = "";
-
-    overflowButtons.forEach((buttonConfig) => {
-      const item = document.createElement("button");
-      addClass(item, "endpointOverflowItem");
-      item.textContent = buttonConfig.label;
-      item.title = `Set endpoint to ${buttonConfig.endpoint}`;
-      item.setAttribute("aria-label", `Set endpoint to ${buttonConfig.endpoint}`);
-
-      item.addEventListener("click", () => {
-        this.setEndpoint(buttonConfig.endpoint);
-        this.closeOverflowDropdown();
-      });
-
-      this.endpointOverflowDropdown!.appendChild(item);
-    });
-
-    // Position and show dropdown
-    this.endpointOverflowDropdown.style.display = "block";
-    this.endpointOverflowButton.setAttribute("aria-expanded", "true");
-
-    // Add click-outside listener to close dropdown
-    const closeHandler = (e: MouseEvent) => {
-      if (
-        this.endpointOverflowDropdown &&
-        !this.endpointOverflowDropdown.contains(e.target as Node) &&
-        e.target !== this.endpointOverflowButton
-      ) {
-        this.closeOverflowDropdown();
-        document.removeEventListener("click", closeHandler);
-      }
-    };
-
-    // Delay adding listener to avoid immediate close
-    setTimeout(() => {
-      document.addEventListener("click", closeHandler);
-    }, 0);
-  }
-
-  private closeOverflowDropdown() {
-    if (this.endpointOverflowDropdown) {
-      this.endpointOverflowDropdown.style.display = "none";
-    }
-    if (this.endpointOverflowButton) {
-      this.endpointOverflowButton.setAttribute("aria-expanded", "false");
-    }
-  }
-
+  /**
+   * Refresh the quick switch endpoints (config `endpointButtons`, endpoints marked "show as button" and legacy
+   * custom buttons). They are listed in the "Quick switch" group of the endpoint dropdown.
+   */
   public refreshEndpointButtons() {
-    if (!this.endpointButtonsContainer) return;
-
-    // Clear existing buttons (but keep overflow button reference)
-    this.endpointButtonsContainer.innerHTML = "";
-    this.endpointOverflowButton = undefined;
-    this.endpointOverflowDropdown = undefined;
+    if (!this.endpointSelect) return;
 
     // Get config buttons (for backwards compatibility) and filter out disabled ones
     const disabledButtons = this.yasgui.persistentConfig.getDisabledDevButtons();
@@ -940,38 +900,21 @@ export class Tab extends EventEmitter {
     // Also include legacy custom buttons for backwards compatibility
     const customButtons = this.yasgui.persistentConfig.getCustomEndpointButtons();
 
-    const allButtons = [...configButtons, ...endpointButtons, ...customButtons];
-
-    // Store button configs for overflow dropdown
-    this.endpointButtonConfigs = allButtons;
-
-    if (allButtons.length === 0) {
-      // Hide container if no buttons
-      this.endpointButtonsContainer.style.display = "none";
-      return;
-    }
-
-    // Show container
-    this.endpointButtonsContainer.style.display = "flex";
-
-    allButtons.forEach((buttonConfig) => {
-      const button = document.createElement("button");
-      addClass(button, "endpointButton");
-      button.textContent = buttonConfig.label;
-      button.title = `Set endpoint to ${buttonConfig.endpoint}`;
-      button.setAttribute("aria-label", `Set endpoint to ${buttonConfig.endpoint}`);
-
-      button.addEventListener("click", () => {
-        this.setEndpoint(buttonConfig.endpoint);
-      });
-
-      this.endpointButtonsContainer!.appendChild(button);
+    const seen = new Set<string>();
+    const allButtons = [...configButtons, ...endpointButtons, ...customButtons].filter((button) => {
+      const key = `${button.endpoint}\n${button.label}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
     });
 
-    // Trigger overflow check after rendering
-    requestAnimationFrame(() => {
-      this.updateEndpointButtonsOverflow();
-    });
+    const labels: { [endpoint: string]: string } = {};
+    for (const button of this.yasgui.config.endpointButtons || []) labels[button.endpoint] = button.label;
+    for (const config of endpointConfigs) if (config.label) labels[config.endpoint] = config.label;
+    for (const button of customButtons) labels[button.endpoint] = button.label;
+
+    this.endpointSelect.setQuickSwitch(allButtons);
+    this.endpointSelect.setEndpointLabels(labels);
   }
 
   public setEndpoint(endpoint: string, endpointHistory?: string[]) {
@@ -1323,8 +1266,10 @@ export class Tab extends EventEmitter {
       persistenceId: null, //yasgui handles persistent storing
       consumeShareLink: null, //not handled by this tab, but by parent Matgui instance
       createShareableLink: () => this.getShareableLink(),
-      // Use global showSnippetsBar setting if it exists
-      showSnippetsBar: this.yasgui.config.showSnippetsBar !== false,
+      // The snippets bar is off unless enabled (config or settings); the snippets are in the Insert menu
+      showSnippetsBar: this.yasgui.config.showSnippetsBar === true,
+      // Yasgui shows its own Run button in the query bar
+      showQueryButton: false,
       showMapButton: false,
       requestConfig: () => {
         const processedReqConfig: YasguiRequestConfig = {
@@ -1415,6 +1360,13 @@ export class Tab extends EventEmitter {
 
     this.yasqe.on("queryResponse", this.handleQueryResponse);
 
+    // Keep the Run button of the query bar in sync
+    this.yasqe.on("query", this.updateRunButton);
+    this.yasqe.on("queryResponse", this.updateRunButton);
+    this.yasqe.on("queryAbort", this.updateRunButton);
+    this.yasqe.on("changes", this.updateRunButton);
+    this.updateRunButton();
+
     // Add Ctrl+Click handler for URIs
     this.attachYasqeMouseHandler();
   }
@@ -1465,6 +1417,10 @@ export class Tab extends EventEmitter {
     this.yasqe?.off("autocompletionClose", this.handleAutocompletionClose);
     this.yasqe?.off("queryBefore", this.handleYasqeQueryBefore);
     this.yasqe?.off("queryResponse", this.handleQueryResponse);
+    this.yasqe?.off("query", this.updateRunButton);
+    this.yasqe?.off("queryResponse", this.updateRunButton);
+    this.yasqe?.off("queryAbort", this.updateRunButton);
+    this.yasqe?.off("changes", this.updateRunButton);
     this.detachYasqeMouseHandler();
     this.yasqe?.destroy();
     this.yasqe = undefined;
@@ -1768,6 +1724,15 @@ export class Tab extends EventEmitter {
       yasrConf.getDownloadFileName = () => words(deburr(this.getName())).join("-");
     }
 
+    // Lets yasr ("Open as query" in its describe panel) open a query in a new tab with the same endpoint.
+    // Assigned untyped, so this compiles whether or not the yasr typings already declare the hook.
+    (yasrConf as { [key: string]: unknown }).openQueryInNewTab = (query: string) => {
+      const tab = this.yasgui.addTab(true, {
+        requestConfig: { ...this.persistentJson.requestConfig, endpoint: this.getEndpoint() },
+      } as Partial<PersistedJson>);
+      tab.setQuery(query);
+    };
+
     this.yasr = new Yasr(this.yasrWrapperEl, yasrConf, this.persistentJson.yasr.response);
     // Expose the tab reference so plugins (e.g. table plugin) can reach yasqe
     (this.yasr as any).tab = this;
@@ -1873,13 +1838,8 @@ export class Tab extends EventEmitter {
     document.documentElement.removeEventListener("mousemove", this.doVerticalDrag, false);
     document.documentElement.removeEventListener("mouseup", this.stopVerticalDrag, false);
 
-    // Clean up resize observer for endpoint buttons overflow
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-      this.resizeObserver = undefined;
-    }
-
     this.removeAllListeners();
+    this.insertMenu?.destroy();
     this.settingsModal?.destroy();
     this.endpointSelect?.destroy();
     this.endpointSelect = undefined;

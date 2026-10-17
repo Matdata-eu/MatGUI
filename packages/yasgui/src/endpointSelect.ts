@@ -5,6 +5,7 @@ import { addClass } from "@matdata/yasgui-utils";
 import "./endpointSelect.scss";
 import parse from "autosuggest-highlight/parse";
 import DOMPurify from "dompurify";
+import { icon } from "./icons";
 
 //Export this here instead of from our custom-types folder of autocomplete-js
 //as this interface is exported via the Matgui config. The custom typings are
@@ -57,6 +58,14 @@ export interface EndpointSelect {
   emit(event: "remove", endpoint: string, history: string[]): boolean;
   on(event: "select", listener: (endpoint: string, history: string[]) => void): this;
   emit(event: "select", endpoint: string, history: string[]): boolean;
+  on(event: "manage", listener: () => void): this;
+  emit(event: "manage"): boolean;
+}
+
+/** An endpoint with a label, listed in the "Quick switch" group of the endpoint dropdown */
+export interface QuickSwitchItem {
+  endpoint: string;
+  label: string;
 }
 
 export class EndpointSelect extends EventEmitter {
@@ -65,6 +74,13 @@ export class EndpointSelect extends EventEmitter {
   private value: string;
   private history: CatalogueItem[];
   private inputField!: HTMLInputElement;
+  private wrapperEl!: HTMLDivElement;
+  private labelEl!: HTMLSpanElement;
+  private dropdownEl!: HTMLDivElement;
+  private quickSwitchEl!: HTMLDivElement;
+  private quickSwitchItems: QuickSwitchItem[] = [];
+  private endpointLabels: { [endpoint: string]: string } = {};
+  private handleDocumentMouseDown!: (event: MouseEvent) => void;
   constructor(initialValue: string, container: HTMLDivElement, options: EndpointSelectConfig, history: string[]) {
     super();
     this.container = container;
@@ -80,25 +96,94 @@ export class EndpointSelect extends EventEmitter {
   private draw() {
     // Create container, we don't need to interact with it anymore
     const autocompleteWrapper = document.createElement("div");
-    addClass(autocompleteWrapper, "autocompleteWrapper");
+    addClass(autocompleteWrapper, "autocompleteWrapper", "endpointPicker");
+    this.wrapperEl = autocompleteWrapper;
     this.container.appendChild(autocompleteWrapper);
+
+    const leadingIcon = document.createElement("span");
+    addClass(leadingIcon, "endpointPicker__icon");
+    leadingIcon.innerHTML = icon("database", 18);
+    autocompleteWrapper.appendChild(leadingIcon);
+
+    // Label of the endpoint (when it has one), shown before its URL
+    this.labelEl = document.createElement("span");
+    addClass(this.labelEl, "endpointPicker__label");
+    autocompleteWrapper.appendChild(this.labelEl);
 
     // Create field
     this.inputField = document.createElement("input");
     addClass(this.inputField, "autocomplete");
     this.inputField.value = this.value;
+    this.inputField.setAttribute("aria-label", "SPARQL endpoint");
+    this.inputField.spellcheck = false;
     autocompleteWrapper.appendChild(this.inputField);
 
     // Create clear button
     const clearBtn = document.createElement("button");
+    clearBtn.type = "button";
     clearBtn.title = "Clear endpoint";
-    addClass(clearBtn, "tabContextButton");
-    clearBtn.innerText = "✖";
+    clearBtn.setAttribute("aria-label", "Clear endpoint");
+    addClass(clearBtn, "tabContextButton", "endpointPicker__clear");
+    clearBtn.innerHTML = icon("x", 16);
     clearBtn.addEventListener("click", () => {
       this.inputField.value = "";
       this.inputField.focus();
     });
-    this.container.appendChild(clearBtn);
+    autocompleteWrapper.appendChild(clearBtn);
+
+    const toggleBtn = document.createElement("button");
+    toggleBtn.type = "button";
+    toggleBtn.tabIndex = -1;
+    toggleBtn.title = "Show endpoints";
+    toggleBtn.setAttribute("aria-label", "Show endpoints");
+    addClass(toggleBtn, "endpointPicker__toggle");
+    toggleBtn.innerHTML = icon("chevronDown", 16, 2);
+    toggleBtn.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+      if (this.isOpen()) {
+        this.inputField.blur();
+        this.closeDropdown();
+      } else {
+        this.inputField.focus();
+        this.openDropdown();
+      }
+    });
+    autocompleteWrapper.appendChild(toggleBtn);
+
+    // Dropdown: quick switch group, the endpoint catalogue and history, and a link to manage endpoints
+    this.dropdownEl = document.createElement("div");
+    addClass(this.dropdownEl, "endpointDropdown");
+    this.quickSwitchEl = document.createElement("div");
+    addClass(this.quickSwitchEl, "endpointQuickSwitch");
+    this.quickSwitchEl.setAttribute("role", "group");
+    this.quickSwitchEl.setAttribute("aria-label", "Quick switch");
+    this.dropdownEl.appendChild(this.quickSwitchEl);
+    const listHost = document.createElement("div");
+    addClass(listHost, "endpointDropdown__list");
+    const listHeading = document.createElement("div");
+    addClass(listHeading, "endpointDropdown__heading");
+    listHeading.textContent = "Endpoints";
+    listHost.appendChild(listHeading);
+    this.dropdownEl.appendChild(listHost);
+    const manage = document.createElement("button");
+    manage.type = "button";
+    addClass(manage, "endpointDropdown__manage");
+    manage.innerHTML = `${icon("settings", 16)}<span>Manage endpoints</span>`;
+    manage.addEventListener("mousedown", (event) => event.preventDefault());
+    manage.addEventListener("click", () => {
+      this.closeDropdown();
+      this.inputField.blur();
+      this.emit("manage");
+    });
+    this.dropdownEl.appendChild(manage);
+    autocompleteWrapper.appendChild(this.dropdownEl);
+
+    this.inputField.addEventListener("focus", () => this.openDropdown());
+    this.inputField.addEventListener("input", () => this.openDropdown());
+    autocompleteWrapper.addEventListener("focusout", (event) => {
+      const next = event.relatedTarget as Node | null;
+      if (!next || !autocompleteWrapper.contains(next)) this.closeDropdown();
+    });
 
     // Init autocomplete library
     new Autocomplete<CatalogueItem>({
@@ -113,8 +198,8 @@ export class EndpointSelect extends EventEmitter {
       },
       // threshold: -1,
       searchEngine: (query, record) => {
-        if (!query || query.trim().length === 0) {
-          //show everything when we've got an empty search string
+        if (!query || query.trim().length === 0 || query === this.value) {
+          //show everything when we've got an empty search string, or when the field still shows the current endpoint
           return true;
         }
         return splitSearchString(query).every((m) => record.indexOf(m) >= 0);
@@ -133,7 +218,8 @@ export class EndpointSelect extends EventEmitter {
       selector: () => this.inputField,
       resultsList: {
         render: true,
-        destination: this.inputField,
+        destination: listHost,
+        position: "beforeend",
         container: (element) => {
           // Remove id, there can be multiple yasgui's active on one page, we can't delete since the library will then add the default
           element.id = "";
@@ -157,7 +243,10 @@ export class EndpointSelect extends EventEmitter {
 
             // Remove button
             const removeBtn = document.createElement("button");
-            removeBtn.textContent = "✖";
+            removeBtn.type = "button";
+            removeBtn.innerHTML = icon("x", 14);
+            removeBtn.title = "Remove from history";
+            removeBtn.setAttribute("aria-label", "Remove from history");
             addClass(removeBtn, "removeItem");
             removeBtn.addEventListener("mousedown", (event) => {
               this.history = this.history.filter((item) => item.endpoint !== endpoint);
@@ -189,6 +278,7 @@ export class EndpointSelect extends EventEmitter {
         const item = feedback.selection.value;
         this.value = item.endpoint;
         this.inputField.value = this.value;
+        this.closeDropdown();
         this.emit(
           "select",
           this.value,
@@ -200,7 +290,7 @@ export class EndpointSelect extends EventEmitter {
         if (container) {
           const noResults = document.createElement("div");
           addClass(noResults, "noResults");
-          noResults.innerText = 'Press "enter" to add this endpoint';
+          noResults.innerText = "Press Enter to use this endpoint";
           container.appendChild(noResults);
         }
       },
@@ -210,6 +300,7 @@ export class EndpointSelect extends EventEmitter {
       const target = <HTMLInputElement>event.target;
       // Enter
       if (event.keyCode === 13) {
+        this.closeDropdown();
         if (this.value === target.value) {
           //we have typed exactly the same value the one from the suggestion list
           //So, just close the suggestion list
@@ -249,6 +340,7 @@ export class EndpointSelect extends EventEmitter {
       }
       // Blur and set value on enter
       if (event.keyCode === 27) {
+        this.closeDropdown();
         this.inputField.blur();
         this.inputField.value = this.value;
         this.clearListSuggestionList();
@@ -274,7 +366,7 @@ export class EndpointSelect extends EventEmitter {
       }
     });
     // Improvised clickAway handler, Blur will fire before select or click events, causing interactive suggestion to no longer work
-    document.addEventListener("mousedown", (event) => {
+    this.handleDocumentMouseDown = (event: MouseEvent) => {
       if (event.button !== 2) {
         const target = <HTMLElement>event.target;
         if (
@@ -283,10 +375,102 @@ export class EndpointSelect extends EventEmitter {
           target.className === "autocomplete"
         )
           return;
+        if (this.wrapperEl.contains(target)) return;
         this.clearListSuggestionList();
         this.inputField.value = this.value;
+        this.closeDropdown();
       }
-    });
+    };
+    document.addEventListener("mousedown", this.handleDocumentMouseDown);
+    this.updateLabel();
+  }
+
+  private isOpen() {
+    return this.wrapperEl.classList.contains("open");
+  }
+
+  private openDropdown() {
+    this.renderQuickSwitch();
+    addClass(this.wrapperEl, "open");
+  }
+
+  private closeDropdown() {
+    this.wrapperEl.classList.remove("open");
+  }
+
+  /**
+   * Endpoints listed in the "Quick switch" group of the dropdown (formerly the endpoint buttons)
+   */
+  public setQuickSwitch(items: QuickSwitchItem[]) {
+    this.quickSwitchItems = items;
+    this.renderQuickSwitch();
+  }
+
+  /**
+   * Known labels of endpoints, shown before the URL of the selected endpoint
+   */
+  public setEndpointLabels(labels: { [endpoint: string]: string }) {
+    this.endpointLabels = labels;
+    this.updateLabel();
+  }
+
+  private updateLabel() {
+    const label =
+      this.endpointLabels[this.value] || this.quickSwitchItems.find((item) => item.endpoint === this.value)?.label;
+    this.labelEl.textContent = label || "";
+    this.wrapperEl.classList.toggle("hasLabel", !!label);
+  }
+
+  private renderQuickSwitch() {
+    const container = this.quickSwitchEl;
+    container.innerHTML = "";
+    const typed = this.inputField.value.trim().toLowerCase();
+    // While the user is typing a new endpoint, only show the matching quick switches
+    const filter = typed && this.inputField.value !== this.value ? typed : "";
+    const items = this.quickSwitchItems.filter(
+      (item) =>
+        !filter || item.label.toLowerCase().indexOf(filter) >= 0 || item.endpoint.toLowerCase().indexOf(filter) >= 0,
+    );
+    container.hidden = items.length === 0;
+    if (!items.length) return;
+    const heading = document.createElement("div");
+    addClass(heading, "endpointQuickSwitch__heading");
+    heading.textContent = "Quick switch";
+    container.appendChild(heading);
+    for (const item of items) {
+      const button = document.createElement("button");
+      button.type = "button";
+      addClass(button, "endpointQuickSwitch__item");
+      if (item.endpoint === this.value) addClass(button, "active");
+      button.title = `Set endpoint to ${item.endpoint}`;
+      button.setAttribute("aria-label", `Set endpoint to ${item.endpoint}`);
+      const dot = document.createElement("span");
+      addClass(dot, "endpointQuickSwitch__dot");
+      const label = document.createElement("span");
+      addClass(label, "endpointQuickSwitch__label");
+      label.textContent = item.label;
+      const url = document.createElement("span");
+      addClass(url, "endpointQuickSwitch__url");
+      url.textContent = item.endpoint.replace(/^https?:\/\//, "");
+      button.append(dot, label, url);
+      const choose = () => {
+        this.value = item.endpoint;
+        this.inputField.value = item.endpoint;
+        this.clearListSuggestionList();
+        this.closeDropdown();
+        this.inputField.blur();
+        this.updateLabel();
+        this.emit(
+          "select",
+          item.endpoint,
+          this.history.map((value) => value.endpoint),
+        );
+      };
+      // Keep the focus in the field until the choice is made
+      button.addEventListener("mousedown", (event) => event.preventDefault());
+      button.addEventListener("click", choose);
+      container.appendChild(button);
+    }
   }
   private clearListSuggestionList = () => {
     const autocompleteList = this.container.querySelector(".autocompleteList");
@@ -307,9 +491,12 @@ export class EndpointSelect extends EventEmitter {
       // Only set when the user is not using the widget at this time
       this.inputField.value = endpoint;
     }
+    this.updateLabel();
+    if (this.isOpen()) this.renderQuickSwitch();
   }
   public destroy() {
     this.removeAllListeners();
+    document.removeEventListener("mousedown", this.handleDocumentMouseDown);
     this.inputField.remove();
   }
 }

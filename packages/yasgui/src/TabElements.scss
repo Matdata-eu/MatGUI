@@ -1,35 +1,68 @@
 @use "sass:color";
 
-$minTabHeight: 35px;
+$minTabHeight: 48px;
 
+// Top bar: side panel toggle, query tabs, and the global actions (help, theme, settings)
 .yasgui {
   .tabsList {
     flex-shrink: 0; // Prevent tabs from shrinking
     display: flex;
     flex-wrap: wrap;
+    align-items: stretch;
+    gap: 2px;
+    min-height: $minTabHeight;
+    padding: 0 12px 0 12px;
+    box-sizing: border-box;
+    font-family: var(--yasgui-font-family, inherit);
+
+    > div {
+      display: flex;
+      align-items: stretch;
+    }
+
+    .yasgui-panelToggleEntry {
+      align-items: center;
+      margin-right: 8px;
+    }
 
     .queryBrowserToggle {
       cursor: pointer;
-      min-height: $minTabHeight;
-      padding: 0 10px;
-      background: transparent;
+      height: 34px;
+      padding: 0 12px;
+      gap: 6px;
       border: none;
-      color: var(--yasgui-button-text, #505050);
-      fill: var(--yasgui-button-text, #505050);
+      border-radius: var(--yasgui-radius-button, 8px);
+      background: transparent;
+      color: var(--yasgui-ink, #1c2633);
+      font: inherit;
+      font-size: 15px;
+      font-weight: 600;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-bottom: 2px solid transparent;
       box-sizing: border-box;
 
-      &:hover,
-      &:focus-visible {
-        color: var(--yasgui-button-hover, #000);
-        background: var(--yasgui-bg-secondary, #f7f7f7);
+      &:hover {
+        background: var(--yasgui-surface-sunken, #edf0f4);
+        color: var(--yasgui-ink, #1c2633);
       }
 
-      i {
-        font-size: 20px;
+      &.active {
+        background: var(--yasgui-brand-soft, #e3eefa);
+        color: var(--yasgui-brand-strong, #044a8c);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--yasgui-focus, #044a8c);
+        outline-offset: 1px;
+      }
+
+      @media (max-width: 768px) {
+        padding: 0 8px;
+
+        .yasgui-btnLabel {
+          display: none;
+        }
       }
     }
 
@@ -45,75 +78,95 @@ $minTabHeight: 35px;
       align-items: center;
       justify-content: center;
       min-height: $minTabHeight;
-      border-bottom: 2px solid transparent;
       box-sizing: border-box;
-    }
-
-    .themeToggle {
-      cursor: pointer;
-      height: 100%;
-      margin-left: auto;
-      margin-right: 10px;
-      padding: 6px 8px;
-      background: transparent;
-      border: none;
-      color: var(--yasgui-button-text, #505050);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 4px;
-
-      &:hover {
-        color: var(--yasgui-button-hover, #000);
-        background: var(--yasgui-bg-secondary, #f7f7f7);
-      }
     }
 
     .addTab {
       cursor: pointer;
-      height: 100%;
-      font-size: 120%;
-      font-weight: 800;
-      margin-left: 15px;
-      padding: 0px 5px 2px 5px;
-      background: inherit;
+      align-self: center;
+      width: 34px;
+      height: 34px;
+      margin-left: 4px;
+      padding: 0;
       border: none;
-      color: #337ab7;
+      border-radius: var(--yasgui-radius-button, 8px);
+      background: transparent;
+      color: var(--yasgui-ink-muted, #56606c);
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
-      &:hover,
-      &:focus-visible {
-        transform: scale(1.1);
+      &:hover {
+        background: var(--yasgui-surface-sunken, #edf0f4);
+        color: var(--yasgui-ink, #1c2633);
       }
 
-      &:focus {
-        color: #faa857;
+      &:focus-visible {
+        outline: 2px solid var(--yasgui-focus, #044a8c);
+        outline-offset: 1px;
+      }
+    }
+
+    // Global actions, pushed to the right
+    .yasgui-topBarActions {
+      margin-left: auto;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .yasgui-topBarButton {
+      width: 36px;
+      height: 36px;
+      margin: 0;
+      padding: 0;
+      border: none;
+      border-radius: var(--yasgui-radius-button, 8px);
+      background: transparent;
+      color: var(--yasgui-ink-muted, #56606c);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+
+      &:hover {
+        background: var(--yasgui-surface-sunken, #edf0f4);
+        color: var(--yasgui-button-hover, #1c2633);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--yasgui-focus, #044a8c);
+        outline-offset: 1px;
       }
     }
 
     .tab {
       position: relative;
-      $activeColor: #337ab7;
-      $hoverColor: color.adjust($activeColor, $lightness: 30%);
       user-select: none;
       -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
+      background: transparent;
 
-      // Distinguish managed-query tabs from legacy tabs via background.
-      // Legacy tabs keep their current styling.
-      &.managed a {
-        background: var(--yasgui-tab-managed, #a4cbed);
+      // Tabs holding a saved (workspace) query get a marker before their name
+      &.managed a span::before {
+        content: "";
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        margin-right: 8px;
+        border-radius: 999px;
+        vertical-align: middle;
+        background: var(--yasgui-tab-managed, #0563bb);
       }
 
-      // Unsaved changes indicator for managed queries.
-      // The dot indicates the user still needs to save.
+      // Unsaved changes of a managed query: the marker turns amber
       &.managedDirty a span::before {
-        content: "• ";
+        background: var(--yasgui-highlight, #f2b300);
       }
 
       .loader {
         display: none;
-        background-color: color.adjust(#555, $lightness: 50%);
+        background-color: var(--yasgui-brand, #0563bb);
         height: 2px;
         position: absolute;
         bottom: 0;
@@ -140,14 +193,6 @@ $minTabHeight: 35px;
         }
       }
 
-      &.active .loader {
-        background-color: $hoverColor;
-      }
-
-      &:hover .loader {
-        background-color: $activeColor;
-      }
-
       &.querying .loader {
         display: block;
       }
@@ -162,14 +207,20 @@ $minTabHeight: 35px;
       }
 
       &.active a {
-        border-bottom-color: $activeColor;
-        color: var(--yasgui-text-primary, #555);
+        color: var(--yasgui-ink, #1c2633);
+        font-weight: 600;
+        box-shadow: inset 0 -3px 0 var(--yasgui-highlight, #f2b300);
       }
 
       input {
         display: none;
         outline: none;
-        border: none;
+        border: 1px solid var(--yasgui-line-strong, #808893);
+        border-radius: var(--yasgui-radius-sm, 6px);
+        padding: 4px 6px;
+        font: inherit;
+        background: var(--yasgui-surface-raised, #ffffff);
+        color: var(--yasgui-ink, #1c2633);
       }
 
       &.renaming {
@@ -185,13 +236,12 @@ $minTabHeight: 35px;
       }
 
       a {
-        font-weight: 600;
-        color: var(--yasgui-text-secondary, color.adjust(#555, $lightness: 20%));
+        color: var(--yasgui-ink-muted, #56606c);
         font-size: 15px;
         line-height: 1.5rem;
         font-weight: 500;
-        min-width: 120px;
-        padding: 0px 24px 0px 30px;
+        min-width: 0;
+        padding: 0 8px 0 14px;
         white-space: nowrap;
         overflow: hidden;
         user-select: none;
@@ -209,28 +259,54 @@ $minTabHeight: 35px;
         }
 
         &:hover {
-          border-bottom-color: $hoverColor;
-          color: var(--yasgui-text-primary, #555);
+          color: var(--yasgui-ink, #1c2633);
+          box-shadow: inset 0 -3px 0 var(--yasgui-line, #e3e7ec);
         }
 
-        &:focus {
-          border-bottom-color: #faa857;
-          color: var(--yasgui-text-primary, #555);
+        &:focus-visible {
+          outline: 2px solid var(--yasgui-focus, #044a8c);
+          outline-offset: -2px;
+          color: var(--yasgui-ink, #1c2633);
         }
 
         .closeTab {
-          color: var(--yasgui-text-primary, #000);
-          margin-left: 7px;
-          font-size: 15px;
-          text-shadow: 0 1px 0 var(--yasgui-bg-primary, #fff);
-          opacity: 0.2;
-          font-weight: 700;
-          padding: 2px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 22px;
+          height: 22px;
+          margin-left: 6px;
+          border-radius: var(--yasgui-radius-sm, 6px);
+          color: var(--yasgui-ink-muted, #56606c);
+          opacity: 0;
 
           &:hover {
-            opacity: 0.5;
+            opacity: 1;
+            background: var(--yasgui-surface-sunken, #edf0f4);
+            color: var(--yasgui-ink, #1c2633);
           }
         }
+      }
+
+      &.active a .closeTab,
+      a:hover .closeTab,
+      a:focus-visible .closeTab {
+        opacity: 0.7;
+      }
+
+      // Always reachable on touch screens
+      @media (hover: none) {
+        a .closeTab {
+          opacity: 0.7;
+        }
+      }
+    }
+
+    @media (max-width: 768px) {
+      padding: 0 8px;
+
+      .tab a {
+        padding: 0 4px 0 10px;
       }
     }
   }

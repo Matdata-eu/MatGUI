@@ -30,7 +30,8 @@ export default function initialize(): Config<CatalogueItem> {
     theme: undefined,
     showThemeToggle: true,
     orientation: "vertical",
-    showSnippetsBar: true,
+    showSnippetsBar: false,
+    helpUrl: "https://matgui-doc.matdata.eu/docs/user-guide",
     endpointDescribe: {
       enabled: true,
       timeoutMs: 60000,

@@ -2,6 +2,7 @@ import Yasgui from "./";
 import TabContextMenu from "./TabContextMenu";
 import { hasClass, addClass, removeClass } from "@matdata/yasgui-utils";
 import sortablejs from "sortablejs";
+import { icon, iconButton } from "./icons";
 import "./TabElements.scss";
 
 export interface TabList {}
@@ -151,7 +152,7 @@ export class TabListEl {
 
     //tab close btn
     const closeBtn = document.createElement("div");
-    closeBtn.innerHTML = "&#x2716;";
+    closeBtn.innerHTML = icon("x", 14, 2);
     closeBtn.title = "Close tab";
     closeBtn.setAttribute("tabindex", "-1");
     closeBtn.setAttribute("aria-hidden", "true");
@@ -218,6 +219,8 @@ export class TabList {
   public tabContextMenu?: TabContextMenu;
   public tabEntryIndex: number | undefined;
   private _queryBrowserToggleEl?: HTMLDivElement;
+  private _actionsEl?: HTMLDivElement;
+  private themeObserver?: MutationObserver;
 
   constructor(yasgui: Yasgui) {
     this.yasgui = yasgui;
@@ -280,7 +283,10 @@ export class TabList {
       const numOfChildren = this._tabsListEl.childElementCount;
       if (typeof this.tabEntryIndex !== "number") return;
 
-      const isQueryBrowserToggleEntry = (el: Element) => !!(el as HTMLElement).querySelector?.(".queryBrowserToggle");
+      // The side panel toggle and the global actions are not tabs
+      const isQueryBrowserToggleEntry = (el: Element) =>
+        !!(el as HTMLElement).querySelector?.(".queryBrowserToggle") ||
+        (el as HTMLElement).classList?.contains("yasgui-topBarActions");
       const advance = (direction: -1 | 1) => {
         let nextIndex = this.tabEntryIndex as number;
         for (let i = 0; i < numOfChildren; i++) {
@@ -320,18 +326,29 @@ export class TabList {
 
     this._queryBrowserToggleEl = document.createElement("div");
     this._queryBrowserToggleEl.setAttribute("role", "presentation");
+    addClass(this._queryBrowserToggleEl, "yasgui-panelToggleEntry");
 
-    const queryBrowserButton = document.createElement("button");
-    queryBrowserButton.type = "button";
-    queryBrowserButton.className = "queryBrowserToggle";
-    queryBrowserButton.setAttribute("aria-label", "Open query browser");
-    queryBrowserButton.title = "Open query browser";
-    queryBrowserButton.innerHTML = '<i class="fa-regular fa-file-lines"></i>';
-    queryBrowserButton.addEventListener("click", () => {
-      this.yasgui.queryBrowser.toggle(queryBrowserButton);
+    // Shows or hides the left side panel (Queries / Endpoint). Keeps the `queryBrowserToggle` class
+    // of the former query browser button, so existing selectors keep working.
+    const panelButton = iconButton("panelLeft", "Side panel", {
+      className: "queryBrowserToggle yasgui-panelToggle",
+      showLabel: true,
+      title: "Show or hide the side panel with your saved queries and the endpoint overview",
+    });
+    (panelButton.querySelector(".yasgui-btnLabel") as HTMLElement).textContent = "Panel";
+    panelButton.setAttribute("aria-expanded", "false");
+    panelButton.addEventListener("click", () => {
+      const sidePanel = this.yasgui.sidePanel;
+      if (sidePanel) sidePanel.toggle();
+      else this.yasgui.queryBrowser.toggle(panelButton);
+    });
+    this.yasgui.sidePanel?.onChange((state) => {
+      const expanded = state.open && !state.collapsed;
+      panelButton.setAttribute("aria-expanded", String(expanded));
+      panelButton.classList.toggle("active", expanded);
     });
 
-    this._queryBrowserToggleEl.appendChild(queryBrowserButton);
+    this._queryBrowserToggleEl.appendChild(panelButton);
     this._tabsListEl.appendChild(this._queryBrowserToggleEl);
 
     sortablejs.create(this._tabsListEl, {
@@ -345,7 +362,7 @@ export class TabList {
         this.yasgui.emit("tabOrderChanged", this.yasgui, tabs);
         this.yasgui.persistentConfig.setTabOrder(tabs);
       },
-      filter: ".queryBrowserToggle, .addTab, input, .renaming, .closeTab",
+      filter: ".queryBrowserToggle, .addTab, .yasgui-topBarActions, input, .renaming, .closeTab",
       preventOnFilter: false,
       onMove: (ev: any, _origEv: any) => {
         return hasClass(ev.related, "tab");
@@ -357,7 +374,7 @@ export class TabList {
 
     const addTabLink = document.createElement("button");
     addTabLink.className = "addTab";
-    addTabLink.textContent = "+";
+    addTabLink.innerHTML = icon("plus", 18, 2);
     addTabLink.title = "Add tab";
     addTabLink.setAttribute("aria-label", "Add a new tab");
     addTabLink.addEventListener("click", this.handleAddNewTab);
@@ -365,18 +382,72 @@ export class TabList {
       // sets aria tabEntryIndex to active tab
       // this.tabEntryIndex = this.getActiveIndex();
       if (!this._tabsListEl) return;
-      this.tabEntryIndex = this._tabsListEl.childElementCount - 1; // sets tabEntry to add tab, visually makes sense, not sure about accessibility-wise
+      // sets tabEntry to add tab, visually makes sense, not sure about accessibility-wise
+      this.tabEntryIndex = Array.prototype.indexOf.call(this._tabsListEl.children, this.addTabEl);
     });
     addTabLink.addEventListener("blur", () => {
       addTabLink.setAttribute("tabindex", "0"); // maintains tabability
     });
     this.addTabEl.appendChild(addTabLink);
     this._tabsListEl.appendChild(this.addTabEl);
+    this._tabsListEl.appendChild(this.drawGlobalActions());
     this.tabContextMenu = TabContextMenu.get(
       this.yasgui,
       this.yasgui.config.contextMenuContainer ? this.yasgui.config.contextMenuContainer : this._tabsListEl,
     );
     return this._tabsListEl;
+  }
+  /**
+   * Global actions at the right of the top bar: help, theme and settings
+   */
+  private drawGlobalActions(): HTMLDivElement {
+    const actions = document.createElement("div");
+    actions.setAttribute("role", "presentation");
+    addClass(actions, "yasgui-topBarActions");
+    this._actionsEl = actions;
+
+    const helpUrl = this.yasgui.config.helpUrl;
+    if (helpUrl) {
+      const help = iconButton("help", "Help", {
+        className: "yasgui-topBarButton yasgui-helpButton",
+        title: "Open the documentation",
+        size: 20,
+      });
+      help.addEventListener("click", () => window.open(helpUrl, "_blank", "noopener,noreferrer"));
+      actions.appendChild(help);
+    }
+
+    if (this.yasgui.config.showThemeToggle) {
+      const theme = document.createElement("button");
+      theme.type = "button";
+      theme.className = "yasgui-topBarButton themeToggle";
+      const update = () => {
+        const dark = this.yasgui.getTheme() === "dark";
+        theme.innerHTML = icon(dark ? "sun" : "moon", 20);
+        const label = dark ? "Switch to light theme" : "Switch to dark theme";
+        theme.title = label;
+        theme.setAttribute("aria-label", label);
+      };
+      update();
+      theme.addEventListener("click", () => {
+        this.yasgui.toggleTheme();
+        update();
+      });
+      // The theme can also change through the system preference or the API
+      if (typeof MutationObserver !== "undefined") {
+        this.themeObserver = new MutationObserver(update);
+        this.themeObserver.observe(this.yasgui.rootEl, { attributes: true, attributeFilter: ["data-theme"] });
+      }
+      actions.appendChild(theme);
+    }
+
+    const settings = iconButton("settings", "Settings", {
+      className: "yasgui-topBarButton yasgui-settingsButton",
+      size: 20,
+    });
+    settings.addEventListener("click", () => this.yasgui.getTab()?.openSettings());
+    actions.appendChild(settings);
+    return actions;
   }
   handleAddNewTab = (event: Event) => {
     event.preventDefault();
@@ -432,6 +503,8 @@ export class TabList {
     }
     this._tabs = {};
     this.tabContextMenu?.destroy();
+    this.themeObserver?.disconnect();
+    this._actionsEl = undefined;
     this._tabsListEl?.remove();
     this._tabsListEl = undefined;
     this._queryBrowserToggleEl = undefined;
