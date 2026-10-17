@@ -17,6 +17,8 @@
 [![npm version](https://img.shields.io/npm/v/@matdata/yasgui)](https://www.npmjs.com/package/@matdata/yasgui)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+![Screenshot](docs/img/screenshot.png)
+
 ---
 
 ## Quick Links
