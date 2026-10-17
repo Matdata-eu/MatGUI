@@ -1801,12 +1801,16 @@ export class Tab extends EventEmitter {
     const chip = document.createElement("div");
     addClass(chip, "verticalResizeChip");
     this.verticalResizerEl.appendChild(chip);
+    this.verticalResizerEl.title = "Drag to resize, double-click to reset";
     this.verticalResizerEl.addEventListener("mousedown", this.initVerticalDrag, false);
     this.verticalResizerEl.addEventListener("dblclick", this.resetVerticalSplit, false);
     this.rootEl.appendChild(this.verticalResizerEl);
   }
 
-  private initVerticalDrag = () => {
+  private initVerticalDrag = (event: MouseEvent) => {
+    // Don't select text while dragging
+    event.preventDefault();
+    if (this.verticalResizerEl) addClass(this.verticalResizerEl, "resizing");
     document.documentElement.addEventListener("mousemove", this.doVerticalDrag, false);
     document.documentElement.addEventListener("mouseup", this.stopVerticalDrag, false);
   };
@@ -1845,6 +1849,7 @@ export class Tab extends EventEmitter {
   };
 
   private stopVerticalDrag = () => {
+    if (this.verticalResizerEl) removeClass(this.verticalResizerEl, "resizing");
     document.documentElement.removeEventListener("mousemove", this.doVerticalDrag, false);
     document.documentElement.removeEventListener("mouseup", this.stopVerticalDrag, false);
 

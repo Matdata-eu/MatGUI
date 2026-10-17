@@ -230,7 +230,7 @@ export class Yasqe extends EditorFacade {
       // Token type "variable-3" represents URIs (IRI_REF)
       this.showNotification(
         "uri-describe-hint",
-        "CTRL+click: find triples where URI is subject. CTRL+SHIFT+click: find triples where URI is object.",
+        "Ctrl+click: find triples where this IRI is the subject. Ctrl+Shift+click: where it is the object.",
       );
     } else {
       this.hideNotification("uri-describe-hint");
@@ -1488,11 +1488,15 @@ export class Yasqe extends EditorFacade {
     const chip = document.createElement("div");
     addClass(chip, "horizontalResizeChip");
     this.horizontalResizeWrapper.appendChild(chip);
+    this.horizontalResizeWrapper.title = "Drag to resize, double-click to show the whole query";
     this.horizontalResizeWrapper.addEventListener("mousedown", this.initDrag, false);
     this.horizontalResizeWrapper.addEventListener("dblclick", this.expandEditor);
     this.rootEl.appendChild(this.horizontalResizeWrapper);
   }
-  private initDrag = () => {
+  private initDrag = (event: MouseEvent) => {
+    // Don't select text while dragging
+    event.preventDefault();
+    addClass(this.horizontalResizeWrapper, "resizing");
     document.documentElement.addEventListener("mousemove", this.doDrag, false);
     document.documentElement.addEventListener("mouseup", this.stopDrag, false);
   };
@@ -1512,6 +1516,7 @@ export class Yasqe extends EditorFacade {
     this.getWrapperElement().style.height = this.calculateDragOffset(event, this.rootEl) + "px";
   };
   private stopDrag = () => {
+    removeClass(this.horizontalResizeWrapper, "resizing");
     document.documentElement.removeEventListener("mousemove", this.doDrag, false);
     document.documentElement.removeEventListener("mouseup", this.stopDrag, false);
     this.emit("resize", this.getWrapperElement().style.height);
@@ -2063,7 +2068,9 @@ export class Yasqe extends EditorFacade {
       // We create one wrapper for each notification, since there is no interactivity with the container (yet) we don't need to keep a reference
       const notificationContainer = document.createElement("div");
       addClass(notificationContainer, "notificationContainer");
-      this.getWrapperElement().appendChild(notificationContainer);
+      // Anchored to the yasqe root, not the CodeMirror wrapper: when the editor area is shorter than the
+      // CodeMirror element (e.g. in a split layout) the bottom of the wrapper is clipped, and the hint with it
+      this.rootEl.appendChild(notificationContainer);
 
       // Create the actual notification element
       this.notificationEls[key] = document.createElement("div");
@@ -2077,6 +2084,7 @@ export class Yasqe extends EditorFacade {
     const el = this.notificationEls[key];
     addClass(el, "active");
     el.innerText = message;
+    el.title = message;
   }
   /**
    * Hides notification

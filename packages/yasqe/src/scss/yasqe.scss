@@ -2,6 +2,7 @@
 @import "@fortawesome/fontawesome-free/css/solid.css";
 
 .yasqe {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -25,28 +26,40 @@
     max-width: 30em;
   }
 
+  // A small pill floating above the bottom edge of the editor (and above the resize bar)
   .notificationContainer {
     width: 100%;
     display: flex;
     justify-content: center;
     position: absolute;
-    bottom: 0;
+    left: 0;
+    bottom: 14px;
+    z-index: 4;
+    pointer-events: none;
   }
 
   .notification {
-    z-index: 4;
-    padding: 0 5px;
+    max-width: calc(100% - 24px);
+    box-sizing: border-box;
+    padding: 0 10px;
     max-height: 0px;
+    overflow: hidden;
+    border-radius: 6px;
     color: var(--yasgui-notification-text, #999);
     background-color: var(--yasgui-notification-bg, #eee);
-    font-size: 90%;
+    font-size: 13px;
+    line-height: 24px;
     text-align: center;
-    transition: max-height 0.2s ease-in;
-    border-top-right-radius: 2px;
-    border-top-left-radius: 2px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    opacity: 0;
+    transition:
+      max-height 0.2s ease-in,
+      opacity 0.2s ease-in;
 
     &.active {
       max-height: 3rem;
+      opacity: 1;
     }
   }
 
@@ -103,15 +116,25 @@
     cursor: row-resize;
   }
 
+  // Like MatGUI's side panel resizer: a brand-coloured line that shows on hover and while dragging
   .horizontalResizeChip {
-    width: 20%;
-    height: 4px;
-    background-color: #d1d1d1;
-    visibility: hidden;
+    width: 100%;
+    height: 3px;
     border-radius: 2px;
+    background-color: var(--yasgui-brand, #0563bb);
+    opacity: 0;
+    transition: opacity 0.15s ease;
   }
 
-  &:hover .horizontalResizeChip {
-    visibility: visible;
+  .horizontalResizeWrapper:hover .horizontalResizeChip {
+    opacity: 0.4;
+  }
+
+  .horizontalResizeWrapper.resizing {
+    cursor: row-resize;
+
+    .horizontalResizeChip {
+      opacity: 0.7;
+    }
   }
 }

@@ -520,6 +520,12 @@ MAtGUI offers two layout options to optimize screen space:
 - The icon shows the layout you switch to: two columns (side by side) or two rows (stacked)
 - Layout preference is saved automatically
 
+**Resizing the editor and results:**
+
+- Vertical layout: drag the bottom edge of the editor to make it taller or shorter; double-click it to show the whole query
+- Horizontal layout: drag the line between the editor and the results; double-click it to go back to a 50/50 split
+- Like the side panel's edge, the handle shows a blue line when you hover or drag it
+
 ### Query Formatting
 
 Keep your SPARQL queries clean and readable with automatic formatting.

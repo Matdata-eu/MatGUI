@@ -126,16 +126,22 @@
       z-index: 10;
 
       &:hover .verticalResizeChip {
-        visibility: visible;
+        opacity: 0.4;
+      }
+
+      &.resizing .verticalResizeChip {
+        opacity: 0.7;
       }
     }
 
+    // Like the side panel resizer: a brand-coloured line that shows on hover and while dragging
     .verticalResizeChip {
-      width: 4px;
-      height: 20%;
-      background-color: #d1d1d1;
-      visibility: hidden;
+      width: 3px;
+      height: 100%;
       border-radius: 2px;
+      background-color: var(--yasgui-brand, #0563bb);
+      opacity: 0;
+      transition: opacity 0.15s ease;
     }
 
     // Show vertical resizer only in horizontal mode
