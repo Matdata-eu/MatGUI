@@ -19,6 +19,7 @@ import "@matdata/yasgui-table-plugin/dist/yasgui-table-plugin.min.css";
 import { ThemeManager, Theme } from "./ThemeManager";
 import QueryBrowser from "./queryManagement/QueryBrowser";
 import EndpointDescribePanel, { EndpointDescribeConfig } from "./endpointDescribe/EndpointDescribePanel";
+import SidePanel from "./sidePanel/SidePanel";
 import "./index.scss";
 import "./themes.scss";
 import "./github-dark-theme.scss";
@@ -107,9 +108,14 @@ export interface Config<EndpointObject extends CatalogueItem = CatalogueItem> {
    */
   orientation?: "vertical" | "horizontal";
   /**
-   * Show code snippets bar in all tabs (global setting)
+   * Show the code snippets bar above the editor in all tabs (global setting).
+   * Off by default: the snippets are available from the Insert menu of the query bar.
    */
   showSnippetsBar?: boolean;
+  /**
+   * Link opened by the help button in the top bar. Set to false to hide the button.
+   */
+  helpUrl?: string | false;
   /**
    * "Describe endpoint" panel: service description, VoID and overview queries of the current endpoint
    */
@@ -163,6 +169,8 @@ export class Yasgui extends EventEmitter {
   public themeManager: ThemeManager;
   public queryBrowser: QueryBrowser;
   public endpointDescribe: EndpointDescribePanel | undefined;
+  /** Left side panel hosting the query browser (Queries) and the endpoint overview (Endpoint) */
+  public sidePanel: SidePanel;
   public mainEl: HTMLDivElement;
   private recentTabIds: string[] = [];
   private navigationSnapshot: string[] | null = null;
@@ -205,9 +213,17 @@ export class Yasgui extends EventEmitter {
     // Tab panels and the docked endpoint describe panel sit side by side
     this.mainEl = document.createElement("div");
     addClass(this.mainEl, "yasgui-main");
+    this.sidePanel = new SidePanel(this);
+    this.mainEl.appendChild(this.sidePanel.getElement());
     this.mainEl.appendChild(this.tabPanelsEl);
+    // An unpinned side panel moves out of the way when the user starts writing a query
+    this.tabPanelsEl.addEventListener("focusin", (event) => {
+      const target = event.target as HTMLElement | null;
+      if (target && target.closest && target.closest(".yasqe")) this.sidePanel.yieldToEditor();
+    });
 
     this.queryBrowser = new QueryBrowser(this);
+    this.queryBrowser.attachToSidePanel(this.sidePanel, this.sidePanel.addView("queries", "Queries", "fileText"));
     this.on("tabClose", (_yasgui, tab) => {
       this.removeTabFromRecentHistory(tab.getId());
     });
@@ -272,8 +288,10 @@ export class Yasgui extends EventEmitter {
       }
     }
     if (this.config.endpointDescribe?.enabled) {
+      // Registers itself as the "Endpoint" view of the side panel
       this.endpointDescribe = new EndpointDescribePanel(this);
-      this.mainEl.appendChild(this.endpointDescribe.getElement());
+    } else {
+      this.sidePanel.restore();
     }
   }
   public hasFullscreen(fullscreen: boolean) {
@@ -520,6 +538,7 @@ export class Yasgui extends EventEmitter {
   public destroy() {
     this.removeAllListeners();
     this.endpointDescribe?.destroy();
+    this.sidePanel.destroy();
     this.tabElements.destroy();
     for (const tabId in this._tabs) {
       const tab = this._tabs[tabId];

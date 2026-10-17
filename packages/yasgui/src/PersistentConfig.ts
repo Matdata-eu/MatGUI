@@ -21,6 +21,14 @@ export interface PersistedJson {
   disabledDevButtons?: string[]; // Endpoints of developer-configured buttons that are disabled by user
   codeMirrorThemeLight?: string; // User-selected CodeMirror theme for light mode
   codeMirrorThemeDark?: string; // User-selected CodeMirror theme for dark mode
+  sidePanel?: SidePanelState; // Left side panel (Queries / Endpoint)
+}
+export interface SidePanelState {
+  open: boolean;
+  collapsed: boolean;
+  pinned: boolean;
+  view: "queries" | "endpoint";
+  width: number;
 }
 function getDefaults(): PersistedJson {
   return {
@@ -325,6 +333,21 @@ export default class PersistentConfig {
    */
   public setOrientation(orientation: "vertical" | "horizontal") {
     this.persistedJson.orientation = orientation;
+    this.toStorage();
+  }
+
+  /**
+   * Get the persisted state of the left side panel
+   */
+  public getSidePanelState(): SidePanelState | undefined {
+    return this.persistedJson.sidePanel;
+  }
+
+  /**
+   * Persist the state of the left side panel
+   */
+  public setSidePanelState(state: SidePanelState) {
+    this.persistedJson.sidePanel = state;
     this.toStorage();
   }
 
