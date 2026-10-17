@@ -25,6 +25,40 @@ $minTabHeight: 48px;
       margin-right: 8px;
     }
 
+    // MatData glyph and the MatGUI name
+    .yasgui-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 8px 0 4px;
+      color: var(--yasgui-ink, #1c2633);
+      user-select: none;
+
+      &__glyph {
+        flex-shrink: 0;
+        color: var(--yasgui-brand, #0563bb);
+      }
+
+      &__name {
+        font-size: 19px;
+        font-weight: 700;
+        line-height: 1;
+        white-space: nowrap;
+
+        span {
+          color: var(--yasgui-brand, #0563bb);
+        }
+      }
+
+      @media (max-width: 768px) {
+        padding-right: 4px;
+
+        .yasgui-brand__name {
+          display: none;
+        }
+      }
+    }
+
     .queryBrowserToggle {
       cursor: pointer;
       height: 34px;

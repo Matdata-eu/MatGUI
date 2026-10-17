@@ -29,6 +29,7 @@ export default function initialize(): Config<CatalogueItem> {
     yasr: Yasr.defaults,
     theme: undefined,
     showThemeToggle: true,
+    showBrand: true,
     orientation: "vertical",
     showSnippetsBar: false,
     helpUrl: "https://matgui-doc.matdata.eu/docs/user-guide",

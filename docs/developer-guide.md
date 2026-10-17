@@ -692,6 +692,9 @@ interface Config {
   // Show theme toggle button
   showThemeToggle?: boolean;  // default: true
 
+  // Show the MatGUI glyph and name at the start of the top bar
+  showBrand?: boolean;  // default: true
+
   // Layout orientation: 'vertical' or 'horizontal'
   orientation?: 'vertical' | 'horizontal';  // default: 'vertical'
 

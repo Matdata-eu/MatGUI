@@ -104,6 +104,8 @@ export interface Config<EndpointObject extends CatalogueItem = CatalogueItem> {
   contextMenuContainer: HTMLElement | undefined;
   theme?: Theme;
   showThemeToggle?: boolean;
+  /** Show the MatGUI glyph and name at the start of the top bar (default: true) */
+  showBrand?: boolean;
   /**
    * Layout orientation: 'vertical' (default) or 'horizontal' (side-by-side)
    * 'vertical': YASQE on top, YASR below
