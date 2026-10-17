@@ -1174,7 +1174,10 @@ export class Yasqe extends EditorFacade {
     return this.isFullscreen;
   }
 
-  private insertSnippet(code: string) {
+  /**
+   * Insert a code snippet at the cursor and focus the editor
+   */
+  public insertSnippet(code: string) {
     const doc = this.getDoc();
     const cursor = doc.getCursor();
     doc.replaceRange(code, cursor);
@@ -2249,6 +2252,13 @@ export class Yasqe extends EditorFacade {
     return ajaxConfig ? Sparql.hasAuthenticationCredentials(ajaxConfig) : false;
   }
 
+  /**
+   * True while a query started from this editor is running
+   */
+  public isQueryRunning(): boolean {
+    return !!this.req;
+  }
+
   public abortQuery() {
     if (this.req) {
       if (this.abortController) {
@@ -2407,6 +2417,9 @@ export interface Config extends Omit<EditorOptions, "extraKeys"> {
    */
   persistenceId: ((yasqe: Yasqe) => string) | string | undefined | null;
   persistencyExpire: number; //seconds
+  /**
+   * Show the Run button in the editor. Yasgui sets this to false: it shows its own Run button in the query bar.
+   */
   showQueryButton: boolean;
   requestConfig: RequestConfig<Yasqe> | ((yasqe: Yasqe) => RequestConfig<Yasqe>);
   pluginButtons: (() => HTMLElement[] | HTMLElement) | undefined;
