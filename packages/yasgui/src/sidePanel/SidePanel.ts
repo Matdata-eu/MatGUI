@@ -1,14 +1,14 @@
 import { addClass, removeClass } from "@matdata/yasgui-utils";
 import type { Yasgui } from "../";
 import type { SidePanelState } from "../PersistentConfig";
-import { iconButton, IconName } from "../icons";
+import { iconButton, IconName, modKeyLabel } from "../icons";
 import "./SidePanel.scss";
 
 export type SidePanelView = SidePanelState["view"];
 
 const MIN_WIDTH = 260;
 const MAX_WIDTH = 640;
-const DEFAULT_WIDTH = 340;
+const DEFAULT_WIDTH = 300;
 /** Below this width the panel floats over the content instead of pushing it aside */
 export const NARROW_BREAKPOINT = 768;
 
@@ -56,13 +56,20 @@ export default class SidePanel {
     addClass(this.rootEl, "yasgui-sidePanel");
     this.rootEl.setAttribute("aria-label", "Side panel");
 
-    // Rail, shown when the panel is collapsed
+    // Rail with a button per view, shown whenever the panel is not expanded (on narrow screens only when collapsed)
     this.railEl = document.createElement("div");
     addClass(this.railEl, "yasgui-sidePanel__rail");
-    const expand = iconButton("panelLeft", "Expand side panel", { className: "yasgui-sidePanel__railButton" });
+    const expand = iconButton("panelLeft", "Open side panel", {
+      className: "yasgui-sidePanel__railButton yasgui-sidePanel__expand",
+      title: `Open side panel (${modKeyLabel()}+B)`,
+    });
     expand.addEventListener("click", () => this.show());
     this.railEl.appendChild(expand);
+    const railDivider = document.createElement("div");
+    addClass(railDivider, "yasgui-sidePanel__railDivider");
+    this.railEl.appendChild(railDivider);
     this.rootEl.appendChild(this.railEl);
+    document.addEventListener("keydown", this.handleGlobalKeydown);
 
     this.bodyEl = document.createElement("div");
     addClass(this.bodyEl, "yasgui-sidePanel__body");
@@ -79,7 +86,7 @@ export default class SidePanel {
     addClass(actions, "yasgui-sidePanel__actions");
     this.pinButton = iconButton("pin", "Pin panel", { className: "yasgui-sidePanel__action yasgui-sidePanel__pin" });
     this.pinButton.addEventListener("click", () => this.setPinned(!this.state.pinned));
-    const collapseButton = iconButton("chevronsLeft", "Collapse panel", {
+    const collapseButton = iconButton("chevronsLeft", `Collapse panel (${modKeyLabel()}+B)`, {
       className: "yasgui-sidePanel__action yasgui-sidePanel__collapse",
     });
     collapseButton.addEventListener("click", () => this.collapse());
@@ -118,6 +125,24 @@ export default class SidePanel {
 
     this.apply(false);
   }
+
+  /** Ctrl+B / ⌘B shows or hides the panel, from anywhere in this Yasgui instance */
+  private handleGlobalKeydown = (event: KeyboardEvent) => {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
+    if (event.key.toLowerCase() !== "b" || !this.views.size) return;
+    const target = event.target as Node | null;
+    if (!target || !(this.yasgui.rootEl.contains(target) || target === document.body)) return;
+    // Inside a text field Ctrl+B is left alone; the query editor is not one of those
+    const el = target as HTMLElement;
+    if (el.closest?.("input, textarea, [contenteditable='true']") && !el.closest?.(".yasqe")) return;
+    event.preventDefault();
+    if (this.state.open && !this.state.collapsed) {
+      if (this.isNarrow()) this.close();
+      else this.collapse();
+    } else {
+      this.show();
+    }
+  };
 
   public getElement(): HTMLElement {
     return this.rootEl;
@@ -276,6 +301,7 @@ export default class SidePanel {
     this.rootEl.classList.toggle("collapsed", open && collapsed);
     this.rootEl.classList.toggle("pinned", pinned);
     this.rootEl.classList.toggle("hasTabs", this.views.size > 1);
+    this.rootEl.classList.toggle("hasViews", this.views.size > 0);
     this.rootEl.style.setProperty("--yasgui-side-panel-width", `${this.clampWidth(this.state.width)}px`);
     this.rootEl.setAttribute("aria-hidden", String(!open));
     this.pinButton.setAttribute("aria-pressed", String(pinned));
@@ -285,7 +311,8 @@ export default class SidePanel {
       const active = entry.view === view;
       entry.tabButton.setAttribute("aria-selected", String(active));
       entry.tabButton.tabIndex = active ? 0 : -1;
-      entry.railButton.setAttribute("aria-pressed", String(active && open));
+      entry.railButton.setAttribute("aria-pressed", String(active && open && !collapsed));
+      entry.railButton.classList.toggle("lastView", active);
       entry.container.hidden = !active;
     }
     if (persist) this.yasgui.persistentConfig.setSidePanelState({ ...this.state });
@@ -330,6 +357,7 @@ export default class SidePanel {
   };
 
   public destroy() {
+    document.removeEventListener("keydown", this.handleGlobalKeydown);
     document.documentElement.removeEventListener("mousemove", this.doResize);
     document.documentElement.removeEventListener("mouseup", this.stopResize);
     this.listeners = [];

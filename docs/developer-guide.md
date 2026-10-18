@@ -695,6 +695,9 @@ interface Config {
   // Show the MatGUI glyph and name at the start of the top bar
   showBrand?: boolean;  // default: true
 
+  // Search for saved queries, commands and settings in the top bar, also opened with Ctrl+K / Cmd+K
+  showCommandPalette?: boolean;  // default: true
+
   // Layout orientation: 'vertical' or 'horizontal'
   orientation?: 'vertical' | 'horizontal';  // default: 'vertical'
 
@@ -2126,7 +2129,7 @@ The MatData look is defined by a small set of tokens, in `:root` (light) and `[d
 
 ```css
 --yasgui-surface          /* page background */
---yasgui-surface-raised   /* cards, panels, menus */
+--yasgui-surface-raised   /* the query card, active tab, menus */
 --yasgui-surface-sunken   /* hover backgrounds, inputs */
 --yasgui-line             /* dividers */
 --yasgui-line-strong      /* input borders */
@@ -2142,15 +2145,24 @@ The MatData look is defined by a small set of tokens, in `:root` (light) and `[d
 --yasgui-focus            /* focus ring */
 --yasgui-radius-sm / -md / -lg / -button
 --yasgui-shadow-soft / --yasgui-shadow-raised
---yasgui-font-family      /* Barlow, then system sans-serif */
+--yasgui-surface-selected /* selected rows */
+--yasgui-line-soft        /* separators inside the query card */
+--yasgui-line-grip        /* grip of the editor / results separator */
+--yasgui-ink-subtle       /* breadcrumbs, status text */
+--yasgui-brand-fill       /* background of the Run button */
+--yasgui-success          /* "Saved" check */
+--yasgui-shadow-raise / --yasgui-shadow-sheet / --yasgui-shadow-overlay
+--yasgui-scrim            /* backdrop behind the Ctrl+K search */
+--yasgui-font-family      /* Geist, then system sans-serif */
+--yasgui-font-size        /* base text size, 13px */
 --yasgui-font-mono        /* JetBrains Mono, then system monospace */
 ```
 
-**Fonts:** Yasgui does not load web fonts itself, so embedding it never triggers an unexpected network request. Barlow and JetBrains Mono are first in the font stacks and are used when the page provides them, for example:
+**Fonts:** Yasgui does not load web fonts itself, so embedding it never triggers an unexpected network request. Geist and JetBrains Mono are first in the font stacks and are used when the page provides them, for example:
 
 ```html
 <link rel="stylesheet"
-  href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+  href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 ```
 
 **Available CSS Custom Properties (original names, still supported):**

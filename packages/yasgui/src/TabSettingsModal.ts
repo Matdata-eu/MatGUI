@@ -2049,6 +2049,14 @@ export default class TabSettingsModal {
           },
         ],
       },
+      {
+        category: "Workspace",
+        shortcuts: [
+          { keys: ["Ctrl+K", "Cmd+K"], description: "Search saved queries, commands and settings" },
+          { keys: ["Ctrl+B", "Cmd+B"], description: "Show or hide the side panel" },
+          { keys: ["F8"], description: "Show or hide the endpoint overview" },
+        ],
+      },
     ];
 
     shortcutsData.forEach((section) => {

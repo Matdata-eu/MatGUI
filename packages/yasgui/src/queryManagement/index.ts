@@ -7,6 +7,7 @@ export * from "./textHash";
 export * from "./browserFilter";
 export * from "./openManagedQuery";
 export * from "./readOnlyWorkspace";
+export * from "./listManagedQueries";
 export * from "./backends/WorkspaceBackend";
 export * from "./backends/errors";
 export * from "./backends/getWorkspaceBackend";

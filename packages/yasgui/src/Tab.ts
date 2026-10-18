@@ -85,9 +85,10 @@ export class Tab extends EventEmitter {
   private endpointSelect: EndpointSelect | undefined;
   private settingsModal?: TabSettingsModal;
   private runButton?: HTMLButtonElement;
-  private describeButton?: HTMLButtonElement;
   private insertMenu?: InsertMenu;
   private versionChipEl?: HTMLSpanElement;
+  private editorToolbarEl?: HTMLDivElement;
+  private titleEl?: HTMLDivElement;
   private currentOrientation: "vertical" | "horizontal";
   private orientationToggleButton?: HTMLButtonElement;
   private editorToolsEl?: HTMLDivElement;
@@ -605,8 +606,9 @@ export class Tab extends EventEmitter {
   }
 
   /**
-   * The query bar of the tab: endpoint picker, Run, Prefixes, Explore endpoint, Insert and the layout toggle.
-   * It keeps the `controlbar` class of the former icon-only control bar.
+   * The head of the query card: breadcrumbs and title of the query, then the endpoint picker, the saved
+   * status and Run. The editor actions (Prefixes, Insert, format, share, layout) go in a toolbar at the
+   * top right of the editor. The bar keeps the `controlbar` class of the former icon-only control bar.
    */
   private initControlbar() {
     if (!this.controlBarEl) return;
@@ -617,39 +619,16 @@ export class Tab extends EventEmitter {
     // The mobile menu was added by the settings modal; it goes to the end of the bar
     const mobileMenu = this.settingsModal?.getHamburgerElement();
 
-    this.initEndpointSelectField();
-    this.initRunButton();
-
-    const divider = document.createElement("div");
-    addClass(divider, "yasgui-queryBar__divider", "desktopOnly");
-    bar.appendChild(divider);
-
-    const prefixButton = iconButton("tag", "Prefixes", {
-      className: "yasgui-queryBarButton tabContextButton prefixButton desktopOnly",
-      showLabel: true,
-      title: "Insert your saved prefixes into the query",
-    });
-    prefixButton.addEventListener("click", () => this.settingsModal?.insertPrefixes());
-    bar.appendChild(prefixButton);
-
-    if (this.yasgui.config.endpointDescribe?.enabled) {
-      this.describeButton = iconButton("compass", "Explore endpoint", {
-        className: "yasgui-queryBarButton tabContextButton describeEndpointButton desktopOnly",
-        showLabel: true,
-        title: "Explore the endpoint: service description, VoID and overview queries (F8)",
-      });
-      this.describeButton.setAttribute("aria-pressed", "false");
-      this.describeButton.addEventListener("click", () => this.yasgui.endpointDescribe?.toggle());
-      bar.appendChild(this.describeButton);
-      this.yasgui.sidePanel?.onChange(this.updateDescribeButton);
-      this.updateDescribeButton();
-    }
-
-    this.insertMenu = new InsertMenu(this, bar, (event) => this.settingsModal?.openMapWidget(event));
+    this.initQueryTitle();
 
     const spacer = document.createElement("div");
     addClass(spacer, "yasgui-queryBar__spacer");
     bar.appendChild(spacer);
+
+    this.initEndpointSelectField();
+    if (this.yasgui.config.endpointInfo) {
+      bar.appendChild(this.yasgui.config.endpointInfo());
+    }
 
     this.versionChipEl = document.createElement("span");
     addClass(this.versionChipEl, "yasgui-versionChip", "desktopOnly");
@@ -658,20 +637,137 @@ export class Tab extends EventEmitter {
     this.on("change", this.updateVersionChip);
     this.updateVersionChip();
 
-    if (this.yasgui.config.endpointInfo) {
-      bar.appendChild(this.yasgui.config.endpointInfo());
-    }
-    this.initOrientationToggle();
+    this.initRunButton();
     if (mobileMenu) bar.appendChild(mobileMenu);
+    this.initEditorToolbar();
     this.initEndpointButtons();
   }
 
-  private updateDescribeButton = () => {
-    if (!this.describeButton) return;
-    const visible = !!this.yasgui.sidePanel?.isViewVisible("endpoint");
-    this.describeButton.setAttribute("aria-pressed", String(visible));
-    this.describeButton.classList.toggle("active", visible);
+  /** Breadcrumbs (workspace and folders of a saved query) and the name of the query */
+  private initQueryTitle() {
+    if (!this.controlBarEl) return;
+    const title = document.createElement("div");
+    addClass(title, "yasgui-queryTitle");
+    this.titleEl = title;
+    this.controlBarEl.appendChild(title);
+    this.on("change", this.updateQueryTitle);
+    this.updateQueryTitle();
+  }
+
+  /** Workspace label and folder names of a saved query, empty for a query that is not saved */
+  public getBreadcrumbs(): string[] {
+    const meta = this.getManagedQueryMetadata();
+    if (!meta) return [];
+    const workspace = this.yasgui.persistentConfig.getWorkspace(meta.workspaceId);
+    const crumbs = [workspace?.label || meta.workspaceId];
+    const path = (meta.queryRef as any)?.path as string | undefined;
+    if (meta.backendType === "git" && path) crumbs.push(...path.split("/").slice(0, -1).filter(Boolean));
+    return crumbs;
+  }
+
+  private updateQueryTitle = () => {
+    const el = this.titleEl;
+    if (!el) return;
+    const crumbs = this.getBreadcrumbs();
+    const name = this.name() || "Query";
+    const version = this.getSavedVersionLabel();
+    const key = JSON.stringify([crumbs, name, version]);
+    if (el.dataset.key === key) return;
+    el.dataset.key = key;
+    el.innerHTML = "";
+
+    if (crumbs.length) {
+      const nav = document.createElement("nav");
+      addClass(nav, "yasgui-breadcrumbs");
+      nav.setAttribute("aria-label", "Location of the query");
+      crumbs.forEach((crumb, i) => {
+        if (i > 0) {
+          const sep = document.createElement("span");
+          addClass(sep, "yasgui-breadcrumbs__sep");
+          sep.setAttribute("aria-hidden", "true");
+          sep.textContent = "/";
+          nav.appendChild(sep);
+        }
+        const link = document.createElement("button");
+        link.type = "button";
+        addClass(link, "yasgui-breadcrumbs__item");
+        link.textContent = crumb;
+        link.title = "Show in the query browser";
+        link.addEventListener("click", () => this.yasgui.sidePanel?.show("queries"));
+        nav.appendChild(link);
+      });
+      el.appendChild(nav);
+    }
+
+    const heading = document.createElement("h2");
+    addClass(heading, "yasgui-queryTitle__name");
+    const nameEl = document.createElement("span");
+    nameEl.textContent = name;
+    nameEl.title = "Double-click to rename";
+    nameEl.addEventListener("dblclick", () => this.getTabListEl()?.startRename());
+    heading.appendChild(nameEl);
+    if (version) {
+      const badge = document.createElement("span");
+      addClass(badge, "yasgui-queryTitle__version");
+      badge.textContent = version;
+      badge.title = "Saved version";
+      heading.appendChild(badge);
+    }
+    el.appendChild(heading);
   };
+
+  /** Floating toolbar at the top right of the editor: Prefixes, Insert, the editor tools and the layout toggle */
+  private initEditorToolbar() {
+    if (!this.yasqeWrapperEl) return;
+    addClass(this.yasqeWrapperEl, "yasgui-editorArea");
+    const toolbar = document.createElement("div");
+    addClass(toolbar, "yasgui-editorToolbar");
+    toolbar.setAttribute("role", "toolbar");
+    toolbar.setAttribute("aria-label", "Editor");
+    this.editorToolbarEl = toolbar;
+
+    const prefixButton = iconButton("tag", "Prefixes", {
+      className: "yasgui-editorToolbar__button tabContextButton prefixButton desktopOnly",
+      showLabel: true,
+      title: "Insert your saved prefixes into the query",
+    });
+    prefixButton.addEventListener("click", () => this.settingsModal?.insertPrefixes());
+    toolbar.appendChild(prefixButton);
+
+    this.insertMenu = new InsertMenu(this, toolbar, (event) => this.settingsModal?.openMapWidget(event));
+
+    const divider = document.createElement("div");
+    addClass(divider, "yasgui-editorToolbar__divider", "desktopOnly");
+    toolbar.appendChild(divider);
+
+    this.initOrientationToggle();
+    this.yasqeWrapperEl.appendChild(toolbar);
+  }
+
+  /** The panel of this tab, holding the query card */
+  public getRootEl(): HTMLDivElement | undefined {
+    return this.rootEl;
+  }
+
+  /** Open the Insert menu of the editor toolbar (snippets and the map widget) */
+  public openInsertMenu() {
+    this.insertMenu?.open();
+  }
+
+  /** Insert the saved prefixes into the query */
+  public insertPrefixes() {
+    this.settingsModal?.insertPrefixes();
+  }
+
+  /** Focus the endpoint picker and show its list of endpoints */
+  public focusEndpoint() {
+    this.endpointSelect?.open();
+  }
+
+  /** Toggle the Endpoint view of the side panel (also F8) */
+  public toggleEndpointExplorer() {
+    this.yasgui.endpointDescribe?.toggle();
+  }
 
   /**
    * Run button next to the endpoint: runs the query, or stops it while it runs
@@ -735,16 +831,17 @@ export class Tab extends EventEmitter {
     }
     const workspace = this.yasgui.persistentConfig.getWorkspace(meta.workspaceId);
     const ref = meta.lastSavedVersionRef as any;
-    const version: string | undefined = ref?.commitSha
-      ? String(ref.commitSha).substring(0, 7)
-      : ref?.managedQueryVersionIri
-        ? String(ref.managedQueryVersionIri).split(/[/#]/).filter(Boolean).pop()
-        : undefined;
+    const version = this.getSavedVersionLabel();
     const readOnly = isWorkspaceReadOnly(workspace);
     const dirty = this.hasUnsavedManagedChanges();
+    const state = dirty ? "dirty" : readOnly ? "readOnly" : "saved";
     chip.hidden = false;
     chip.classList.toggle("dirty", dirty);
-    chip.textContent = dirty ? "Unsaved changes" : version ? `Saved · ${version}` : readOnly ? "Read-only" : "Saved";
+    if (chip.dataset.state !== state) {
+      chip.dataset.state = state;
+      const label = dirty ? "Unsaved changes" : readOnly ? "Read-only" : "Saved";
+      chip.innerHTML = `${dirty ? "" : icon(readOnly ? "lock" : "check", 14, 2)}<span>${label}</span>`;
+    }
     const details = [
       workspace ? `Workspace: ${workspace.label}` : undefined,
       version ? `Version: ${ref?.commitSha || ref?.managedQueryVersionIri}` : undefined,
@@ -752,6 +849,14 @@ export class Tab extends EventEmitter {
     ].filter(Boolean);
     chip.title = details.join("\n");
   };
+
+  /** Short label of the saved version of a managed query: a commit hash or the last part of a version IRI */
+  public getSavedVersionLabel(): string | undefined {
+    const ref = this.getManagedQueryMetadata()?.lastSavedVersionRef as any;
+    if (ref?.commitSha) return String(ref.commitSha).substring(0, 7);
+    if (ref?.managedQueryVersionIri) return String(ref.managedQueryVersionIri).split(/[/#]/).filter(Boolean).pop();
+    return undefined;
+  }
 
   /** Open the settings modal of this tab, optionally on a section (e.g. "endpoints") */
   public openSettings(section?: string) {
@@ -763,7 +868,8 @@ export class Tab extends EventEmitter {
 
     this.orientationToggleButton = document.createElement("button");
     this.orientationToggleButton.type = "button";
-    this.orientationToggleButton.className = "yasgui-queryBarIconButton tabContextButton orientationToggle desktopOnly";
+    this.orientationToggleButton.className =
+      "yasgui-editorToolbar__iconButton tabContextButton orientationToggle desktopOnly";
 
     this.updateOrientationToggleIcon();
 
@@ -771,7 +877,7 @@ export class Tab extends EventEmitter {
       this.toggleOrientation();
     });
 
-    this.controlBarEl.appendChild(this.orientationToggleButton);
+    (this.editorToolbarEl || this.controlBarEl).appendChild(this.orientationToggleButton);
   }
 
   public updateOrientationToggleIcon() {
@@ -1376,13 +1482,14 @@ export class Tab extends EventEmitter {
 
   /**
    * Move the editor's own buttons (save, share, format, fullscreen) from their floating spot
-   * inside the editor into the query bar, next to the layout toggle, with Lucide icons.
+   * inside the editor into the editor toolbar, next to the layout toggle, with Lucide icons.
    * The elements keep their yasqe classes and handlers, so the share popup and the
    * save buttons keep working.
    */
   private mountEditorTools() {
     const buttons = this.yasqe?.getWrapperElement()?.querySelector<HTMLDivElement>(".yasqe_buttons");
-    if (!buttons || !this.controlBarEl) return;
+    const host = this.editorToolbarEl || this.controlBarEl;
+    if (!buttons || !host) return;
     this.editorToolsEl?.remove();
     const tools = document.createElement("div");
     addClass(tools, "yasgui-editorTools", "yasqe_buttonsHost");
@@ -1409,9 +1516,8 @@ export class Tab extends EventEmitter {
           icon("minimize").replace('class="yasgui-icon"', 'class="yasgui-icon fullscreenExitIcon"'),
       );
     }
-    const anchor =
-      this.orientationToggleButton?.parentElement === this.controlBarEl ? this.orientationToggleButton : null;
-    this.controlBarEl.insertBefore(tools, anchor);
+    const anchor = this.orientationToggleButton?.parentElement === host ? this.orientationToggleButton : null;
+    host.insertBefore(tools, anchor);
     this.editorToolsEl = tools;
   }
 

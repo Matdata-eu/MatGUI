@@ -9,19 +9,25 @@
     // Grows up to 480px; the small basis keeps the query bar from wrapping before it has to
     flex: 10 1 200px;
     min-width: 200px;
-    max-width: 480px;
-    height: 40px;
+    max-width: 440px;
+    height: 34px;
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 0 4px 0 12px;
+    padding: 0 2px 0 12px;
     box-sizing: border-box;
-    border-radius: var(--yasgui-radius-sm, 6px);
-    border: 1px solid var(--yasgui-line-strong, #808893);
-    background: var(--yasgui-surface-raised, #ffffff);
+    border-radius: var(--yasgui-radius-button, 8px);
+    border: none;
+    background: var(--yasgui-surface-sunken, #edf1f6);
     color: var(--yasgui-ink, #1c2633);
 
+    &:hover {
+      box-shadow: inset 0 0 0 1px var(--yasgui-line, #dfe5ec);
+    }
+
     &:focus-within {
+      background: var(--yasgui-surface-raised, #ffffff);
+      box-shadow: inset 0 0 0 1px var(--yasgui-line, #dfe5ec);
       outline: 2px solid var(--yasgui-focus, #044a8c);
       outline-offset: 1px;
     }
@@ -30,7 +36,6 @@
       flex: 1 1 150px;
       min-width: 0;
       max-width: none;
-      height: 38px;
       padding-left: 10px;
     }
   }
@@ -43,7 +48,7 @@
 
   .endpointPicker__label {
     display: none;
-    font-weight: 600;
+    font-weight: 500;
     white-space: nowrap;
     flex-shrink: 0;
     max-width: 40%;
@@ -59,6 +64,8 @@
     // The URL reads as secondary information next to the label, until the user edits it
     &:not(:focus-within) .autocomplete {
       color: var(--yasgui-ink-muted, #56606c) !important;
+      font-family: var(--yasgui-font-mono, monospace);
+      font-size: 12px;
     }
   }
 
@@ -73,7 +80,6 @@
     outline: none;
     background: transparent;
     font: inherit;
-    font-size: 15px;
     text-overflow: ellipsis;
     box-sizing: border-box;
   }

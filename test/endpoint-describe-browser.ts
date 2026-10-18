@@ -140,7 +140,10 @@ describe("Endpoint describe panel", function () {
   });
 
   async function openPanel() {
-    await page.click(".tabPanel.active .describeEndpointButton");
+    // The rail shows while the side panel is closed or collapsed; otherwise its Endpoint tab is there
+    const railButton = await page.$('.yasgui-sidePanel__railButton[data-view="endpoint"]');
+    if (railButton && (await railButton.isVisible())) await railButton.click();
+    else await page.click('.yasgui-sidePanel__tab[data-view="endpoint"]');
     await page.waitForSelector(".yasgui-describe.open .yasgui-describe__drawer", { visible: true });
   }
 
