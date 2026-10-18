@@ -4,14 +4,23 @@
 :root {
   // MatData design tokens (light). New code uses these; plugins use them with a fallback,
   // e.g. var(--yasgui-brand, #0563bb).
-  --yasgui-surface: #f5f7fa;
+  --yasgui-surface: #f1f4f8;
   --yasgui-surface-raised: #ffffff;
-  --yasgui-surface-sunken: #edf0f4;
-  --yasgui-line: #e3e7ec;
+  --yasgui-surface-sunken: #edf1f6;
+  --yasgui-surface-selected: #e6ecf3;
+  --yasgui-line: #dfe5ec;
+  --yasgui-line-soft: #edf0f4;
   --yasgui-line-strong: #808893;
+  --yasgui-line-grip: #c9d2dc;
   --yasgui-ink: #1c2633;
+  --yasgui-ink-body: #3a4552;
   --yasgui-ink-muted: #56606c;
+  --yasgui-ink-subtle: #6a7380;
   --yasgui-brand: #0563bb;
+  // Fill of primary buttons (Run); --yasgui-brand is also used for brand-coloured text
+  --yasgui-brand-fill: #0563bb;
+  --yasgui-brand-fill-strong: #044a8c;
+  --yasgui-success: #067647;
   --yasgui-brand-strong: #044a8c;
   --yasgui-on-brand: #ffffff;
   --yasgui-brand-soft: #e3eefa;
@@ -25,32 +34,37 @@
   --yasgui-radius-button: 8px;
   --yasgui-shadow-soft: 0 1px 2px rgba(28, 38, 51, 0.04), 0 4px 16px rgba(28, 38, 51, 0.05);
   --yasgui-shadow-raised: 0 2px 4px rgba(28, 38, 51, 0.05), 0 12px 32px rgba(28, 38, 51, 0.08);
-  // Barlow and JetBrains Mono are used when the page provides them (Yasgui loads no web fonts itself)
-  --yasgui-font-family: Barlow, "Helvetica Neue", Arial, sans-serif;
+  // Raised controls (active tab, selected segment), the main sheet, and menus and dialogs
+  --yasgui-shadow-raise: 0 0 0 1px rgba(28, 38, 51, 0.07), 0 1px 2px rgba(28, 38, 51, 0.06);
+  --yasgui-shadow-sheet: 0 0 0 1px rgba(28, 38, 51, 0.05), 0 1px 3px rgba(28, 38, 51, 0.05);
+  --yasgui-shadow-overlay: 0 16px 48px rgba(28, 38, 51, 0.22), 0 0 0 1px rgba(28, 38, 51, 0.06);
+  --yasgui-scrim: rgba(28, 38, 51, 0.28);
+  // Geist and JetBrains Mono are used when the page provides them (Yasgui loads no web fonts itself)
+  --yasgui-font-family: Geist, system-ui, -apple-system, "Segoe UI", sans-serif;
   --yasgui-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   // Original Yasgui variables, with MatData values
   --yasgui-bg-primary: #ffffff;
-  --yasgui-bg-secondary: #f5f7fa;
-  --yasgui-bg-tertiary: #edf0f4;
-  --yasgui-bg-quaternary: #e3e7ec;
+  --yasgui-bg-secondary: #f1f4f8;
+  --yasgui-bg-tertiary: #edf1f6;
+  --yasgui-bg-quaternary: #dfe5ec;
   --yasgui-text-primary: #1c2633;
   --yasgui-text-secondary: #56606c;
   --yasgui-text-muted: #6a7380;
-  --yasgui-border-color: #e3e7ec;
+  --yasgui-border-color: #dfe5ec;
   --yasgui-border-color-secondary: #808893;
-  --yasgui-border-color-light: #e3e7ec;
+  --yasgui-border-color-light: #dfe5ec;
   --yasgui-link-color: #0563bb;
   --yasgui-link-hover: #044a8c;
   --yasgui-accent-color: #0563bb;
   --yasgui-accent-bg: #e3eefa;
   --yasgui-button-text: #56606c;
   --yasgui-button-hover: #1c2633; // text colour of a hovered button
-  --yasgui-chip-bg: #edf0f4;
+  --yasgui-chip-bg: #edf1f6;
   --yasgui-chip-text: #56606c;
   --yasgui-tab-bg: #ffffff;
   --yasgui-tab-bg-active: #ffffff;
-  --yasgui-tab-border: #e3e7ec;
+  --yasgui-tab-border: #dfe5ec;
   --yasgui-tab-managed: #0563bb; // marker of tabs holding a saved (workspace) query
   --yasgui-input-border: #808893;
   --yasgui-input-focus: #044a8c;
@@ -58,14 +72,14 @@
   --yasgui-tooltip-bg: #1c2633;
   --yasgui-tooltip-text: #ffffff;
   --yasgui-error-color: #b42318;
-  --yasgui-notification-bg: #edf0f4;
+  --yasgui-notification-bg: #edf1f6;
   --yasgui-notification-text: #56606c;
   --yasgui-help-bg: #e3eefa;
   --yasgui-help-text: #044a8c;
-  --yasgui-fallback-bg: #f5f7fa;
-  --yasgui-fallback-border: #e3e7ec;
+  --yasgui-fallback-bg: #f1f4f8;
+  --yasgui-fallback-border: #dfe5ec;
   --yasgui-resize-handle: #c5ccd4;
-  --yasgui-nav-bg: #edf0f4;
+  --yasgui-nav-bg: #edf1f6;
   --yasgui-match-highlight-bg: #e3eefa;
 
   // Minimum heights
@@ -81,62 +95,74 @@
 
 [data-theme="dark"] {
   // MatData design tokens (dark)
-  --yasgui-surface: #0d141c;
-  --yasgui-surface-raised: #16202b;
-  --yasgui-surface-sunken: #0a1016;
-  --yasgui-line: #26323e;
+  --yasgui-surface: #0b0e13;
+  --yasgui-surface-raised: #141920;
+  --yasgui-surface-sunken: #1c222b;
+  --yasgui-surface-selected: #232b36;
+  --yasgui-line: #252d38;
+  --yasgui-line-soft: #1d242d;
   --yasgui-line-strong: #6f7e8c;
-  --yasgui-ink: #eef1ef;
-  --yasgui-ink-muted: #a3afba;
-  --yasgui-brand: #5aa8f2;
+  --yasgui-line-grip: #36404d;
+  --yasgui-ink: #edeff2;
+  --yasgui-ink-body: #d5d9de;
+  --yasgui-ink-muted: #b3b8bf;
+  --yasgui-ink-subtle: #8b9199;
+  --yasgui-brand: #5aa6f0;
+  --yasgui-brand-fill: #1a73cf;
+  --yasgui-brand-fill-strong: #2c83dc;
+  --yasgui-success: #47cd89;
   --yasgui-brand-strong: #93c5f6;
   --yasgui-on-brand: #04172b;
-  --yasgui-brand-soft: #0e2a48;
+  --yasgui-brand-soft: #13263d;
   --yasgui-highlight: #f5c242;
   --yasgui-highlight-ink: #f5c242;
   --yasgui-danger: #f97066;
   --yasgui-focus: #93c5f6;
   --yasgui-shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.4);
   --yasgui-shadow-raised: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --yasgui-shadow-raise: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --yasgui-shadow-sheet: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 2px 8px rgba(0, 0, 0, 0.35);
+  --yasgui-shadow-overlay: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.07);
+  --yasgui-scrim: rgba(0, 0, 0, 0.5);
 
   // Original Yasgui variables, with MatData values
-  --yasgui-bg-primary: #16202b;
-  --yasgui-bg-secondary: #0d141c;
-  --yasgui-bg-tertiary: #0a1016;
-  --yasgui-bg-quaternary: #26323e;
-  --yasgui-text-primary: #eef1ef;
-  --yasgui-text-secondary: #a3afba;
+  --yasgui-bg-primary: #141920;
+  --yasgui-bg-secondary: #0b0e13;
+  --yasgui-bg-tertiary: #1c222b;
+  --yasgui-bg-quaternary: #252d38;
+  --yasgui-text-primary: #edeff2;
+  --yasgui-text-secondary: #b3b8bf;
   --yasgui-text-muted: #8593a0;
-  --yasgui-border-color: #26323e;
+  --yasgui-border-color: #252d38;
   --yasgui-border-color-secondary: #6f7e8c;
-  --yasgui-border-color-light: #26323e;
+  --yasgui-border-color-light: #252d38;
   --yasgui-link-color: #5aa8f2;
   --yasgui-link-hover: #93c5f6;
   --yasgui-accent-color: #5aa8f2;
-  --yasgui-accent-bg: #0e2a48;
-  --yasgui-button-text: #a3afba;
-  --yasgui-button-hover: #eef1ef; // text colour of a hovered button
-  --yasgui-chip-bg: #0a1016;
-  --yasgui-chip-text: #a3afba;
-  --yasgui-tab-bg: #16202b;
-  --yasgui-tab-bg-active: #16202b;
-  --yasgui-tab-border: #26323e;
+  --yasgui-accent-bg: #13263d;
+  --yasgui-button-text: #b3b8bf;
+  --yasgui-button-hover: #edeff2; // text colour of a hovered button
+  --yasgui-chip-bg: #1c222b;
+  --yasgui-chip-text: #b3b8bf;
+  --yasgui-tab-bg: #141920;
+  --yasgui-tab-bg-active: #141920;
+  --yasgui-tab-border: #252d38;
   --yasgui-tab-managed: #5aa8f2;
   --yasgui-input-border: #6f7e8c;
   --yasgui-input-focus: #93c5f6;
-  --yasgui-label-color: #a3afba;
-  --yasgui-tooltip-bg: #0a1016;
-  --yasgui-tooltip-text: #eef1ef;
+  --yasgui-label-color: #b3b8bf;
+  --yasgui-tooltip-bg: #1c222b;
+  --yasgui-tooltip-text: #edeff2;
   --yasgui-error-color: #f97066;
-  --yasgui-notification-bg: #0a1016;
-  --yasgui-notification-text: #a3afba;
-  --yasgui-help-bg: #0e2a48;
+  --yasgui-notification-bg: #1c222b;
+  --yasgui-notification-text: #b3b8bf;
+  --yasgui-help-bg: #13263d;
   --yasgui-help-text: #93c5f6;
-  --yasgui-fallback-bg: #0d141c;
-  --yasgui-fallback-border: #26323e;
+  --yasgui-fallback-bg: #0b0e13;
+  --yasgui-fallback-border: #252d38;
   --yasgui-resize-handle: #3a4856;
-  --yasgui-nav-bg: #0a1016;
-  --yasgui-match-highlight-bg: #0e2a48;
+  --yasgui-nav-bg: #1c222b;
+  --yasgui-match-highlight-bg: #13263d;
   --yasgui-endpoint-button-bg: #5aa8f2;
   --yasgui-endpoint-button-border: #5aa8f2;
   --yasgui-endpoint-button-text: #04172b;
@@ -150,6 +176,8 @@
   background-color: var(--yasgui-surface);
   color: var(--yasgui-text-primary);
   font-family: var(--yasgui-font-family);
+  font-size: var(--yasgui-font-size, 13px);
+  letter-spacing: -0.003em;
 
   a {
     color: var(--yasgui-link-color);
@@ -162,8 +190,7 @@
 
   // Tabs styling (top bar)
   .tabsList {
-    background: var(--yasgui-surface-raised);
-    border-bottom: 1px solid var(--yasgui-line);
+    background: var(--yasgui-surface);
   }
 
   .tab {
@@ -536,6 +563,37 @@ li.CodeMirror-hint-active,
   .cm-s-default {
     background-color: var(--yasgui-bg-primary);
     color: var(--yasgui-text-primary);
+  }
+
+  // MatData code colours for the default (light) editor theme
+  .yasqe .cm-s-default {
+    span.cm-keyword {
+      color: #a3367f;
+    }
+    span.cm-atom {
+      color: #c2410c;
+    }
+    span.cm-variable-3 {
+      color: #2f7d4f;
+    }
+    span.cm-string-2 {
+      color: #0563bb;
+    }
+    span.cm-number {
+      color: #b45309;
+    }
+    span.cm-string {
+      color: #9a3412;
+    }
+    span.cm-punc,
+    span.cm-bracket-paren,
+    span.cm-comment,
+    span.cm-meta {
+      color: #6a7380;
+    }
+    span.cm-comment {
+      font-style: italic;
+    }
   }
 }
 

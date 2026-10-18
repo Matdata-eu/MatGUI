@@ -629,13 +629,23 @@ export default class QueryBrowser {
     return { managedQueryVersionIri: versionTag };
   }
 
+  /**
+   * Open a saved query of a workspace in a new tab, or select the tab that already has it open
+   */
+  public async openQuery(workspaceId: string, queryId: string, queryLabel?: string) {
+    const workspace = this.getWorkspaces().find((w) => w.id === workspaceId);
+    if (!workspace) throw new Error("Selected workspace no longer exists");
+    const backend = getWorkspaceBackend(workspace, { persistentConfig: this.yasgui.persistentConfig });
+    await this.openManagedQueryInNewTab(backend, backend.type, queryId, queryLabel, workspaceId);
+  }
+
   private async openManagedQueryInNewTab(
     backend: ReturnType<typeof getWorkspaceBackend>,
     backendType: BackendType,
     queryId: string,
     queryLabel?: string,
+    workspaceId: string = this.selectedWorkspaceId!,
   ) {
-    const workspaceId = this.selectedWorkspaceId!;
     const alreadyOpenTabId = this.findOpenManagedTabId(workspaceId, backendType, queryId);
     if (alreadyOpenTabId) {
       this.yasgui.selectTabId(alreadyOpenTabId);

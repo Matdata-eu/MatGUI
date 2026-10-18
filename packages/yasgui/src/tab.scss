@@ -29,16 +29,34 @@
       display: none;
     }
 
-    // When yasqe is fullscreen, keep controlbar visible
+    // When yasqe is fullscreen, keep the query head and the editor toolbar visible
     &:has(.yasqe.fullscreen) .controlbar {
       position: fixed;
-      top: 50px;
+      top: 56px;
       left: 0;
       right: 0;
       z-index: 9999;
-      background: var(--yasgui-bg-primary);
-      border-bottom: 1px solid var(--yasgui-border-color);
-      padding: 5px;
+      min-height: 52px;
+      padding: 8px 20px;
+      background: var(--yasgui-surface-raised, #ffffff);
+      border-bottom: 1px solid var(--yasgui-line-soft, #edf0f4);
+
+      .yasgui-breadcrumbs {
+        display: none;
+      }
+    }
+
+    &:has(.yasqe.fullscreen) {
+      .yasqe.fullscreen {
+        padding-top: 108px;
+      }
+
+      .yasgui-editorToolbar {
+        position: fixed;
+        top: 116px;
+        right: 24px;
+        z-index: 10000;
+      }
 
       // Hide the layout orientation toggle button in fullscreen mode
       .orientationToggle {
@@ -51,8 +69,7 @@
       &.active {
         display: flex;
         flex-direction: row;
-        gap: 10px;
-        height: 100%;
+        gap: 0;
       }
 
       .editorwrapper {
@@ -115,9 +132,10 @@
     }
 
     // Vertical resizer for horizontal layout
+    // Separator between the editor and the results in the side-by-side layout: a thin line with a grip
     .verticalResizeWrapper {
       display: none; // Hidden by default (shown only in horizontal mode)
-      width: 10px;
+      width: 13px;
       flex-shrink: 0;
       align-items: center;
       justify-content: center;
@@ -125,23 +143,29 @@
       position: relative;
       z-index: 10;
 
-      &:hover .verticalResizeChip {
-        opacity: 0.4;
+      &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 6px;
+        width: 1px;
+        background: var(--yasgui-line-soft, #edf0f4);
       }
 
+      &:hover .verticalResizeChip,
       &.resizing .verticalResizeChip {
-        opacity: 0.7;
+        background-color: var(--yasgui-brand, #0563bb);
       }
     }
 
-    // Like the side panel resizer: a brand-coloured line that shows on hover and while dragging
     .verticalResizeChip {
-      width: 3px;
-      height: 100%;
-      border-radius: 2px;
-      background-color: var(--yasgui-brand, #0563bb);
-      opacity: 0;
-      transition: opacity 0.15s ease;
+      position: relative;
+      width: 4px;
+      height: 32px;
+      border-radius: 999px;
+      background-color: var(--yasgui-line-grip, #c9d2dc);
+      transition: background-color 0.15s ease;
     }
 
     // Show vertical resizer only in horizontal mode
@@ -186,18 +210,110 @@
     align-items: center;
     flex-shrink: 0;
     gap: 8px;
-    min-height: 60px;
-    padding: 10px 16px;
+    padding: 18px 20px 12px;
     box-sizing: border-box;
-    // When the bar is too narrow (side-by-side layout), the editor tools wrap to a second line on the
-    // right instead of ending up behind the results
+    // When the head is too narrow (side-by-side layout), the endpoint and Run wrap below the title
     flex-wrap: wrap;
     justify-content: flex-end;
-    row-gap: 6px;
+    row-gap: 8px;
     position: relative; // For dropdown positioning
     container-type: inline-size; // The bar is narrower than the viewport in the side-by-side layout
-    background: var(--yasgui-surface, transparent);
+    background: transparent;
     color: var(--yasgui-ink, inherit);
+  }
+
+  // Breadcrumbs and name of the query
+  .yasgui-queryTitle {
+    flex: 1 1 200px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    margin-right: auto;
+
+    &__name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      line-height: 28px;
+      letter-spacing: -0.025em;
+      color: var(--yasgui-ink, #1c2633);
+
+      > span:first-child {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        cursor: text;
+      }
+    }
+
+    &__version {
+      flex-shrink: 0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--yasgui-surface-sunken, #edf1f6);
+      color: var(--yasgui-ink-muted, #56606c);
+      font-family: var(--yasgui-font-mono, monospace);
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.3;
+      letter-spacing: 0;
+    }
+
+    @media (max-width: 768px) {
+      flex-basis: 100%;
+
+      &__name {
+        font-size: 17px;
+        line-height: 24px;
+      }
+    }
+  }
+
+  .yasgui-breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--yasgui-ink-subtle, #6a7380);
+    white-space: nowrap;
+    overflow: hidden;
+
+    &__item {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0;
+      border: none;
+      background: none;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+
+      &:hover {
+        color: var(--yasgui-ink, #1c2633);
+        text-decoration: underline;
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--yasgui-focus, #044a8c);
+        outline-offset: 1px;
+        border-radius: 2px;
+      }
+    }
+
+    &__sep {
+      flex-shrink: 0;
+      color: var(--yasgui-line-grip, #c9d2dc);
+    }
   }
 
   .yasgui-queryBar {
@@ -210,7 +326,7 @@
     }
 
     &__spacer {
-      flex: 1 1 0;
+      flex: 0 0 0;
       min-width: 0;
     }
 
@@ -265,25 +381,6 @@
       }
     }
 
-    // Collapse the labels before the bar starts to wrap, based on the width of the bar itself
-    // (narrow window, side-by-side layout, open side panel)
-    @container (max-width: 980px) {
-      .yasgui-queryBarButton {
-        padding: 0 9px;
-      }
-      .yasgui-queryBarButton .yasgui-btnLabel {
-        display: none;
-      }
-    }
-
-    @container (max-width: 640px) {
-      .yasgui-runButton__shortcut {
-        display: none;
-      }
-    }
-
-    // Side-by-side layout: a narrower endpoint picker leaves room for the saved version and the
-    // editor tools, so they don't end up behind the results
     @container (max-width: 760px) {
       .endpointPicker {
         flex-basis: 150px;
@@ -296,8 +393,7 @@
 
     @media (max-width: 768px) {
       gap: 6px;
-      padding: 8px 12px;
-      min-height: 56px;
+      padding: 12px 12px 8px;
 
       .yasgui-runButton__shortcut {
         display: none;
@@ -305,7 +401,99 @@
     }
   }
 
-  // Editor tools (save, share, format, fullscreen), moved from the editor into the query bar
+  // Editor area: the editor with its toolbar floating at the top right
+  .yasgui-editorArea {
+    position: relative;
+    container-type: inline-size;
+  }
+
+  .yasgui-editorToolbar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 12px 2px 2px;
+    border-radius: var(--yasgui-radius-button, 8px);
+    background: var(--yasgui-surface-raised, #ffffff);
+    color: var(--yasgui-ink-muted, #56606c);
+    font-size: 12px;
+
+    &__divider {
+      width: 1px;
+      height: 16px;
+      margin: 0 4px;
+      flex-shrink: 0;
+      background: var(--yasgui-line, #dfe5ec);
+    }
+
+    // Prefixes and Insert: icon and label
+    .yasgui-editorToolbar__button,
+    .yasgui-queryBarButton {
+      height: 28px;
+      padding: 0 8px;
+      gap: 6px;
+      border: none;
+      border-radius: var(--yasgui-radius-sm, 6px);
+      background: transparent;
+      color: var(--yasgui-ink-muted, #56606c);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+
+      .yasgui-icon {
+        width: 14px;
+        height: 14px;
+      }
+
+      &:hover,
+      &.active,
+      &[aria-expanded="true"] {
+        background: var(--yasgui-surface-sunken, #edf1f6);
+        color: var(--yasgui-ink, #1c2633);
+      }
+    }
+
+    .yasgui-editorToolbar__iconButton {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: var(--yasgui-radius-sm, 6px);
+      color: var(--yasgui-ink-muted, #56606c);
+
+      &:hover {
+        background: var(--yasgui-surface-sunken, #edf1f6);
+        color: var(--yasgui-ink, #1c2633);
+      }
+    }
+
+    button:focus-visible {
+      outline: 2px solid var(--yasgui-focus, #044a8c);
+      outline-offset: 1px;
+    }
+
+    .yasgui-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    // Narrow editor (side-by-side layout, small windows): only the icons
+    @container (max-width: 560px) {
+      .yasgui-editorToolbar__button .yasgui-btnLabel,
+      .yasgui-insertButton .yasgui-btnLabel {
+        display: none;
+      }
+    }
+  }
+
+  // Editor tools (save, share, format, fullscreen), moved from the editor into the editor toolbar
+  .yasgui-editorToolbar .yasgui-editorTools,
   .yasgui-queryBar .yasgui-editorTools {
     display: flex;
     align-items: center;
@@ -322,8 +510,8 @@
 
       > button,
       .yasqe_saveWrapper > button {
-        width: 36px;
-        height: 36px;
+        width: 28px;
+        height: 28px;
         margin: 0;
         padding: 0;
         display: inline-flex;
@@ -365,7 +553,7 @@
         }
       }
 
-      // Popups open below the bar instead of above the floating buttons
+      // Popups open below the toolbar instead of above the floating buttons
       .yasqe_sharePopup,
       .yasqe_hamburgerMenu {
         position: absolute !important;
@@ -388,23 +576,22 @@
 
   // Run / Stop
   .yasgui-runButton {
-    height: 40px;
+    height: 34px;
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 0 18px 0 14px;
+    padding: 0 10px 0 12px;
     border-radius: var(--yasgui-radius-button, 8px);
     border: none;
-    background: var(--yasgui-brand, #0563bb);
+    background: var(--yasgui-brand-fill, var(--yasgui-brand, #0563bb));
     color: var(--yasgui-on-brand, #ffffff);
     font: inherit;
-    font-size: 15px;
     font-weight: 600;
     cursor: pointer;
 
     &:hover {
-      background: var(--yasgui-brand-strong, #044a8c);
+      background: var(--yasgui-brand-fill-strong, var(--yasgui-brand-strong, #044a8c));
     }
 
     &.invalid .yasgui-icon {
@@ -427,40 +614,61 @@
     }
 
     &__shortcut {
-      font: inherit;
-      font-size: 13px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.16);
+      font-family: var(--yasgui-font-mono, monospace);
+      font-size: 11px;
       font-weight: 500;
-      opacity: 0.75;
+    }
+
+    &.running .yasgui-runButton__shortcut {
+      display: none;
     }
 
     @media (max-width: 768px) {
-      height: 38px;
       padding: 0 12px;
     }
   }
 
-  // Saved version of a managed query
+  // Saved status of a managed query
   .yasgui-versionChip {
-    height: 26px;
-    // Gives up its width (with an ellipsis; the tooltip has the details) before the bar wraps
-    flex: 1 1 56px;
-    min-width: 56px;
-    max-width: max-content;
+    height: 34px;
+    flex: 0 1 auto;
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0 10px;
-    border-radius: 999px;
-    background: var(--yasgui-brand-soft, #e3eefa);
-    color: var(--yasgui-brand-strong, #044a8c);
-    font-size: 13px;
-    font-weight: 600;
+    padding: 0 12px;
+    border-radius: var(--yasgui-radius-button, 8px);
+    background: var(--yasgui-surface-sunken, #edf1f6);
+    color: var(--yasgui-ink-muted, #56606c);
+    font-weight: 500;
     white-space: nowrap;
-    line-height: 26px;
     box-sizing: border-box;
 
+    > span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .yasgui-icon {
+      flex-shrink: 0;
+      color: var(--yasgui-success, #067647);
+    }
+
     &.dirty {
-      background: var(--yasgui-surface-sunken, #edf0f4);
       color: var(--yasgui-highlight-ink, #6e4d00);
+
+      &::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        background: var(--yasgui-highlight, #f2b300);
+      }
     }
 
     &[hidden] {
@@ -485,6 +693,11 @@
         }
       }
     }
+  }
+
+  .yasgui-editorToolbar .yasgui-insertMenu {
+    left: auto;
+    right: 0;
   }
 
   .yasgui-insertMenu {
@@ -662,20 +875,54 @@
     }
   }
 
-  // Editor: a raised card under the query bar, in the MatData look
+  // The query card: head, editor and results on one raised sheet, with no gap between them
+  .yasgui-tabPanels {
+    padding: 0 12px 12px 0;
+    box-sizing: border-box;
+
+    @media (max-width: 768px) {
+      padding: 0 8px 8px;
+    }
+  }
+
   .tabPanel {
-    .editorwrapper .yasqe {
-      margin: 0 16px;
+    &.active {
       border-radius: var(--yasgui-radius-md, 10px);
       background: var(--yasgui-surface-raised, #ffffff);
-      box-shadow: var(--yasgui-shadow-soft, 0 1px 2px rgba(28, 38, 51, 0.04));
+      box-shadow: var(--yasgui-shadow-sheet, 0 1px 3px rgba(28, 38, 51, 0.06), 0 0 0 1px rgba(28, 38, 51, 0.04));
+    }
+
+    .editorwrapper .yasqe {
+      margin: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+
+      .cm-editor {
+        border: none;
+        background: transparent;
+      }
 
       .cm-scroller {
         font-family: var(--yasgui-font-mono, monospace);
+        font-size: 13px;
+        line-height: 22px;
       }
 
-      @media (max-width: 768px) {
-        margin: 0 12px;
+      .cm-gutters {
+        padding-left: 8px;
+        border-right: none;
+        background: transparent;
+        color: var(--yasgui-ink-subtle, #6a7380);
+      }
+
+      .cm-activeLine {
+        background: var(--yasgui-surface-sunken, #edf1f6);
+      }
+
+      .cm-activeLineGutter {
+        background: transparent;
+        color: var(--yasgui-ink, #1c2633);
       }
     }
 
@@ -683,30 +930,59 @@
       background: transparent;
     }
 
-    // Results sit on the same grid as the editor
-    .yasrWrapperEl {
-      padding: 12px 16px 16px;
-      box-sizing: border-box;
+    // Separator between the editor and the results: a thin line with a grip
+    .editorwrapper .horizontalResizeWrapper {
+      position: relative;
+      height: 13px;
 
-      @media (max-width: 768px) {
-        padding: 8px 12px 12px;
+      &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 6px;
+        height: 1px;
+        background: var(--yasgui-line-soft, #edf0f4);
+      }
+
+      .horizontalResizeChip {
+        position: relative;
+        width: 32px;
+        height: 4px;
+        border-radius: 999px;
+        background-color: var(--yasgui-line-grip, #c9d2dc);
+        opacity: 1;
+      }
+
+      &:hover .horizontalResizeChip,
+      &.resizing .horizontalResizeChip {
+        background-color: var(--yasgui-brand, #0563bb);
+        opacity: 1;
       }
     }
 
+    .yasrWrapperEl {
+      padding: 0;
+    }
+
     .yasr {
-      border-radius: var(--yasgui-radius-md, 10px);
-      background: var(--yasgui-surface-raised, #ffffff);
-      box-shadow: var(--yasgui-shadow-soft, 0 1px 2px rgba(28, 38, 51, 0.04));
+      border-radius: 0 0 var(--yasgui-radius-md, 10px) var(--yasgui-radius-md, 10px);
+      background: transparent;
+      box-shadow: none;
     }
 
     &.orientation-horizontal {
       .editorwrapper .yasqe {
-        margin-right: 0;
-        margin-bottom: 16px;
+        margin: 0;
       }
 
-      .yasrWrapperEl {
-        padding: 0 16px 16px 0;
+      .yasr {
+        border-radius: 0 var(--yasgui-radius-md, 10px) var(--yasgui-radius-md, 10px) 0;
+      }
+
+      // Results header on the line of the query title
+      .yasr .yasr_header {
+        padding-top: 18px;
       }
     }
   }

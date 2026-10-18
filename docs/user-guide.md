@@ -24,12 +24,13 @@
   - [YASGUI (Main Interface)](#yasgui-main-interface)
 - [The Interface](#the-interface)
   - [Top Bar](#top-bar)
-  - [Query Bar](#query-bar)
+  - [Search](#search)
+  - [Query Card](#query-card)
   - [Endpoint Picker](#endpoint-picker)
   - [Run and Stop](#run-and-stop)
   - [Insert Menu](#insert-menu)
   - [Side Panel](#side-panel)
-  - [Version Chip](#version-chip)
+  - [Saved Status](#saved-status)
   - [Small Screens](#small-screens)
   - [Fonts and Colors](#fonts-and-colors)
 - [Features](#features)
@@ -68,6 +69,7 @@
   - [Query Editor (YASQE)](#query-editor-yasqe)
   - [Fullscreen](#fullscreen)
   - [Matgui Tabs](#matgui-tabs)
+  - [Workspace](#workspace)
   - [General Editor](#general-editor)
   - [Results Viewer (YASR)](#results-viewer-yasr)
 - [Troubleshooting](#troubleshooting)
@@ -195,7 +197,7 @@ Then access at `http://localhost:3000`
 
 1. **Select an Endpoint**: Enter a SPARQL endpoint URL in the endpoint field (or use the default)
 2. **Write a Query**: Type your SPARQL query in the editor
-3. **Execute**: Click **Run** in the query bar or press `Ctrl+Enter` (`Cmd+Enter` on a Mac)
+3. **Execute**: Click **Run** at the top of the query card or press `Ctrl+Enter` (`Cmd+Enter` on a Mac)
 4. **View Results**: Results appear in the results viewer below
 
 **Example Query:**
@@ -335,34 +337,53 @@ The container that brings YASQE and YASR together with additional functionality.
 
 ## The Interface
 
-The MatGUI window has three horizontal layers: the **top bar** with your query tabs, the **query bar** of the active tab, and the editor with the results below it (or next to it, see [Layout Orientation](#layout-orientation)). A **side panel** on the left holds your saved queries and the overview of the current endpoint.
+The MatGUI window has a **top bar** with your query tabs and the search, a **side panel** on the left with your saved queries and the overview of the current endpoint, and one **query card** for the active tab. The card holds the title of the query, the endpoint and **Run**, the editor, and the results below it (or next to it, see [Layout Orientation](#layout-orientation)).
 
 ### Top Bar
 
 From left to right:
 
-- **Panel**: opens and closes the [side panel](#side-panel)
-- **Query tabs**: one tab per query. The active tab is underlined in amber. Tabs that hold a saved (managed) query show a small dot before their name; the dot turns amber when the query has unsaved changes. Hover a tab to show its close button (×), click **+** to add a tab
+- **MatGUI**: the name of the application (sites that embed MatGUI can hide it)
+- **Query tabs**: one tab per query. The active tab is raised. Tabs that hold a saved (managed) query show a small dot before their name; the dot turns amber when the query has unsaved changes. Hover a tab to show its close button (×), click **+** to add a tab
+- **Search queries and commands** (`Ctrl+K`, or `⌘K` on a Mac): see [Search](#search)
 - **Help** (?): opens the MatGUI user guide in a new browser tab
 - **Theme** (sun / moon): switches between the light and dark theme
 - **Settings** (gear): opens the settings of the active tab
 
-### Query Bar
+### Search
 
-Each tab has its own query bar above the editor:
+Click **Search queries and commands** in the top bar, or press `Ctrl+K` (`⌘K` on a Mac), to open the search. Start typing to find:
+
+- **Queries**: the saved queries of all your workspaces, with the workspace and folder they are in. Pick one to open it in a new tab, or to go to the tab that already has it open
+- **Commands**: Run query, New tab, Insert snippet, Insert PREFIX declarations, Switch endpoint, Explore endpoint, Show saved queries, Toggle side panel, Toggle side-by-side layout, Format, Share, Save, Download, full screen editor, dark mode and the documentation. Commands with a shortcut show it at the right
+- **Settings**: every section of the settings (Request, SPARQL endpoints, Workspaces, Prefixes, Editor, Import / export, Keyboard shortcuts, About), for example type `prefixes` and pick **Settings: Prefixes**
+
+Type `>` first to search commands and settings only. Use `↑` and `↓` to move, `Enter` to open and `Esc` to close.
+
+### Query Card
+
+The head of the card shows:
 
 | Control              | What it does                                                                                     |
 | -------------------- | ------------------------------------------------------------------------------------------------ |
+| Breadcrumbs          | For a saved query: the workspace and the folders it is in. Click one to show the query browser   |
+| Title                | The name of the tab. Double-click it to rename the query. Saved queries also show their version (for example `3f9c2ab`) |
 | Endpoint picker      | Shows the label and URL of the endpoint the query runs against; click it to switch (see below)  |
+| **Saved**            | Shown for saved queries only (see [Saved Status](#saved-status))                                 |
 | **Run**              | Runs the query. Becomes **Stop** while the query runs                                            |
+
+The toolbar at the top right of the editor:
+
+| Control              | What it does                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
 | **Prefixes**         | Inserts your saved prefix declarations into the query (see [Prefix Management](#prefix-management)) |
-| **Explore endpoint** | Opens the side panel on the **Endpoint** view (see [Endpoint Overview](#endpoint-overview))     |
 | **Insert**           | Opens a menu with code snippets and a map to draw a geometry (see [Insert Menu](#insert-menu))   |
-| Version chip         | Shown for saved queries only (see [Version Chip](#version-chip))                                 |
-| Editor tools         | Save (when a workspace is configured), Share, Format and Fullscreen for the editor. On small screens they move into the **⋯** menu |
+| Editor tools         | Share, Format, Save (when a workspace is configured), Download and Fullscreen for the editor. On small screens they move into the **⋯** menu |
 | Layout toggle        | Switches between the editor above the results and side by side                                   |
 
-When the query bar gets narrow (a small window, the side-by-side layout or an open side panel), the buttons keep their icon and hide their label. Hover a button to see its name.
+When the editor gets narrow (a small window or the side-by-side layout), **Prefixes** and **Insert** keep their icon and hide their label. Hover a button to see its name.
+
+The editor and the results share the card, separated by a thin line with a grip in the middle: drag the grip to give the editor more or less room, double-click it to show the whole query.
 
 ### Endpoint Picker
 
@@ -376,7 +397,7 @@ Type a URL and press `Enter` to use an endpoint that is not in the list. Press `
 
 ### Run and Stop
 
-**Run** sits next to the endpoint picker and shows the shortcut (`Ctrl ↵`, or `⌘ ↵` on a Mac). While a query runs, the button turns into **Stop**: click it to cancel the request. When the query contains a syntax error, the play icon is replaced by an amber warning icon and the tooltip says so; you can still run the query.
+**Run** sits at the right of the card head and shows the shortcut (`Ctrl ↵`, or `⌘ ↵` on a Mac). While a query runs, the button turns into **Stop**: click it to cancel the request. When the query contains a syntax error, the play icon is replaced by an amber warning icon and the tooltip says so; you can still run the query.
 
 ### Insert Menu
 
@@ -392,41 +413,41 @@ The snippets bar above the editor, which earlier versions showed by default, is 
 
 ### Side Panel
 
-The side panel on the left has two views, selected with the tabs at its top:
+The side panel on the left has two views, selected with **Queries** and **Endpoint** at its top:
 
 - **Queries**: the query browser for your workspaces. Pick a workspace, search, open a saved query in a new tab, or save the current tab with **Save current tab**
 - **Endpoint**: the endpoint overview of the current endpoint (see [Endpoint Overview](#endpoint-overview))
 
-Open the panel with **Panel** in the top bar (it opens on the view you used last), with **Explore endpoint** in the query bar, or with `F8` (which toggles the Endpoint view).
+While the panel is closed, a narrow bar of icons stays at the left edge: **Open side panel**, then one button per view. Click a view to open the panel on it. You can also press `Ctrl+B` (`⌘B` on a Mac) to show or hide the panel, `F8` to toggle the Endpoint view, or use **Show saved queries** and **Explore endpoint** in the [search](#search).
 
 The buttons at the top right of the panel:
 
 - **Pin**: keeps the panel open while you work in the editor, also after you reload the page. An unpinned panel closes when you open a query from it, and steps aside when you click into the editor
-- **Collapse** («): shrinks the panel to a narrow bar with one button per view. Click a button to expand the panel again
-- **Close** (×): closes the panel. `Esc` closes an unpinned panel too
+- **Collapse** («): closes the panel back to the bar of icons (`Ctrl+B` does the same). `Esc` closes an unpinned panel too
 
 Drag the right edge of the panel to change its width; double-click the edge to restore the default width. The view, the width and the pinned state are remembered.
 
-### Version Chip
+### Saved Status
 
-Tabs that hold a saved (managed) query show a chip in the query bar:
+Tabs that hold a saved (managed) query show their status next to **Run**:
 
-- **Saved · 1a2b3c4** (Git workspaces) or **Saved**: the tab matches the saved version. Hover the chip to see when and by whom it was saved
-- **Unsaved changes**: you changed the query since it was last saved
+- **✓ Saved**: the tab matches the saved version. The version itself is shown next to the title. Hover the status to see the workspace and the full version
+- **Unsaved changes** (with an amber dot): you changed the query since it was last saved
 - **Read-only**: the query comes from a read-only workspace
 
 ### Small Screens
 
 On screens narrower than about 770 pixels:
 
-- The query bar keeps the endpoint picker, **Run** and **Insert**; the other actions move into the menu button (☰) at the end of the query bar: Prefixes, Explore endpoint, Saved queries, Geometry from a map, Switch theme, the layout toggle and Settings
-- The side panel opens over the editor instead of next to it
+- The card head keeps the title, the endpoint picker and **Run**; the other actions move into the menu button (☰) next to Run: Prefixes, Explore endpoint, Saved queries, Geometry from a map, Switch theme, the layout toggle and Settings. The editor toolbar keeps **Insert** and the **⋯** menu
+- **Panel** in the top bar opens the side panel, which opens over the editor instead of next to it. The bar of icons is not shown
+- The search in the top bar becomes a magnifier icon
 
 ### Fonts and Colors
 
-MatGUI uses the MatData colors: a calm blue for actions, an amber highlight for the active tab and the panel tabs, and neutral greys for surfaces and lines, in both the light and the dark theme.
+MatGUI uses the MatData colors: a calm blue for actions, amber for unsaved changes, and quiet greys for the page, with the query card raised on it, in both the light and the dark theme. The query editor colors SPARQL keywords, variables, IRIs, prefixed names and literals in the same palette.
 
-The interface prefers the **Barlow** font and the editor prefers **JetBrains Mono**. MatGUI does not download fonts by itself: if your browser or the page that embeds MatGUI provides these fonts they are used, otherwise MatGUI falls back to the standard fonts of your system. Site owners can load them, see the Developer Guide.
+The interface prefers the **Geist** font at 13 pixels and the editor prefers **JetBrains Mono**. MatGUI does not download fonts by itself: if your browser or the page that embeds MatGUI provides these fonts they are used, otherwise MatGUI falls back to the standard fonts of your system. Site owners can load them, see the Developer Guide.
 
 ---
 
@@ -449,7 +470,7 @@ MatGUI supports both light and dark themes, allowing you to customize the appear
 - Click the theme button at the right of the top bar
   - **Light Mode**: Shows a moon icon - clicking switches to dark mode
   - **Dark Mode**: Shows a sun icon - clicking switches to light mode
-- On small screens, use **Switch theme** in the query bar menu (☰)
+- On small screens, use **Switch theme** in the menu (☰) of the query card
 - Your theme preference persists across page reloads and browser sessions
 
 **Theme Details:**
@@ -516,7 +537,7 @@ MAtGUI offers two layout options to optimize screen space:
 
 **How to Change Layout:**
 
-- Click the layout toggle button at the right end of the query bar
+- Click the layout toggle button at the right end of the editor toolbar
 - The icon shows the layout you switch to: two columns (side by side) or two rows (stacked)
 - Layout preference is saved automatically
 
@@ -599,7 +620,7 @@ WHERE {
 
 ### Code Snippets
 
-Quickly insert common SPARQL patterns and query types with the **Insert** menu of the query bar (see [Insert Menu](#insert-menu)) or, when you turn it on, the code snippets bar above the editor.
+Quickly insert common SPARQL patterns and query types with the **Insert** menu of the editor toolbar (see [Insert Menu](#insert-menu)) or, when you turn it on, the code snippets bar above the editor.
 
 **Features:**
 
@@ -614,7 +635,7 @@ Quickly insert common SPARQL patterns and query types with the **Insert** menu o
 **How to Use:**
 
 1. Position your cursor where you want to insert code
-2. Click **Insert** in the query bar and pick a snippet (or click a snippet button in the snippets bar, when it is shown)
+2. Click **Insert** in the editor toolbar and pick a snippet (or click a snippet button in the snippets bar, when it is shown)
 3. The code is inserted at your cursor position
 4. Continue editing as needed
 
@@ -674,7 +695,7 @@ MatGUI includes standard prefixes like:
 
 **How to Use:**
 
-1. Click **Prefixes** in the query bar to insert all saved prefixes
+1. Click **Prefixes** in the editor toolbar to insert all saved prefixes
 2. Open Settings (gear icon in the top bar) to manage your prefix collection
 3. Enable/disable auto-capture in Settings
 
@@ -719,13 +740,13 @@ Custom endpoint configurations persist across browser sessions. You can delete e
 
 **How to Switch Endpoints:**
 
-- Click the endpoint picker in the query bar
+- Click the endpoint picker at the top of the query card
 - Click an endpoint in the **Quick switch** group
 - The endpoint change triggers the same behavior as manually entering an endpoint
 - The new endpoint is used for all subsequent queries
 - The label of the endpoint is shown in the picker, followed by its URL
 
-> Earlier versions showed these endpoints as buttons next to the endpoint field, with an overflow menu (⋯) when they did not fit. They now live in the endpoint dropdown, so the query bar stays tidy however many endpoints you add.
+> Earlier versions showed these endpoints as buttons next to the endpoint field, with an overflow menu (⋯) when they did not fit. They now live in the endpoint dropdown, so the query card stays tidy however many endpoints you add.
 
 ### Configuration Import/Export
 
@@ -830,7 +851,7 @@ Ctrl+clicking on `http://dbpedia.org/resource/European_Union` automatically quer
 
 ### Endpoint Overview
 
-Get to know an unfamiliar SPARQL endpoint while you write your queries. Click **Explore endpoint** in the query bar or press `F8` to open the **Endpoint** view of the [side panel](#side-panel), next to the editor.
+Get to know an unfamiliar SPARQL endpoint while you write your queries. Click the compass in the bar of icons at the left, press `F8`, or pick **Explore endpoint** in the [search](#search) to open the **Endpoint** view of the [side panel](#side-panel), next to the editor.
 
 **Service description and VoID**
 
@@ -910,7 +931,8 @@ Access comprehensive configuration options through the Settings modal.
 **How to Open:**
 
 - Click the settings button (gear icon) at the right of the top bar
-- Or choose **Settings** in the query bar menu (☰) on small screens
+- Or choose **Settings** in the menu (☰) of the query card on small screens
+- Or search for a section with `Ctrl+K`, for example **Settings: Prefixes**
 - **Manage endpoints** in the endpoint dropdown opens the Endpoints section directly
 
 **Settings Sections:**
@@ -2104,6 +2126,14 @@ Master Matgui with these keyboard shortcuts for faster querying.
 | ---------------------------------------- | --------------------------------------------- |
 | `Ctrl+Alt+Tab` / `Cmd+Alt+Tab`           | Switch to previously used Matgui tab          |
 | `Ctrl+Alt+Shift+Tab` / `Cmd+Alt+Shift+Tab` | Switch to next tab in recently used order   |
+
+### Workspace
+
+| Shortcut           | Action                                       |
+| ------------------ | -------------------------------------------- |
+| `Ctrl+K` / `Cmd+K` | Search saved queries, commands and settings  |
+| `Ctrl+B` / `Cmd+B` | Show or hide the side panel                  |
+| `F8`               | Show or hide the endpoint overview           |
 
 ### General Editor
 

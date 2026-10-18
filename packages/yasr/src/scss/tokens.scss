@@ -3,13 +3,20 @@
 // are fallbacks so yasr also looks right standalone or with an older MatGUI theme.
 // Plugins may use the same --yasr-ui-* shorthands inside `.yasr`.
 .yasr {
-  --yasr-ui-surface: var(--yasgui-surface, #f5f7fa);
+  --yasr-ui-surface: var(--yasgui-surface, #f1f4f8);
   --yasr-ui-raised: var(--yasgui-surface-raised, #ffffff);
-  --yasr-ui-sunken: var(--yasgui-surface-sunken, #edf0f4);
-  --yasr-ui-line: var(--yasgui-line, #e3e7ec);
+  --yasr-ui-sunken: var(--yasgui-surface-sunken, #edf1f6);
+  --yasr-ui-line: var(--yasgui-line, #dfe5ec);
   --yasr-ui-line-strong: var(--yasgui-line-strong, #808893);
   --yasr-ui-ink: var(--yasgui-ink, #1c2633);
   --yasr-ui-ink-muted: var(--yasgui-ink-muted, #56606c);
+  --yasr-ui-ink-subtle: var(--yasgui-ink-subtle, #6a7380);
+  --yasr-ui-line-soft: var(--yasgui-line-soft, #edf0f4);
+  --yasr-ui-shadow-raise: var(
+    --yasgui-shadow-raise,
+    0 0 0 1px rgba(28, 38, 51, 0.07),
+    0 1px 2px rgba(28, 38, 51, 0.06)
+  );
   --yasr-ui-brand: var(--yasgui-brand, #0563bb);
   --yasr-ui-brand-strong: var(--yasgui-brand-strong, #044a8c);
   --yasr-ui-on-brand: var(--yasgui-on-brand, #ffffff);
@@ -26,23 +33,26 @@
     0 2px 4px rgba(28, 38, 51, 0.05),
     0 12px 32px rgba(28, 38, 51, 0.08)
   );
-  --yasr-ui-font: var(--yasgui-font-family, Barlow, "Helvetica Neue", Arial, sans-serif);
+  --yasr-ui-font: var(--yasgui-font-family, Geist, system-ui, -apple-system, "Segoe UI", sans-serif);
   --yasr-ui-mono: var(--yasgui-font-mono, "JetBrains Mono", ui-monospace, monospace);
 }
 
 [data-theme="dark"] .yasr,
 .yasr[data-theme="dark"] {
-  --yasr-ui-surface: var(--yasgui-surface, #0d141c);
-  --yasr-ui-raised: var(--yasgui-surface-raised, #16202b);
-  --yasr-ui-sunken: var(--yasgui-surface-sunken, #0a1016);
-  --yasr-ui-line: var(--yasgui-line, #26323e);
+  --yasr-ui-surface: var(--yasgui-surface, #0b0e13);
+  --yasr-ui-raised: var(--yasgui-surface-raised, #141920);
+  --yasr-ui-sunken: var(--yasgui-surface-sunken, #1c222b);
+  --yasr-ui-line: var(--yasgui-line, #252d38);
   --yasr-ui-line-strong: var(--yasgui-line-strong, #6f7e8c);
-  --yasr-ui-ink: var(--yasgui-ink, #eef1ef);
-  --yasr-ui-ink-muted: var(--yasgui-ink-muted, #a3afba);
-  --yasr-ui-brand: var(--yasgui-brand, #5aa8f2);
+  --yasr-ui-ink: var(--yasgui-ink, #edeff2);
+  --yasr-ui-ink-muted: var(--yasgui-ink-muted, #b3b8bf);
+  --yasr-ui-ink-subtle: var(--yasgui-ink-subtle, #8b9199);
+  --yasr-ui-line-soft: var(--yasgui-line-soft, #1d242d);
+  --yasr-ui-shadow-raise: var(--yasgui-shadow-raise, 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.4));
+  --yasr-ui-brand: var(--yasgui-brand, #5aa6f0);
   --yasr-ui-brand-strong: var(--yasgui-brand-strong, #93c5f6);
   --yasr-ui-on-brand: var(--yasgui-on-brand, #04172b);
-  --yasr-ui-brand-soft: var(--yasgui-brand-soft, #0e2a48);
+  --yasr-ui-brand-soft: var(--yasgui-brand-soft, #13263d);
   --yasr-ui-danger: var(--yasgui-danger, #f97066);
   --yasr-ui-focus: var(--yasgui-focus, #93c5f6);
   --yasr-ui-shadow-soft: var(--yasgui-shadow-soft, 0 1px 3px rgba(0, 0, 0, 0.4));

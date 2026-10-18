@@ -22,6 +22,7 @@ import { ThemeManager, Theme } from "./ThemeManager";
 import QueryBrowser from "./queryManagement/QueryBrowser";
 import EndpointDescribePanel, { EndpointDescribeConfig } from "./endpointDescribe/EndpointDescribePanel";
 import SidePanel from "./sidePanel/SidePanel";
+import CommandPalette from "./CommandPalette";
 import "./index.scss";
 import "./themes.scss";
 import "./github-dark-theme.scss";
@@ -107,6 +108,11 @@ export interface Config<EndpointObject extends CatalogueItem = CatalogueItem> {
   /** Show the MatGUI glyph and name at the start of the top bar (default: true) */
   showBrand?: boolean;
   /**
+   * Search box for saved queries, commands and settings in the top bar, also opened with Ctrl+K / ⌘K
+   * (default: true)
+   */
+  showCommandPalette?: boolean;
+  /**
    * Layout orientation: 'vertical' (default) or 'horizontal' (side-by-side)
    * 'vertical': YASQE on top, YASR below
    * 'horizontal': YASQE on left, YASR on right
@@ -176,6 +182,8 @@ export class Yasgui extends EventEmitter {
   public endpointDescribe: EndpointDescribePanel | undefined;
   /** Left side panel hosting the query browser (Queries) and the endpoint overview (Endpoint) */
   public sidePanel: SidePanel;
+  /** Ctrl+K search for saved queries, commands and settings (unless `showCommandPalette` is false) */
+  public commandPalette: CommandPalette | undefined;
   public mainEl: HTMLDivElement;
   private recentTabIds: string[] = [];
   private navigationSnapshot: string[] | null = null;
@@ -219,6 +227,7 @@ export class Yasgui extends EventEmitter {
     this.mainEl = document.createElement("div");
     addClass(this.mainEl, "yasgui-main");
     this.sidePanel = new SidePanel(this);
+    if (this.config.showCommandPalette) this.commandPalette = new CommandPalette(this);
     this.mainEl.appendChild(this.sidePanel.getElement());
     this.mainEl.appendChild(this.tabPanelsEl);
     // An unpinned side panel moves out of the way when the user starts writing a query
@@ -543,6 +552,7 @@ export class Yasgui extends EventEmitter {
   public destroy() {
     this.removeAllListeners();
     this.endpointDescribe?.destroy();
+    this.commandPalette?.destroy();
     this.sidePanel.destroy();
     this.tabElements.destroy();
     for (const tabId in this._tabs) {

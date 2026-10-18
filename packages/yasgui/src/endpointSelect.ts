@@ -102,7 +102,7 @@ export class EndpointSelect extends EventEmitter {
 
     const leadingIcon = document.createElement("span");
     addClass(leadingIcon, "endpointPicker__icon");
-    leadingIcon.innerHTML = icon("database", 18);
+    leadingIcon.innerHTML = icon("database", 16);
     autocompleteWrapper.appendChild(leadingIcon);
 
     // Label of the endpoint (when it has one), shown before its URL
@@ -401,6 +401,13 @@ export class EndpointSelect extends EventEmitter {
   /**
    * Endpoints listed in the "Quick switch" group of the dropdown (formerly the endpoint buttons)
    */
+  /** Focus the endpoint field and show the endpoint list */
+  public open() {
+    this.inputField.focus();
+    this.inputField.select();
+    if (!this.isOpen()) this.openDropdown();
+  }
+
   public setQuickSwitch(items: QuickSwitchItem[]) {
     this.quickSwitchItems = items;
     this.renderQuickSwitch();

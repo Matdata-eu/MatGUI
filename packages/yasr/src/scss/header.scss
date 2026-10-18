@@ -5,8 +5,8 @@
 .yasr .yasr_header {
   align-items: center;
   gap: 8px 4px;
-  min-height: 52px;
-  padding: 8px 16px;
+  min-height: 44px;
+  padding: 6px 20px 8px;
   box-sizing: border-box;
   color: var(--yasr-ui-ink);
   font-family: var(--yasr-ui-font);
@@ -16,8 +16,8 @@
     flex-shrink: 0;
     margin-right: 12px;
     gap: 2px;
-    padding: 3px;
-    border-radius: var(--yasr-ui-radius-md);
+    padding: 2px;
+    border-radius: var(--yasr-ui-radius-button);
     background: var(--yasr-ui-sunken);
     max-width: 100%;
     scrollbar-width: none;
@@ -27,23 +27,23 @@
     }
 
     .yasr_btn {
-      gap: 8px;
-      height: 32px;
+      gap: 6px;
+      height: 28px;
       margin: 0;
-      padding: 0 14px;
+      padding: 0 10px;
       border: none;
       border-radius: var(--yasr-ui-radius-button);
       background: transparent;
       color: var(--yasr-ui-ink-muted);
       fill: currentColor;
       font-family: inherit;
-      font-size: 15px;
+      font-size: 12px;
       font-weight: 500;
       line-height: 1;
 
       .plugin_icon {
-        width: 16px;
-        height: 16px;
+        width: 14px;
+        height: 14px;
         margin: 0;
         flex-shrink: 0;
       }
@@ -75,18 +75,9 @@
     padding: 0;
     border-radius: 0;
     background: transparent;
-    color: var(--yasr-ui-ink-muted);
-    font-size: 15px;
+    color: var(--yasr-ui-ink-subtle, var(--yasr-ui-ink-muted));
+    font-size: 12px;
     font-variant-numeric: tabular-nums;
-
-    &::before {
-      content: "";
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--yasr-ui-brand);
-      flex-shrink: 0;
-    }
   }
 
   // Icon buttons on the right
@@ -95,15 +86,15 @@
   .yasr_fullscreenButton,
   .yasr_external_ref_btn {
     gap: 6px;
-    height: 32px;
-    min-width: 32px;
+    height: 28px;
+    min-width: 28px;
     padding: 0;
     border: none;
     border-radius: var(--yasr-ui-radius-button);
     background: transparent;
     color: var(--yasr-ui-ink-muted);
     font-family: inherit;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     text-decoration: none;
 
@@ -124,7 +115,7 @@
   }
 
   .yasr_downloadIcon {
-    padding: 0 12px;
+    padding: 0 8px;
   }
 
   @media (max-width: 768px) {

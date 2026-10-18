@@ -2,7 +2,7 @@ import Yasgui from "./";
 import TabContextMenu from "./TabContextMenu";
 import { hasClass, addClass, removeClass } from "@matdata/yasgui-utils";
 import sortablejs from "sortablejs";
-import { icon, iconButton } from "./icons";
+import { icon, iconButton, modKeyLabel } from "./icons";
 import "./TabElements.scss";
 
 export interface TabList {}
@@ -361,6 +361,8 @@ export class TabList {
       panelButton.classList.toggle("active", expanded);
     });
 
+    // On wide screens the rail of the side panel takes over from this button
+    if (this.yasgui.sidePanel) addClass(this._tabsListEl, "hasSidePanelRail");
     this._queryBrowserToggleEl.appendChild(panelButton);
     this._tabsListEl.appendChild(this._queryBrowserToggleEl);
 
@@ -419,12 +421,23 @@ export class TabList {
     addClass(actions, "yasgui-topBarActions");
     this._actionsEl = actions;
 
+    if (this.yasgui.config.showCommandPalette) {
+      const search = document.createElement("button");
+      search.type = "button";
+      search.className = "yasgui-commandSearch";
+      search.title = `Search queries, commands and settings (${modKeyLabel()}+K)`;
+      search.setAttribute("aria-label", "Search queries, commands and settings");
+      search.innerHTML = `${icon("search", 16)}<span class="yasgui-commandSearch__text">Search queries and commands</span><kbd>${modKeyLabel()} K</kbd>`;
+      search.addEventListener("click", () => this.yasgui.commandPalette?.open());
+      actions.appendChild(search);
+    }
+
     const helpUrl = this.yasgui.config.helpUrl;
     if (helpUrl) {
       const help = iconButton("help", "Help", {
         className: "yasgui-topBarButton yasgui-helpButton",
         title: "Open the documentation",
-        size: 20,
+        size: 16,
       });
       help.addEventListener("click", () => window.open(helpUrl, "_blank", "noopener,noreferrer"));
       actions.appendChild(help);
@@ -436,7 +449,7 @@ export class TabList {
       theme.className = "yasgui-topBarButton themeToggle";
       const update = () => {
         const dark = this.yasgui.getTheme() === "dark";
-        theme.innerHTML = icon(dark ? "sun" : "moon", 20);
+        theme.innerHTML = icon(dark ? "sun" : "moon", 16);
         const label = dark ? "Switch to light theme" : "Switch to dark theme";
         theme.title = label;
         theme.setAttribute("aria-label", label);
@@ -456,7 +469,7 @@ export class TabList {
 
     const settings = iconButton("settings", "Settings", {
       className: "yasgui-topBarButton yasgui-settingsButton",
-      size: 20,
+      size: 16,
     });
     settings.addEventListener("click", () => this.yasgui.getTab()?.openSettings());
     actions.appendChild(settings);
