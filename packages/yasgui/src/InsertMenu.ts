@@ -2,7 +2,7 @@ import { addClass } from "@matdata/yasgui-utils";
 import { icon } from "./icons";
 import type Tab from "./Tab";
 
-interface SnippetLike {
+export interface SnippetLike {
   label: string;
   code: string;
   group?: string;
@@ -123,12 +123,13 @@ export default class InsertMenu {
     else this.open();
   }
 
-  private getSnippets(): SnippetLike[] {
+  public getSnippets(): SnippetLike[] {
     const yasqe = this.tab.getYasqe();
     return ((yasqe?.config.snippets as SnippetLike[] | undefined) || []).filter((s) => s && s.label && s.code);
   }
 
-  private insert(snippet: SnippetLike) {
+  /** Insert a snippet at the cursor of the editor */
+  public insert(snippet: SnippetLike) {
     const yasqe = this.tab.getYasqe();
     this.close();
     if (!yasqe) return;

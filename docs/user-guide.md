@@ -355,10 +355,11 @@ From left to right:
 Click **Search queries and commands** in the top bar, or press `Ctrl+K` (`⌘K` on a Mac), to open the search. Start typing to find:
 
 - **Queries**: the saved queries of all your workspaces, with the workspace and folder they are in. Pick one to open it in a new tab, or to go to the tab that already has it open
+- **Snippets**: the code snippets of the [Insert menu](#insert-menu), found by name, group or the code they write (`filter` finds the comparison snippets). Pick one to insert it at the cursor
 - **Commands**: Run query, New tab, Insert snippet, Insert PREFIX declarations, Switch endpoint, Explore endpoint, Show saved queries, Toggle side panel, Toggle side-by-side layout, Format, Share, Save, Download, full screen editor, dark mode and the documentation. Commands with a shortcut show it at the right
 - **Settings**: every section of the settings (Request, SPARQL endpoints, Workspaces, Prefixes, Editor, Import / export, Keyboard shortcuts, About), for example type `prefixes` and pick **Settings: Prefixes**
 
-Type `>` first to search commands and settings only. Use `↑` and `↓` to move, `Enter` to open and `Esc` to close.
+Type `>` first to search commands and settings only. Snippets and settings show up once you type something. Use `↑` and `↓` to move, `Enter` to open and `Esc` to close.
 
 ### Query Card
 
