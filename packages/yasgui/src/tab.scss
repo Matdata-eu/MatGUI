@@ -971,6 +971,18 @@
       box-shadow: none;
     }
 
+    // Full screen results: below the top bar (like the full screen editor), on a solid background
+    .yasr.fullscreen {
+      top: 56px;
+      border-radius: 0;
+      background: var(--yasgui-surface-raised, #ffffff);
+
+      .yasr_header {
+        background: var(--yasgui-surface-raised, #ffffff);
+        border-bottom: 1px solid var(--yasgui-line-soft, #edf0f4);
+      }
+    }
+
     &.orientation-horizontal {
       .editorwrapper .yasqe {
         margin: 0;
