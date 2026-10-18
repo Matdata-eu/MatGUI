@@ -4,9 +4,10 @@ import { icon, IconName, modKeyLabel } from "./icons";
 import { getWorkspaceBackend } from "./queryManagement/backends/getWorkspaceBackend";
 import { listManagedQueries } from "./queryManagement/listManagedQueries";
 import { scorePaletteItem } from "./paletteSearch";
+import { displayGroupName } from "./InsertMenu";
 import "./CommandPalette.scss";
 
-type PaletteSection = "queries" | "commands" | "settings";
+type PaletteSection = "queries" | "snippets" | "commands" | "settings";
 
 export interface PaletteItem {
   section: PaletteSection;
@@ -23,10 +24,12 @@ export interface PaletteItem {
 
 const SECTION_LABELS: Record<PaletteSection, string> = {
   queries: "Queries",
+  snippets: "Snippets",
   commands: "Commands",
   settings: "Settings",
 };
 const MAX_QUERIES = 8;
+const MAX_SNIPPETS = 8;
 /** Saved queries are listed again after this long, so new and renamed queries show up */
 const QUERY_CACHE_MS = 60_000;
 
@@ -380,7 +383,24 @@ export default class CommandPalette {
     // Settings only show up when searched for, so the list starts with queries and commands
     const settings = query || commandsOnly ? pick(all.filter((item) => item.section === "settings")) : [];
     const queries = commandsOnly ? [] : pick(this.queryItems, query ? MAX_QUERIES : 5);
-    return [...queries, ...commands, ...settings];
+    // Snippets too: there are many, so they only show up when searched for
+    const snippets = query && !commandsOnly ? pick(this.getSnippetItems(), MAX_SNIPPETS) : [];
+    return [...queries, ...snippets, ...commands, ...settings];
+  }
+
+  /** The code snippets of the Insert menu; picking one inserts it at the cursor */
+  private getSnippetItems(): PaletteItem[] {
+    const tab = this.yasgui.getTab();
+    if (!tab) return [];
+    return tab.getSnippets().map((snippet) => ({
+      section: "snippets",
+      label: snippet.label,
+      detail: snippet.group ? displayGroupName(snippet.group) : undefined,
+      icon: "braces",
+      // The code too, so "filter" finds the snippets that write a FILTER
+      keywords: `snippet insert ${snippet.code}`,
+      run: () => tab.insertSnippet(snippet),
+    }));
   }
 
   private render() {

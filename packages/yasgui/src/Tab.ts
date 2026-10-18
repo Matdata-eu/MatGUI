@@ -27,7 +27,7 @@ import { getWorkspaceBackend } from "./queryManagement/backends/getWorkspaceBack
 import { asWorkspaceBackendError } from "./queryManagement/backends/errors";
 import { normalizeQueryFilename } from "./queryManagement/normalizeQueryFilename";
 import { resolveEndpointUrl } from "./urlUtils";
-import InsertMenu from "./InsertMenu";
+import InsertMenu, { SnippetLike } from "./InsertMenu";
 import { icon, iconButton, runShortcutLabel, IconName } from "./icons";
 
 export interface PersistedJsonYasr extends YasrPersistentConfig {
@@ -752,6 +752,16 @@ export class Tab extends EventEmitter {
   /** Open the Insert menu of the editor toolbar (snippets and the map widget) */
   public openInsertMenu() {
     this.insertMenu?.open();
+  }
+
+  /** The code snippets offered by the Insert menu */
+  public getSnippets(): SnippetLike[] {
+    return this.insertMenu?.getSnippets() || [];
+  }
+
+  /** Insert a code snippet at the cursor */
+  public insertSnippet(snippet: SnippetLike) {
+    this.insertMenu?.insert(snippet);
   }
 
   /** Insert the saved prefixes into the query */
