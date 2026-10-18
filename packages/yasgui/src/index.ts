@@ -208,11 +208,8 @@ export class Yasgui extends EventEmitter {
     // Set persistentConfig reference in ThemeManager so it can access CodeMirror theme preference
     this.themeManager.setPersistentConfig(this.persistentConfig);
 
-    // Load persisted showSnippetsBar if available
-    const persistedShowSnippetsBar = this.persistentConfig.getShowSnippetsBar();
-    if (persistedShowSnippetsBar !== undefined) {
-      this.config.showSnippetsBar = persistedShowSnippetsBar;
-    }
+    // The snippets bar only shows when the embedder turns it on with `showSnippetsBar: true`; the snippets
+    // are in the Insert menu and the Ctrl+K search. A value saved by the former settings checkbox is ignored.
 
     // Load persisted orientation if available
     const persistedOrientation = this.persistentConfig.getOrientation();

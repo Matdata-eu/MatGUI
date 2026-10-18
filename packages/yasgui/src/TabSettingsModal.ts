@@ -665,38 +665,6 @@ export default class TabSettingsModal {
     constructValidationSection.appendChild(constructValidationCheckboxContainer);
     constructValidationSection.appendChild(constructValidationHelp);
     container.appendChild(constructValidationSection);
-
-    // Code Snippets Bar Visibility Section
-    const snippetsBarSection = document.createElement("div");
-    addClass(snippetsBarSection, "settingsSection");
-
-    const snippetsBarCheckboxContainer = document.createElement("div");
-    addClass(snippetsBarCheckboxContainer, "checkboxContainer");
-
-    const snippetsBarCheckbox = document.createElement("input");
-    snippetsBarCheckbox.type = "checkbox";
-    snippetsBarCheckbox.id = "showSnippetsBar";
-    // Read from global config
-    const persistedValue = this.tab.yasgui.persistentConfig.getShowSnippetsBar();
-    snippetsBarCheckbox.checked =
-      persistedValue !== undefined ? persistedValue : this.tab.yasgui.config.showSnippetsBar === true;
-
-    const snippetsBarLabel = document.createElement("label");
-    snippetsBarLabel.htmlFor = "showSnippetsBar";
-    snippetsBarLabel.textContent = "Show code snippets bar";
-
-    const snippetsBarHelp = document.createElement("div");
-    snippetsBarHelp.textContent =
-      "Display the code snippets bar above the editor for quick insertion of common SPARQL patterns. The same snippets are always available from the Insert menu of the query bar.";
-    addClass(snippetsBarHelp, "settingsHelp");
-    snippetsBarHelp.style.marginTop = "5px";
-
-    snippetsBarCheckboxContainer.appendChild(snippetsBarCheckbox);
-    snippetsBarCheckboxContainer.appendChild(snippetsBarLabel);
-
-    snippetsBarSection.appendChild(snippetsBarCheckboxContainer);
-    snippetsBarSection.appendChild(snippetsBarHelp);
-    container.appendChild(snippetsBarSection);
   }
 
   private drawEndpointsSettings(container: HTMLElement) {
@@ -1716,26 +1684,6 @@ export default class TabSettingsModal {
       }
       if (constructValidationCheckbox) {
         yasqe.setCheckConstructVariables(constructValidationCheckbox.checked);
-      }
-      const snippetsBarCheckbox = document.getElementById("showSnippetsBar") as HTMLInputElement;
-      if (snippetsBarCheckbox) {
-        // Save globally to config and persistent storage
-        this.tab.yasgui.config.showSnippetsBar = snippetsBarCheckbox.checked;
-        this.tab.yasgui.persistentConfig.setShowSnippetsBar(snippetsBarCheckbox.checked);
-
-        // Apply to all tabs by updating each Yasqe instance's config and refreshing
-        this.tab.yasgui.persistentConfig.getTabs().forEach((tabId: string) => {
-          const tab = this.tab.yasgui.getTab(tabId);
-          if (tab) {
-            const tabYasqe = tab.getYasqe();
-            if (tabYasqe) {
-              // Update the individual Yasqe instance's config
-              tabYasqe.config.showSnippetsBar = snippetsBarCheckbox.checked;
-              // Refresh the snippets bar to reflect the change
-              tabYasqe.refreshSnippetsBar();
-            }
-          }
-        });
       }
       yasqe.saveQuery();
     }
