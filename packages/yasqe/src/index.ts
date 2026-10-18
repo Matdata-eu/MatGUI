@@ -6,7 +6,7 @@ import { findFirstPrefixLine as findFirstPrefixLineInDoc, foldAt, unfoldAt } fro
 import { getPrefixesFromQuery, addPrefixes, removePrefixes, Prefixes } from "./prefixUtils";
 import { getPreviousNonWsToken, getNextNonWsToken, getCompleteToken } from "./tokenUtils";
 import { Storage as YStorage } from "@matdata/yasgui-utils";
-import * as queryString from "query-string";
+import queryString from "query-string";
 import tooltip from "./tooltip";
 import { addClass, removeClass } from "@matdata/yasgui-utils";
 import * as Sparql from "./sparql";
