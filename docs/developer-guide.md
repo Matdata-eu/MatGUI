@@ -705,7 +705,7 @@ interface Config {
   endpointDescribe: EndpointDescribeConfig;
 
   // Show the snippets bar above the editor. The snippets are always available
-  // in the Insert menu of the query bar; a user's saved choice takes precedence
+  // in the Insert menu of the editor and in the Ctrl+K search
   showSnippetsBar?: boolean;  // default: false
 
   // Page opened by the help button of the top bar; false hides the button

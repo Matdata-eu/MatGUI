@@ -410,7 +410,7 @@ Type a URL and press `Enter` to use an endpoint that is not in the list. Press `
 
 Use the arrow keys to move through the menu and `Esc` to close it.
 
-The snippets bar above the editor, which earlier versions showed by default, is now hidden by default. Turn it back on with **Show code snippets bar** in Settings → Editor if you prefer one-click snippet buttons.
+You can also find a snippet with the [search](#search) (`Ctrl+K`). The snippets bar that earlier versions showed above the editor is gone, unless the site that embeds MatGUI turns it on.
 
 ### Side Panel
 
@@ -621,22 +621,21 @@ WHERE {
 
 ### Code Snippets
 
-Quickly insert common SPARQL patterns and query types with the **Insert** menu of the editor toolbar (see [Insert Menu](#insert-menu)) or, when you turn it on, the code snippets bar above the editor.
+Quickly insert common SPARQL patterns and query types with the **Insert** menu of the editor toolbar (see [Insert Menu](#insert-menu)) or the [search](#search) (`Ctrl+K`).
 
 **Features:**
 
 - **Insert menu**: All snippets in one searchable menu, grouped by their group name
-- **Snippets bar (optional)**: Hidden by default. Turn it on with **Show code snippets bar** in Settings → Editor to get one button per snippet above the editor
+- **Search**: Type part of a snippet's name, group or code in the `Ctrl+K` search and pick it
 - **Quick insertion**: Click a snippet to insert code at your cursor position
 - **Default snippets**: Includes 5 useful SPARQL snippets (SELECT, CONSTRUCT, ASK, FILTER, OPTIONAL)
 - **Dropdown grouping**: When more than 10 snippets are configured, they are grouped in dropdown menus
 - **Customizable**: Developers can configure custom snippets
-- **Visibility toggle**: Show or hide the snippets bar based on preference
 
 **How to Use:**
 
 1. Position your cursor where you want to insert code
-2. Click **Insert** in the editor toolbar and pick a snippet (or click a snippet button in the snippets bar, when it is shown)
+2. Click **Insert** in the editor toolbar and pick a snippet, or press `Ctrl+K` and search for it
 3. The code is inserted at your cursor position
 4. Continue editing as needed
 
@@ -657,7 +656,7 @@ When more than 10 snippets are configured, they are organized into dropdown menu
 
 **Configuration:**
 
-- Snippets bar visibility is saved in user preferences. It is off by default; a choice you made earlier is kept
+- The snippets bar above the editor only shows when the site that embeds MatGUI turns it on (`showSnippetsBar: true`)
 - Developers can configure custom snippets with label, code, and group properties
 - The bar is hidden automatically when no snippets are configured
 
