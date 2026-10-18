@@ -8,7 +8,7 @@
     position: relative;
   }
 
-  &.yasr--describeOpen:not(.yasr--describeOverlay) {
+  &.yasr--describeOpen:not(.yasr--describeOverlay):not(.yasr--describeFloating):not(.yasr--describeMaximized) {
     > .yasr_results,
     > .yasr_pluginToolbar,
     > .yasr_fallback_info {
@@ -72,6 +72,86 @@
     width: min(var(--yasr-describe-width), calc(100% - 24px));
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
+  }
+
+  // Handle on the left edge of the docked panel, styled like the editor split handles
+  .yasr_describe_resizer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 8px;
+    z-index: 1;
+    cursor: col-resize;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 12px;
+      bottom: 12px;
+      left: 1px;
+      width: 3px;
+      border-radius: 3px;
+      background: var(--yasr-ui-brand);
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    &:hover::after {
+      opacity: 0.4;
+    }
+
+    &.resizing::after {
+      opacity: 0.7;
+    }
+  }
+
+  &.yasr--describeOverlay,
+  &.yasr--describeFloating,
+  &.yasr--describeMaximized {
+    .yasr_describe_resizer {
+      display: none;
+    }
+  }
+
+  // Floating: a window that is moved by its top bar and resized by its corner grip
+  &.yasr--describeFloating .yasr_describe {
+    position: fixed;
+    right: auto;
+    bottom: auto;
+    z-index: 1000;
+    max-width: none;
+    resize: both;
+    box-shadow:
+      0 12px 40px rgba(13, 20, 28, 0.22),
+      0 2px 6px rgba(13, 20, 28, 0.12);
+
+    .yasr_describe_nav {
+      cursor: move;
+    }
+
+    &.yasr_describe--moving {
+      user-select: none;
+    }
+  }
+
+  // Maximized: over the whole window
+  &.yasr--describeMaximized {
+    .yasr_describe_scrim {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(13, 20, 28, 0.32);
+    }
+
+    .yasr_describe {
+      position: fixed;
+      inset: 24px;
+      width: auto;
+      max-width: none;
+      z-index: 1001;
+    }
   }
 
   .yasr_describe_nav {
@@ -448,4 +528,9 @@
   .is-copied {
     color: var(--yasr-ui-brand-strong);
   }
+}
+
+body.yasr_describe_resizingBody {
+  cursor: col-resize;
+  user-select: none;
 }

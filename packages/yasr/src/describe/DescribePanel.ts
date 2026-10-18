@@ -8,6 +8,7 @@
  * Ported from the describe modal of yasgui-table-plugin
  * (src/controls/describe-modal.ts), redesigned as a non-modal panel: it sits
  * next to the results on wide screens and overlays them on narrow ones.
+ * The docked panel can be widened, floated as a movable window, or maximized.
  */
 import type { Yasr } from "../index";
 import { DescribeHistory, DescribeHistoryEntry } from "./describeHistory";
@@ -32,6 +33,18 @@ import {
   toPrefixedName,
 } from "./resourceQuery";
 import { icon, IconName } from "./icons";
+import {
+  DescribeLayout,
+  DescribeMode,
+  DEFAULT_DOCKED_WIDTH,
+  clampDockedWidth,
+  clampFloatingRect,
+  defaultFloatingRect,
+  loadLayout,
+  saveLayout,
+} from "./describeLayout";
+
+export type { DescribeMode } from "./describeLayout";
 
 export interface DescribeOptions {
   /** Which triples to show. Defaults to `"outgoing"` (the resource is the subject). */
@@ -77,8 +90,39 @@ export class DescribePanel {
   /** Labels and types learned from earlier outgoing describes, for the title of incoming views. */
   private labelCache = new Map<string, string>();
   private typeCache = new Map<string, string[]>();
+  private layout: DescribeLayout = loadLayout();
+  private mode: DescribeMode = this.layout.mode;
+  /** Mode to go back to when leaving maximized. */
+  private restoreMode: "docked" | "floating" = this.layout.mode;
+  private resizer: HTMLElement | undefined;
+  private panelObserver: ResizeObserver | undefined;
+  private windowResizeHandler = () => this.updateLayout();
 
   constructor(private yasr: Yasr) {}
+
+  public getMode(): DescribeMode {
+    return this.mode;
+  }
+
+  /** Dock the panel next to the results, float it as a movable window, or maximize it over the page. */
+  public setMode(mode: DescribeMode): void {
+    if (mode === this.mode) return;
+    if (mode === "maximized") this.restoreMode = this.mode === "floating" ? "floating" : "docked";
+    else {
+      this.restoreMode = mode;
+      this.layout.mode = mode;
+      saveLayout(this.layout);
+    }
+    this.mode = mode;
+    if (!this.el) return;
+    this.updateLayout();
+    const entry = this.history.current();
+    if (entry) {
+      const hadFocus = this.el.contains(document.activeElement);
+      this.el.replaceChild(this.renderNav(entry), this.el.querySelector(".yasr_describe_nav")!);
+      if (hadFocus) (this.el.querySelector<HTMLElement>(".yasr_describe_modeButton") || this.el).focus();
+    }
+  }
 
   public isOpen(): boolean {
     return !!this.el;
@@ -127,9 +171,21 @@ export class DescribePanel {
     this.scrim = undefined;
     this.resizeObserver?.disconnect();
     this.resizeObserver = undefined;
+    this.panelObserver?.disconnect();
+    this.panelObserver = undefined;
+    this.resizer = undefined;
     document.removeEventListener("keydown", this.keydownHandler);
-    this.yasr.rootEl.classList.remove("yasr--describeOpen", "yasr--describeOverlay");
+    window.removeEventListener("resize", this.windowResizeHandler);
+    this.yasr.rootEl.classList.remove(
+      "yasr--describeOpen",
+      "yasr--describeOverlay",
+      "yasr--describeFloating",
+      "yasr--describeMaximized",
+    );
     this.yasr.rootEl.style.removeProperty("--yasr-describe-top");
+    this.yasr.rootEl.style.removeProperty("--yasr-describe-width");
+    // Maximized is for the current look only; the next one opens docked or floating again
+    if (this.mode === "maximized") this.mode = this.restoreMode;
     if (hadFocus || document.activeElement === document.body) {
       if (this.returnFocus && this.returnFocus.isConnected) this.returnFocus.focus();
     }
@@ -217,14 +273,19 @@ export class DescribePanel {
 
     this.yasr.rootEl.appendChild(this.scrim);
     this.yasr.rootEl.appendChild(this.el);
+    this.resizer = this.createResizer();
     this.yasr.rootEl.classList.add("yasr--describeOpen");
     document.addEventListener("keydown", this.keydownHandler);
+    window.addEventListener("resize", this.windowResizeHandler);
 
     this.updateLayout();
     if (typeof ResizeObserver !== "undefined") {
       this.resizeObserver = new ResizeObserver(() => this.updateLayout());
       this.resizeObserver.observe(this.yasr.rootEl);
       this.resizeObserver.observe(this.yasr.headerEl);
+      // A floating panel is resized with its corner grip: remember its size
+      this.panelObserver = new ResizeObserver(() => this.rememberFloatingSize());
+      this.panelObserver.observe(this.el);
     }
     // Move focus into the panel so keyboard users land on it; render() keeps it there.
     requestAnimationFrame(() => {
@@ -237,8 +298,103 @@ export class DescribePanel {
     const root = this.yasr.rootEl;
     const header = this.yasr.headerEl;
     root.style.setProperty("--yasr-describe-top", `${header.offsetTop + header.offsetHeight}px`);
-    const overlay = root.getBoundingClientRect().width < OVERLAY_BREAKPOINT;
-    root.classList.toggle("yasr--describeOverlay", overlay);
+    const rootWidth = root.getBoundingClientRect().width;
+    const docked = this.mode === "docked";
+    root.classList.toggle("yasr--describeOverlay", docked && rootWidth < OVERLAY_BREAKPOINT);
+    root.classList.toggle("yasr--describeFloating", this.mode === "floating");
+    root.classList.toggle("yasr--describeMaximized", this.mode === "maximized");
+    if (this.layout.width === DEFAULT_DOCKED_WIDTH) root.style.removeProperty("--yasr-describe-width");
+    else root.style.setProperty("--yasr-describe-width", `${clampDockedWidth(this.layout.width, rootWidth)}px`);
+
+    const style = this.el.style;
+    if (this.mode === "floating") {
+      const viewport = { width: window.innerWidth, height: window.innerHeight };
+      const rect = clampFloatingRect(this.layout.floating || defaultFloatingRect(viewport), viewport);
+      this.layout.floating = rect;
+      style.left = `${rect.x}px`;
+      style.top = `${rect.y}px`;
+      style.width = `${rect.width}px`;
+      style.height = `${rect.height}px`;
+    } else {
+      style.removeProperty("left");
+      style.removeProperty("top");
+      style.removeProperty("width");
+      style.removeProperty("height");
+    }
+  }
+
+  private rememberFloatingSize(): void {
+    if (!this.el || this.mode !== "floating" || !this.layout.floating) return;
+    const { width, height } = this.el.getBoundingClientRect();
+    if (!width || !height) return;
+    const rounded = { width: Math.round(width), height: Math.round(height) };
+    if (rounded.width === this.layout.floating.width && rounded.height === this.layout.floating.height) return;
+    this.layout.floating = { ...this.layout.floating, ...rounded };
+    saveLayout(this.layout);
+  }
+
+  /** Handle on the left edge of the docked panel; drag to change its width, double-click to reset. */
+  private createResizer(): HTMLElement {
+    const handle = document.createElement("div");
+    handle.className = "yasr_describe_resizer";
+    handle.title = "Drag to resize, double-click to reset";
+    handle.setAttribute("aria-hidden", "true");
+    handle.addEventListener("mousedown", (e) => {
+      if (e.button !== 0 || !this.el) return;
+      e.preventDefault();
+      const startX = e.clientX;
+      const startWidth = this.el.getBoundingClientRect().width;
+      const rootWidth = this.yasr.rootEl.getBoundingClientRect().width;
+      handle.classList.add("resizing");
+      document.body.classList.add("yasr_describe_resizingBody");
+      const move = (ev: MouseEvent) => {
+        this.layout.width = clampDockedWidth(startWidth + startX - ev.clientX, rootWidth);
+        this.yasr.rootEl.style.setProperty("--yasr-describe-width", `${this.layout.width}px`);
+      };
+      const up = () => {
+        handle.classList.remove("resizing");
+        document.body.classList.remove("yasr_describe_resizingBody");
+        document.removeEventListener("mousemove", move);
+        document.removeEventListener("mouseup", up);
+        saveLayout(this.layout);
+      };
+      document.addEventListener("mousemove", move);
+      document.addEventListener("mouseup", up);
+    });
+    handle.addEventListener("dblclick", () => {
+      this.layout.width = DEFAULT_DOCKED_WIDTH;
+      saveLayout(this.layout);
+      this.yasr.rootEl.style.removeProperty("--yasr-describe-width");
+    });
+    return handle;
+  }
+
+  /** Move a floating panel by dragging its top bar. */
+  private startFloatingDrag(e: MouseEvent): void {
+    if (this.mode !== "floating" || e.button !== 0 || !this.el || !this.layout.floating) return;
+    if ((e.target as HTMLElement).closest("button, a, input")) return;
+    e.preventDefault();
+    const start = { x: e.clientX, y: e.clientY, rect: { ...this.layout.floating } };
+    this.el.classList.add("yasr_describe--moving");
+    const move = (ev: MouseEvent) => {
+      if (!this.el) return;
+      const viewport = { width: window.innerWidth, height: window.innerHeight };
+      const rect = clampFloatingRect(
+        { ...start.rect, x: start.rect.x + ev.clientX - start.x, y: start.rect.y + ev.clientY - start.y },
+        viewport,
+      );
+      this.layout.floating = rect;
+      this.el.style.left = `${rect.x}px`;
+      this.el.style.top = `${rect.y}px`;
+    };
+    const up = () => {
+      this.el?.classList.remove("yasr_describe--moving");
+      document.removeEventListener("mousemove", move);
+      document.removeEventListener("mouseup", up);
+      saveLayout(this.layout);
+    };
+    document.addEventListener("mousemove", move);
+    document.addEventListener("mouseup", up);
   }
 
   private onKeydown(e: KeyboardEvent): void {
@@ -247,7 +403,10 @@ export class DescribePanel {
     const inPanel = !!target && this.el.contains(target);
     const inYasr = !!target && this.yasr.rootEl.contains(target);
     const onBody = target === document.body || target === document.documentElement;
-    if (e.key === "Escape" && (inYasr || onBody)) {
+    if (e.key === "Escape" && this.mode === "maximized" && (inYasr || onBody)) {
+      e.preventDefault();
+      this.setMode(this.restoreMode);
+    } else if (e.key === "Escape" && (inYasr || onBody)) {
       e.preventDefault();
       this.close();
     } else if (inPanel && e.altKey && e.key === "ArrowLeft" && this.history.canGoBack()) {
@@ -277,6 +436,7 @@ export class DescribePanel {
       this.renderBody(entry, prefixes),
       this.renderFooter(entry),
     );
+    if (this.resizer) el.appendChild(this.resizer);
     el.setAttribute("aria-busy", String(this.payload.state === "loading"));
     if (hadFocus && !el.contains(document.activeElement)) el.focus({ preventScroll: true });
   }
@@ -323,6 +483,33 @@ export class DescribePanel {
     if (entry.source) source.textContent = `Opened from ${entry.source}`;
     nav.appendChild(source);
 
+    const floating = this.mode === "floating" || (this.mode === "maximized" && this.restoreMode === "floating");
+    const float = floating
+      ? this.button(
+          "yasr_describe_iconButton yasr_describe_modeButton yasr_describe_dock",
+          "Dock next to the results",
+          "panel-right",
+        )
+      : this.button(
+          "yasr_describe_iconButton yasr_describe_modeButton yasr_describe_float",
+          "Float as a window",
+          "picture-in-picture",
+        );
+    float.addEventListener("click", () => this.setMode(floating ? "docked" : "floating"));
+    const maximized = this.mode === "maximized";
+    const maximize = this.button(
+      "yasr_describe_iconButton yasr_describe_modeButton yasr_describe_maximize",
+      maximized ? "Restore (Esc)" : "Maximize",
+      maximized ? "minimize" : "maximize",
+    );
+    maximize.setAttribute("aria-pressed", String(maximized));
+    maximize.addEventListener("click", () => this.setMode(maximized ? this.restoreMode : "maximized"));
+    nav.append(float, maximize);
+    nav.addEventListener("mousedown", (e) => this.startFloatingDrag(e));
+    nav.addEventListener("dblclick", (e) => {
+      if (this.mode === "floating" && !(e.target as HTMLElement).closest("button, a")) this.setMode("maximized");
+    });
+
     const close = this.button("yasr_describe_iconButton yasr_describe_close", "Close (Esc)", "x");
     close.addEventListener("click", () => this.close());
     nav.appendChild(close);
@@ -361,7 +548,12 @@ export class DescribePanel {
       types.slice(0, MAX_VISIBLE_TYPES).forEach(addPill);
       const hidden = types.slice(MAX_VISIBLE_TYPES);
       if (hidden.length) {
-        const more = this.button("yasr_describe_type yasr_describe_typeMore", `Show ${hidden.length} more types`, undefined, "…");
+        const more = this.button(
+          "yasr_describe_type yasr_describe_typeMore",
+          `Show ${hidden.length} more types`,
+          undefined,
+          "…",
+        );
         more.setAttribute("aria-label", `Show ${hidden.length} more types`);
         more.addEventListener("click", () => {
           more.remove();
