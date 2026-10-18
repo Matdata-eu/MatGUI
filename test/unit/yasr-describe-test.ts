@@ -11,6 +11,14 @@ import {
 } from "../../packages/yasr/src/describe/resourceQuery.js";
 import { parseDescribeResponse, pickLabel, pickTypes } from "../../packages/yasr/src/describe/describeParser.js";
 import { DescribeHistory } from "../../packages/yasr/src/describe/describeHistory.js";
+import {
+  clampDockedWidth,
+  clampFloatingRect,
+  defaultFloatingRect,
+  loadLayout,
+  saveLayout,
+  MIN_PANEL_WIDTH,
+} from "../../packages/yasr/src/describe/describeLayout.js";
 
 const expect = chai.expect;
 const EX = "http://example.org/";
@@ -133,6 +141,44 @@ ex:a a ex:Type ;
       expect(history.length).to.equal(1);
       history.push({ iri: "a", direction: "incoming" });
       expect(history.length).to.equal(2);
+    });
+  });
+
+  describe("panel layout", () => {
+    it("keeps the docked width between the minimum and what leaves the results visible", () => {
+      expect(clampDockedWidth(100, 1200)).to.equal(MIN_PANEL_WIDTH);
+      expect(clampDockedWidth(600, 1200)).to.equal(600);
+      expect(clampDockedWidth(1100, 1200)).to.equal(960);
+      expect(clampDockedWidth(500, 400)).to.equal(MIN_PANEL_WIDTH);
+    });
+
+    it("keeps a floating panel inside the window and grabbable", () => {
+      const viewport = { width: 1000, height: 800 };
+      expect(clampFloatingRect({ x: 5000, y: -50, width: 3000, height: 100 }, viewport)).to.deep.equal({
+        x: 920,
+        y: 0,
+        width: 984,
+        height: 240,
+      });
+      const first = defaultFloatingRect(viewport);
+      expect(first.x + first.width).to.equal(976);
+      expect(first.height).to.equal(560);
+    });
+
+    it("remembers the docked width and floating window, but not maximized", () => {
+      const store: Record<string, string> = {};
+      const storage = { getItem: (k: string) => store[k] ?? null, setItem: (k: string, v: string) => (store[k] = v) };
+      expect(loadLayout(storage)).to.deep.equal({ mode: "docked", width: 400 });
+      saveLayout({ mode: "floating", width: 520, floating: { x: 10, y: 20, width: 500, height: 400 } }, storage);
+      expect(loadLayout(storage)).to.deep.equal({
+        mode: "floating",
+        width: 520,
+        floating: { x: 10, y: 20, width: 500, height: 400 },
+      });
+      store["yasr_describeLayout"] = '{"mode":"maximized","width":"wide","floating":{"x":1}}';
+      expect(loadLayout(storage)).to.deep.equal({ mode: "docked", width: 400 });
+      store["yasr_describeLayout"] = "not json";
+      expect(loadLayout(storage)).to.deep.equal({ mode: "docked", width: 400 });
     });
   });
 });
