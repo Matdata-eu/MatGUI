@@ -3,6 +3,10 @@
   flex-direction: row;
   overflow: visible;
   min-height: 0;
+
+  &[hidden] {
+    display: none;
+  }
 }
 
 // Ctrl+K search for saved queries, commands and settings

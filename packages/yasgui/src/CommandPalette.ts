@@ -86,6 +86,12 @@ export default class CommandPalette {
   }
 
   private handleGlobalKeydown = (event: KeyboardEvent) => {
+    // Escape closes the palette wherever the focus went (the input handles it when it has the focus)
+    if (event.key === "Escape" && this.isOpen() && event.target !== this.inputEl) {
+      event.preventDefault();
+      this.close();
+      return;
+    }
     if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
     if (event.key.toLowerCase() !== "k") return;
     // Only for the Yasgui instance the user works in (or the only one on the page)
