@@ -17,6 +17,7 @@ import https from "https";
 import http from "http";
 import path from "path";
 import zlib from "zlib";
+import { fileURLToPath } from "url";
 import { StreamParser } from "n3";
 
 const DUMP_URL = "https://lov.linkeddata.es/lov.nq.gz";
@@ -172,7 +173,7 @@ async function main() {
   );
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname)) {
+if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url))) {
   main().catch((e) => {
     console.error("Could not build the LOV term list:", e.message);
     process.exit(1);
