@@ -27,8 +27,9 @@
       flex-direction: column;
       align-items: center;
       gap: 4px;
-      width: 52px;
-      padding: 4px 0 16px 12px;
+      // Same 12px on both sides, so the buttons sit as far from the card as from the window edge
+      width: 60px;
+      padding: 4px 12px 16px;
       box-sizing: border-box;
     }
 
@@ -78,7 +79,7 @@
       width: var(--yasgui-side-panel-width, 300px);
       min-width: 0;
       min-height: 0;
-      padding: 4px 12px 16px 16px;
+      padding: 4px 12px 16px;
       box-sizing: border-box;
     }
 
