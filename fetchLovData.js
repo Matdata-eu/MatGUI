@@ -18,7 +18,7 @@ import http from "http";
 import path from "path";
 import zlib from "zlib";
 import { fileURLToPath } from "url";
-import { StreamParser } from "n3";
+import readline from "readline";
 
 const DUMP_URL = "https://lov.linkeddata.es/lov.nq.gz";
 const OUTPUT_FILE = path.join("packages", "yasqe", "src", "lov-terms.json");
@@ -153,13 +153,45 @@ export function toBundle(namespaces, maxBytes = MAX_BYTES, source = DUMP_URL) {
   return bundle;
 }
 
+const TERM = String.raw`(<[^>]*>|_:\S+|"(?:[^"\\]|\\.)*"(?:@[A-Za-z0-9-]+|\^\^<[^>]*>)?)`;
+const QUAD = new RegExp(String.raw`^\s*${TERM}\s+${TERM}\s+${TERM}(?:\s+${TERM})?\s*\.\s*$`);
+
+function toTerm(token) {
+  if (token === undefined) return { termType: "DefaultGraph", value: "" };
+  if (token.startsWith("<")) return { termType: "NamedNode", value: token.slice(1, -1) };
+  if (token.startsWith("_:")) return { termType: "BlankNode", value: token.slice(2) };
+  const value = token.substring(1, token.lastIndexOf('"'));
+  try {
+    return { termType: "Literal", value: JSON.parse(`"${value}"`) };
+  } catch {
+    return { termType: "Literal", value };
+  }
+}
+
+/**
+ * Reads N-Quads line by line. The LOV dump contains some invalid lines (e.g. IRIs with spaces), which are
+ * skipped instead of aborting the whole dump.
+ */
+export async function* readQuads(input, stats = { skipped: 0 }) {
+  const lines = readline.createInterface({ input, crlfDelay: Infinity });
+  for await (const line of lines) {
+    if (!line.trim() || line.trimStart().startsWith("#")) continue;
+    const match = QUAD.exec(line);
+    if (!match) {
+      stats.skipped++;
+      continue;
+    }
+    yield { subject: toTerm(match[1]), predicate: toTerm(match[2]), object: toTerm(match[3]), graph: toTerm(match[4]) };
+  }
+}
+
 async function main() {
   const source = process.argv[2] || DUMP_URL;
   console.log(`Reading LOV dump from ${source}...`);
   const input = await openDump(source);
-  const parser = new StreamParser({ format: "N-Quads" });
-  input.pipe(parser);
-  const namespaces = await collectTerms(parser);
+  const stats = { skipped: 0 };
+  const namespaces = await collectTerms(readQuads(input, stats));
+  if (stats.skipped) console.log(`Skipped ${stats.skipped} invalid lines`);
   const bundle = toBundle(namespaces);
   const terms = bundle.namespaces.reduce(
     (count, [, , classes, properties]) =>
