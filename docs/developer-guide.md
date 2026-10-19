@@ -1019,6 +1019,38 @@ const yasqe = new Yasqe(document.getElementById('yasqe'), {
 });
 ```
 
+#### Endpoint Terms for Autocompletion
+
+The class and property autocompleters list terms used in the endpoint before the Linked Open Vocabularies suggestions. MatGUI fills them from its Endpoint overview. A standalone Yasqe (or an embedding page that wants its own source) can provide them with `endpointTerms`:
+
+```typescript
+interface EndpointTerm {
+  iri: string;
+  count?: number;      // shown next to the suggestion
+  prefix?: string;     // with namespace: insert a prefixed name and declare the prefix
+  namespace?: string;
+}
+
+const yasqe = new Yasqe(element, {
+  endpointTerms: async (yasqe, type /* "class" | "property" */) => {
+    return [{ iri: "http://data.europa.eu/949/OperationalPoint", count: 52311, prefix: "era", namespace: "http://data.europa.eu/949/" }];
+  },
+});
+```
+
+Return the terms most used first; Yasqe filters them on what the user typed and shows at most 50. Setting `yasqe.endpointTerms` in the MatGUI config replaces the Endpoint overview as the source.
+
+#### Linked Open Vocabularies Terms
+
+The LOV suggestions come from `packages/yasqe/src/lov-terms.json`, which is bundled with Yasqe: no request is made to the LOV API at runtime. The file holds the classes and properties of the most used LOV vocabularies (ranked by the number of vocabularies that use them, up to about 600 KB) and is generated from the LOV N-Quads dump:
+
+```bash
+npm run util:fetchLov                      # downloads https://lov.linkeddata.es/lov.nq.gz
+node fetchLovData.js path/to/lov.nq.gz     # or use a downloaded dump
+```
+
+The **Refresh LOV terms** GitHub workflow runs the same script monthly (or on demand) and opens a pull request when the list changed. Pass your own list with the `lovTerms` option (`{ namespaces: [[namespace, prefix, "ClassA ClassB", "propA propB"], ...] }`), or set it to `null` to leave out LOV suggestions.
+
 #### Share Configuration
 
 Configure how users can share their SPARQL queries with multiple output formats including URLs, cURL, PowerShell, and wget commands.
@@ -2018,6 +2050,10 @@ interface EndpointDescribeConfig {
 
   // Fetch the service description and VoID when the panel opens
   fetchMetadata: boolean;  // default: true
+
+  // Suggest the classes and properties used in the endpoint in the editor's autocomplete.
+  // Users can still switch this off per endpoint in the panel.
+  autocomplete: boolean;  // default: true
 }
 
 interface DescribeQuery {

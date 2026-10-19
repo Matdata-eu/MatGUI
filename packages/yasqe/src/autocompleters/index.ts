@@ -6,7 +6,7 @@ import "./show-hint.scss";
 export interface CompleterConfig {
   onInitialize?: (this: CompleterConfig, yasqe: Yasqe) => void; //allows for e.g. registering event listeners in yasqe, like the prefix autocompleter does
   isValidCompletionPosition: (yasqe: Yasqe) => boolean;
-  get: (yasqe: Yasqe, token?: AutocompletionToken) => Promise<string[]> | string[];
+  get: (yasqe: Yasqe, token?: AutocompletionToken) => Promise<Suggestion[]> | Suggestion[];
   preProcessToken?: (yasqe: Yasqe, token: Token) => AutocompletionToken;
   postProcessSuggestion?: (yasqe: Yasqe, token: AutocompletionToken, suggestedString: string) => string;
   postprocessHints?: (yasqe: Yasqe, hints: Hint[]) => Hint[];
@@ -16,6 +16,32 @@ export interface CompleterConfig {
   name: string;
 }
 const SUGGESTIONS_LIMIT = 100;
+/**
+ * A suggestion with presentation details. `text` is inserted as is: `postProcessSuggestion` is not applied.
+ */
+export interface RichSuggestion {
+  text: string;
+  displayText?: string;
+  /** Shown next to the suggestion, e.g. a usage count */
+  detail?: string;
+  /** Groups suggestions under a heading in the hint list */
+  section?: string | { name: string; rank?: number };
+  /** Prefixes (prefix → namespace) to declare when the suggestion is picked */
+  prefixes?: { [prefix: string]: string };
+}
+export type Suggestion = string | RichSuggestion;
+/**
+ * A class or property used in the endpoint, e.g. from the Endpoint overview of Yasgui.
+ * Provided through the `endpointTerms` config option.
+ */
+export interface EndpointTerm {
+  iri: string;
+  /** Number of instances (classes) or triples (properties) */
+  count?: number;
+  /** Prefix and namespace with which the IRI can be shortened */
+  prefix?: string;
+  namespace?: string;
+}
 export interface AutocompletionToken extends Token {
   autocompletionString?: string;
   tokenPrefix?: string;
@@ -45,12 +71,12 @@ export class Completer extends EventEmitter {
   /**
    * Store bulk completion in local storage, and populates the trie
    */
-  private storeBulkCompletions(completions: string[]) {
+  private storeBulkCompletions(completions: Suggestion[]) {
     if (!completions || !(completions instanceof Array)) return;
     // store array as trie
     this.trie = new Trie();
     for (const c of completions) {
-      this.trie.insert(c);
+      if (typeof c === "string") this.trie.insert(c);
     }
 
     // store in localstorage as well
@@ -62,7 +88,7 @@ export class Completer extends EventEmitter {
   /**
    * Get completion list from `get` function
    */
-  public getCompletions(token?: AutocompletionToken): Promise<string[]> {
+  public getCompletions(token?: AutocompletionToken): Promise<Suggestion[]> {
     if (!this.config.get) return Promise.resolve([]);
 
     //No token, so probably getting as bulk
@@ -80,7 +106,11 @@ export class Completer extends EventEmitter {
     if (this.trie) return Promise.resolve(take(this.trie.autoComplete(stringToAutocomplete), SUGGESTIONS_LIMIT));
     if (this.config.get instanceof Array)
       return Promise.resolve(
-        this.config.get.filter((possibleMatch) => possibleMatch.indexOf(stringToAutocomplete) === 0),
+        this.config.get.filter(
+          (possibleMatch) =>
+            (typeof possibleMatch === "string" ? possibleMatch : possibleMatch.text).indexOf(stringToAutocomplete) ===
+            0,
+        ),
       );
     //assuming it's a function
     return Promise.resolve(this.config.get(this.yasqe, token)).then((r) => {
@@ -131,8 +161,10 @@ export class Completer extends EventEmitter {
     return true;
   }
 
-  private getHint(autocompletionToken: AutocompletionToken, suggestedString: string): Hint {
-    if (this.config.postProcessSuggestion) {
+  private getHint(autocompletionToken: AutocompletionToken, suggestion: Suggestion): Hint {
+    const rich = typeof suggestion === "string" ? undefined : suggestion;
+    let suggestedString = typeof suggestion === "string" ? suggestion : suggestion.text;
+    if (!rich && this.config.postProcessSuggestion) {
       suggestedString = this.config.postProcessSuggestion(this.yasqe, autocompletionToken, suggestedString);
     }
     let from: Position | undefined;
@@ -152,10 +184,25 @@ export class Completer extends EventEmitter {
     }
     return {
       text: suggestedString,
-      displayText: suggestedString,
+      displayText: rich?.displayText || suggestedString,
+      detail: rich?.detail,
+      section: rich?.section,
+      prefixes: rich?.prefixes,
       from: from,
       to: to,
     };
+  }
+
+  /**
+   * The token to complete. Whitespace is not replaced: completing there inserts at the cursor.
+   */
+  private getTokenToComplete(): AutocompletionToken {
+    const token: AutocompletionToken = this.yasqe.getCompleteToken();
+    if (token.string.trim().length === 0) {
+      const ch = this.yasqe.getDoc().getCursor().ch;
+      return { ...token, string: "", start: ch, end: ch };
+    }
+    return token;
   }
 
   private getHints(token: AutocompletionToken): Promise<Hint[]> {
@@ -201,9 +248,9 @@ export class Completer extends EventEmitter {
    */
   public getHintFn(): HintFn {
     const getHints: HintFn = () => {
-      return this.getHints(this.yasqe.getCompleteToken()).then((list): HintList => {
+      return this.getHints(this.getTokenToComplete()).then((list): HintList => {
         const cur = this.yasqe.getDoc().getCursor();
-        const token: AutocompletionToken = this.yasqe.getCompleteToken();
+        const token: AutocompletionToken = this.getTokenToComplete();
         return {
           list: list,
           from: <Position>{
@@ -287,11 +334,15 @@ export const fetchFromLov = (
   //   .append($(yutils.svg.getElement(require("../imgs.js").loader)).addClass("notificationLoader"));
   // doRequests();
 
+  // LOV API v2 (https://lov.linkeddata.es/dataset/api): "autocomplete" completes (prefixed) IRIs,
+  // "search" is a full text search, which suits a plain word better
+  const q = (token.autocompletionString || token.string).trim();
+  const isIri = q.indexOf(":") >= 0;
   const params = new URLSearchParams();
-  if (token.autocompletionString) params.append("q", token.autocompletionString);
+  params.append("q", q);
   params.append("page_size", "50");
   params.append("type", type);
-  const url = `${reqProtocol}lov.linkeddata.es/dataset/lov/api/v2/autocomplete/terms?${params.toString()}`;
+  const url = `${reqProtocol}lov.linkeddata.es/dataset/api/v2/term/${isIri ? "autocomplete" : "search"}?${params.toString()}`;
   return fetch(url)
     .then((response) => {
       if (!response.ok) {
@@ -300,16 +351,114 @@ export const fetchFromLov = (
       return response.json();
     })
     .then((result) => {
-      if (result.results) {
-        return result.results.map((r: any) => r.uri[0]);
-      }
-      return [];
+      if (!result || !Array.isArray(result.results)) return [];
+      // Depending on the API version, `uri` is a string or a list with one string
+      return result.results
+        .map((r: any) => (Array.isArray(r?.uri) ? r.uri[0] : r?.uri))
+        .filter((uri: unknown): uri is string => typeof uri === "string" && uri.length > 0);
     })
     .catch((_e) => {
       yasqe.showNotification(notificationKey, "Failed fetching suggestions");
     });
 };
 
+const ENDPOINT_SUGGESTIONS_LIMIT = 50;
+export const ENDPOINT_SECTION = { name: "Used in this endpoint", rank: 0 };
+export const LOV_SECTION = { name: "Linked Open Vocabularies", rank: 1 };
+
+function localName(iri: string): string {
+  return iri.substring(Math.max(iri.lastIndexOf("#"), iri.lastIndexOf("/")) + 1);
+}
+
+/**
+ * Selects the endpoint terms that match what the user typed, keeping their (usage) order.
+ * Matches the full IRI, the prefixed name, or, when the user typed a plain word, the local name.
+ */
+export function matchEndpointTerms(terms: EndpointTerm[], token?: AutocompletionToken): EndpointTerm[] {
+  const typed = (token?.string || "").trim().toLowerCase();
+  const iriString = (token?.autocompletionString || "").trim().toLowerCase();
+  if (!typed) return terms.slice(0, ENDPOINT_SUGGESTIONS_LIMIT);
+  const plainWord = typed.indexOf(":") < 0 && typed.indexOf("<") < 0;
+  return terms
+    .filter((term) => {
+      const iri = term.iri.toLowerCase();
+      if (iriString && iri.indexOf(iriString) === 0) return true;
+      if (term.prefix !== undefined && term.namespace && term.iri.indexOf(term.namespace) === 0) {
+        const prefixed = `${term.prefix}:${term.iri.substring(term.namespace.length)}`.toLowerCase();
+        if (prefixed.indexOf(typed) === 0) return true;
+      }
+      return plainWord && localName(iri).indexOf(typed) >= 0;
+    })
+    .slice(0, ENDPOINT_SUGGESTIONS_LIMIT);
+}
+
+/**
+ * The text to insert for an endpoint term: a prefixed name when possible (declaring the prefix when it is missing),
+ * otherwise the full IRI.
+ */
+export function endpointTermToSuggestion(
+  yasqe: Yasqe,
+  token: AutocompletionToken,
+  term: EndpointTerm,
+  section: RichSuggestion["section"] = ENDPOINT_SECTION,
+): RichSuggestion {
+  const detail = term.count !== undefined ? term.count.toLocaleString() : undefined;
+  // The user is typing with a declared prefix that fits this IRI: keep using it
+  if (token.tokenPrefix && token.tokenPrefixUri && term.iri.indexOf(token.tokenPrefixUri) === 0) {
+    const text = token.tokenPrefix + term.iri.substring(token.tokenPrefixUri.length);
+    return { text, detail, section };
+  }
+  if (term.prefix !== undefined && term.namespace && term.iri.indexOf(term.namespace) === 0) {
+    const declared = yasqe.getPrefixesFromQuery()[term.prefix];
+    if (declared === undefined || declared === term.namespace) {
+      const text = `${term.prefix}:${term.iri.substring(term.namespace.length)}`;
+      return {
+        text,
+        detail,
+        section,
+        prefixes: declared === undefined ? { [term.prefix]: term.namespace } : undefined,
+      };
+    }
+  }
+  return { text: `<${term.iri}>`, detail, section };
+}
+
+/**
+ * Class and property suggestions: the terms used in the current endpoint (see the `endpointTerms` config option),
+ * followed by the matching terms of Linked Open Vocabularies (bundled, see the `lovTerms` config option).
+ */
+export const fetchIriSuggestions = async (
+  yasqe: Yasqe,
+  type: "class" | "property",
+  token?: AutocompletionToken,
+): Promise<Suggestion[]> => {
+  let endpointTerms: EndpointTerm[] = [];
+  if (yasqe.config.endpointTerms) {
+    try {
+      endpointTerms = (await yasqe.config.endpointTerms(yasqe, type)) || [];
+    } catch (e) {
+      console.warn("Could not get endpoint terms for autocompletion", e);
+    }
+  }
+  if (!token) return [];
+  const matched = matchEndpointTerms(endpointTerms, token);
+  const known = new Set(matched.map((term) => term.iri));
+  const lovTerms = yasqe.config.lovTerms === undefined ? bundledLovTerms : yasqe.config.lovTerms;
+  const fromLov = lovTerms ? searchLov(lovTerms, type, token) : [];
+  const suggestions = [
+    ...matched.map((term) => endpointTermToSuggestion(yasqe, token, term)),
+    ...fromLov
+      .filter((term) => !known.has(term.iri))
+      .map((term) => endpointTermToSuggestion(yasqe, token, term, LOV_SECTION)),
+  ];
+  if (suggestions.length === 0 && !token.string.trim()) {
+    yasqe.showNotification("autocomplete_" + type, "Nothing to autocomplete yet!");
+  }
+  return suggestions;
+};
+
+import { bundledLovTerms, searchLov } from "./lov";
+export type { LovTerms } from "./lov";
 import variableCompleter from "./variables";
 import prefixCompleter from "./prefixes";
 import propertyCompleter from "./properties";

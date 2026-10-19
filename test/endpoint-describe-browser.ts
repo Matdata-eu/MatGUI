@@ -189,6 +189,40 @@ describe("Endpoint describe panel", function () {
     expect(value).to.contain("foaf:Person");
   });
 
+  async function autocompleteAtEnd(query: string) {
+    await page.evaluate((query) => {
+      const yasqe = (window as any).yasgui.getTab().getYasqe();
+      yasqe.setValue(query);
+      yasqe.focus();
+      yasqe.getDoc().setCursor({ line: 0, ch: query.length });
+    }, query);
+    await page.keyboard.down("Control");
+    await page.keyboard.press("Space");
+    await page.keyboard.up("Control");
+  }
+
+  it("suggests the classes of the endpoint in autocompletion", async function () {
+    await autocompleteAtEnd("SELECT * WHERE { ?s a ");
+    await page.waitForSelector(".CodeMirror-hints li", { timeout: 8000 });
+    const options = await page.$$eval(".CodeMirror-hints li", (items) => items.map((li) => li.textContent || ""));
+    expect(options[0]).to.contain("foaf:Person").and.to.contain("12,345");
+    // Fetched once with a background query, then cached
+    expect(queries.filter((q) => /\?instance a \?class/.test(q))).to.have.length(1);
+    await page.keyboard.press("Enter");
+    const value = await page.evaluate(() => (window as any).yasgui.getTab().getQuery());
+    expect(value).to.contain("PREFIX foaf: <http://xmlns.com/foaf/0.1/>");
+    expect(value).to.contain("?s a foaf:Person");
+  });
+
+  it("doesn't query an endpoint for which autocompletion is switched off", async function () {
+    await openPanel();
+    await page.click(".yasgui-describe__autocomplete input");
+    await autocompleteAtEnd("SELECT * WHERE { ?s a ");
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(await page.$(".CodeMirror-hints li")).to.equal(null);
+    expect(queries.filter((q) => /\?instance a \?class/.test(q))).to.have.length(0);
+  });
+
   it("follows the endpoint of the active tab", async function () {
     await openPanel();
     await runClasses();

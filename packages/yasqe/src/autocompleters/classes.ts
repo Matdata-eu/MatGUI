@@ -6,7 +6,7 @@ var conf: Autocompleter.CompleterConfig = {
     // invalidPosition: yasqe.autocompleters.notifications.hide
   },
   get: function (yasqe, token) {
-    return Autocompleter.fetchFromLov(yasqe, "class", token);
+    return Autocompleter.fetchIriSuggestions(yasqe, "class", token);
   },
   isValidCompletionPosition: function (yasqe) {
     const token = yasqe.getCompleteToken();

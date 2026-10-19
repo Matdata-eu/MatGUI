@@ -2389,6 +2389,7 @@ export class Yasqe extends EditorFacade {
 
 export type { TokenizerState, Position, Token } from "./editor/tokenizerRunner";
 export type { Hint, HintList, HintFn } from "./editor/autocompletion";
+export type { EndpointTerm, Suggestion, RichSuggestion, LovTerms } from "./autocompleters";
 export type { EditorOptions } from "./editor/facade";
 export type { ExtraKeys } from "./editor/keymap";
 
@@ -2494,6 +2495,21 @@ export interface Config extends Omit<EditorOptions, "extraKeys"> {
   showMapButton: boolean; // Show a button to create WKT literals from map input
   checkConstructVariables: boolean; // Check for undefined variables in CONSTRUCT queries
   snippets: Snippet[]; // Code snippets to show in the snippets bar
+  /**
+   * Classes and properties used in the endpoint, suggested by the class and property autocompleters
+   * before the suggestions of Linked Open Vocabularies. Yasgui fills this from its Endpoint overview.
+   */
+  endpointTerms:
+    | ((
+        yasqe: Yasqe,
+        type: "class" | "property",
+      ) => Promise<Autocompleter.EndpointTerm[] | undefined> | Autocompleter.EndpointTerm[] | undefined)
+    | undefined;
+  /**
+   * Linked Open Vocabularies terms suggested by the class and property autocompleters. Undefined (default) uses the
+   * list bundled with Yasqe (refreshed with `npm run util:fetchLov`); null leaves out LOV suggestions.
+   */
+  lovTerms: Autocompleter.LovTerms | null | undefined;
   showSnippetsBar: boolean; // Show the snippets bar
   /**
    * Content of the tooltip shown when hovering an IRI or prefixed name (undefined: no tooltip). Yasgui uses

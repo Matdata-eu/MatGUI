@@ -11,6 +11,7 @@
     "dev": "better-npm-run dev",
     "util:lint": "cross-env ESLINT_STRICT=true eslint --ext .tsx --ext .ts \"packages/*/src/**/*.{ts,tsx}\" \"packages/*/test/**/*.{ts,tsx}\" \"packages/*/grammar/**/*.{ts,tsx}\"",
     "util:validateTs": "tsc -p ./tsconfig-validate.json --noEmit",
+    "util:fetchLov": "node fetchLovData.js",
     "util:prettify": "prettier --parser typescript --write \"packages/*/src/**/*.{ts,tsx}\" && prettier --parser css --write \"packages/*/src/**/*.{css,scss}\"",
     "pretest": "node --input-type=module -e \"import fs from 'fs'; if (!fs.existsSync('./build') || fs.readdirSync('./build').length === 0) { console.log('Run \\\"npm run build\\\" before running a test'); process.exit(1); }\"",
     "test:dev": "cross-env TEST_ON_DEV_BUILD=1 npm run test",

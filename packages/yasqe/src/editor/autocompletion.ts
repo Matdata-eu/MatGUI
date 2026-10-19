@@ -35,6 +35,12 @@ export interface Hint {
   className?: string;
   /** Kept for API compatibility; custom rendering is not supported by the CM6 bridge. */
   render?: (el: HTMLElement, self: Hint, data: any) => void;
+  /** Shown next to the hint, e.g. a usage count */
+  detail?: string;
+  /** Groups hints under a heading */
+  section?: string | { name: string; rank?: number };
+  /** Prefixes (prefix → namespace) that are declared at the top of the query when the hint is picked */
+  prefixes?: { [prefix: string]: string };
   from?: Position;
   to?: Position;
 }
@@ -58,15 +64,24 @@ function hintToCompletion(hint: Hint): Completion {
   return {
     label: hint.displayText || hint.text,
     type: hint.className,
+    detail: hint.detail,
+    section: hint.section,
     apply: (view: EditorView, _completion: Completion, from: number, to: number) => {
       const doc = view.state.doc;
       const replaceFrom = hint.from ? posToOffset(doc, hint.from) : from;
       const replaceTo = hint.to ? posToOffset(doc, hint.to) : to;
       const start = Math.min(replaceFrom, replaceTo);
       const end = Math.max(replaceFrom, replaceTo);
+      // Missing prefixes are declared in the same transaction, so the prefix autocompleter doesn't add its own
+      const prefixLines = Object.entries(hint.prefixes || {})
+        .map(([prefix, namespace]) => `PREFIX ${prefix}: <${namespace}>\n`)
+        .join("");
       view.dispatch({
-        changes: { from: start, to: end, insert: hint.text },
-        selection: { anchor: start + hint.text.length },
+        changes: [
+          ...(prefixLines ? [{ from: 0, insert: prefixLines }] : []),
+          { from: start, to: end, insert: hint.text },
+        ],
+        selection: { anchor: start + prefixLines.length + hint.text.length },
         userEvent: "input.complete",
       });
     },

@@ -1389,6 +1389,10 @@ export class Tab extends EventEmitter {
       // Yasgui shows its own Run button in the query bar
       showQueryButton: false,
       showMapButton: false,
+      // Classes and properties used in the endpoint, from the Endpoint overview
+      endpointTerms:
+        this.yasgui.config.yasqe?.endpointTerms ??
+        ((_yasqe, type) => this.yasgui.endpointDescribe?.getAutocompleteTerms(this, type)),
       iriHover:
         this.yasgui.config.yasqe.iriHover ??
         (this.yasgui.config.iriHover === false

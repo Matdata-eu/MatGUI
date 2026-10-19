@@ -44,6 +44,7 @@
   - [Endpoint Quick Switch](#endpoint-quick-switch)
   - [Configuration Import/Export](#configuration-importexport)
   - [URI Explorer](#uri-explorer)
+  - [Class and Property Autocomplete](#class-and-property-autocomplete)
   - [IRI Hover Info](#iri-hover-info)
   - [Endpoint Overview](#endpoint-overview)
   - [Query Tabs](#query-tabs)
@@ -303,7 +304,7 @@ The query editor where you write and edit SPARQL queries.
 **Features:**
 
 - Syntax highlighting for SPARQL
-- Auto-completion for keywords, prefixes, and URIs
+- Auto-completion for keywords, prefixes, and URIs (classes and properties used in the endpoint come first, see [Class and Property Autocomplete](#class-and-property-autocomplete))
 - Line numbers and code folding
 - Query validation with error highlighting
 - Find and replace functionality
@@ -852,6 +853,29 @@ Alternatively, use `Ctrl`+`Shift` and click on the URI to executes a CONSTRUCT q
 **Example:**
 Ctrl+clicking on `http://dbpedia.org/resource/European_Union` automatically queries for all triples where the European Union is the subject of.
 
+### Class and Property Autocomplete
+
+Press `Ctrl+Space` after `a` (or `rdf:type`) to get class suggestions, or in the position of a property to get property suggestions. MatGUI suggests:
+
+1. **Used in this endpoint**: the classes and properties the endpoint of the tab actually uses, most used first, with the number of instances (classes) or triples (properties) next to them. This also covers vocabularies that are not registered anywhere, such as railML 3, the ERA ontology or your own ontologies.
+2. **Linked Open Vocabularies**: matching classes and properties of the most used vocabularies in [LOV](https://lov.linkeddata.es/dataset/lov/). MatGUI ships this list, so no request is made to LOV while you type. Terms that the endpoint already suggested are not repeated, and a term is inserted as a prefixed name with its `PREFIX` when LOV knows the vocabulary's preferred prefix.
+
+Without typing anything, the endpoint's most used terms are listed. While you type, a suggestion matches on its full IRI, its prefixed name (`era:Op`) or, when you type a plain word (`Operat`), on any part of its local name.
+
+Picking a suggestion inserts a prefixed name when MatGUI knows a prefix for it, and adds the missing `PREFIX` declaration to your query, just like clicking an IRI in the [Endpoint Overview](#endpoint-overview). When you are typing with a prefix that your query declares, that prefix is used.
+
+**Where the suggestions come from**
+
+MatGUI reuses what the endpoint overview already knows about the endpoint, so in most cases no extra query is needed:
+
+- The class and property partitions of the endpoint's VoID description.
+- The results of the **Classes** and **Properties** overview queries, when they hold the complete list.
+- Otherwise MatGUI runs one limited query in the background (the 200 most used classes or properties) the first time you ask for suggestions, with the endpoint and authentication settings of the tab. The result is remembered per endpoint like the other overview results; use **Run again** on the overview's Classes or Properties query to refresh what is suggested. When this query fails or times out, it is not retried for an hour.
+
+**Switching it off for an endpoint**
+
+Counting all properties of a very large public endpoint is expensive. Open the [Endpoint Overview](#endpoint-overview) for that endpoint and clear **Suggest this endpoint's classes and properties in autocomplete**: MatGUI then neither queries the endpoint nor shows its terms, and only the Linked Open Vocabularies suggestions remain. The choice is remembered per endpoint.
+
 ### IRI Hover Info
 
 Rest the mouse on an IRI or prefixed name in the query editor (for example `era:solNature`) to see what it means, without running anything or losing your results. After a short moment a tooltip shows:
@@ -901,6 +925,7 @@ The panel contains predefined queries, grouped in categories:
 - Public endpoints limit how many (expensive) queries you can run. When an endpoint answers that you are sending too many requests, wait a moment before running more queries. Errors of the endpoint are shown below the query (e.g. "estimated execution time exceeds the limit").
 - Describe queries run in the background with the endpoint and authentication settings of the current tab. They do not change your query or the results view. The default and named graphs configured for the tab are not applied, so the whole endpoint is described.
 - Click an IRI in the results to insert it into your query. MatGUI uses a prefixed name when it knows the prefix and adds the missing `PREFIX` declaration.
+- The classes and properties the overview knows are also suggested in the editor's autocomplete. The **Suggest this endpoint's classes and properties in autocomplete** checkbox at the top of the panel switches this off for the current endpoint (see [Class and Property Autocomplete](#class-and-property-autocomplete)).
 - Click the **Open query in a new tab** button next to a query to open it in a new tab, to adapt it further.
 
 **Remembered results**
@@ -2405,7 +2430,7 @@ The proxy solves this by:
 2. **Wait for Typing Pause**: Autocomplete appears after a brief delay
 3. **Position Cursor Correctly**: Autocomplete context-dependent (prefixes, keywords, etc.)
 4. **Manually Trigger**: Press `Ctrl+Space` to force autocomplete
-5. **LOV ontology description**: The implementation uses https://lov.linkeddata.es/dataset/lov/ to retrieve classes and predicates from ontologies. If the ontology that you use cannot be found here, then the autocomplete will not work.
+5. **Classes and properties**: Suggestions come from the endpoint of the tab and from a list of the most used vocabularies in LOV that ships with MatGUI. Rarely used vocabularies are not in that list. If your ontology is not in it, the endpoint suggestions still cover the terms the endpoint uses, unless they are switched off for that endpoint in the Endpoint overview, or the background query failed (it is retried after an hour; running the Classes or Properties overview query also fills the suggestions). See [Class and Property Autocomplete](#class-and-property-autocomplete).
 
 #### Lost Queries
 

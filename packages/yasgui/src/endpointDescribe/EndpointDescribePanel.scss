@@ -153,6 +153,18 @@
       font-size: 13px;
     }
 
+    &__autocomplete {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+      cursor: pointer;
+
+      input {
+        margin: 0;
+      }
+    }
+
     &__card {
       border: 1px solid var(--yasgui-border-color, #e0e0e0);
       border-radius: 6px;
