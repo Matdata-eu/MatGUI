@@ -396,12 +396,17 @@ export function matchEndpointTerms(terms: EndpointTerm[], token?: Autocompletion
  * The text to insert for an endpoint term: a prefixed name when possible (declaring the prefix when it is missing),
  * otherwise the full IRI.
  */
-export function endpointTermToSuggestion(yasqe: Yasqe, token: AutocompletionToken, term: EndpointTerm): RichSuggestion {
+export function endpointTermToSuggestion(
+  yasqe: Yasqe,
+  token: AutocompletionToken,
+  term: EndpointTerm,
+  section: RichSuggestion["section"] = ENDPOINT_SECTION,
+): RichSuggestion {
   const detail = term.count !== undefined ? term.count.toLocaleString() : undefined;
   // The user is typing with a declared prefix that fits this IRI: keep using it
   if (token.tokenPrefix && token.tokenPrefixUri && term.iri.indexOf(token.tokenPrefixUri) === 0) {
     const text = token.tokenPrefix + term.iri.substring(token.tokenPrefixUri.length);
-    return { text, detail, section: ENDPOINT_SECTION };
+    return { text, detail, section };
   }
   if (term.prefix !== undefined && term.namespace && term.iri.indexOf(term.namespace) === 0) {
     const declared = yasqe.getPrefixesFromQuery()[term.prefix];
@@ -410,17 +415,17 @@ export function endpointTermToSuggestion(yasqe: Yasqe, token: AutocompletionToke
       return {
         text,
         detail,
-        section: ENDPOINT_SECTION,
+        section,
         prefixes: declared === undefined ? { [term.prefix]: term.namespace } : undefined,
       };
     }
   }
-  return { text: `<${term.iri}>`, detail, section: ENDPOINT_SECTION };
+  return { text: `<${term.iri}>`, detail, section };
 }
 
 /**
  * Class and property suggestions: the terms used in the current endpoint (see the `endpointTerms` config option),
- * followed by the suggestions of Linked Open Vocabularies.
+ * followed by the matching terms of Linked Open Vocabularies (bundled, see the `lovTerms` config option).
  */
 export const fetchIriSuggestions = async (
   yasqe: Yasqe,
@@ -435,20 +440,25 @@ export const fetchIriSuggestions = async (
       console.warn("Could not get endpoint terms for autocompletion", e);
     }
   }
-  const matched = token ? matchEndpointTerms(endpointTerms, token) : [];
-  const fromEndpoint = matched.map((term) => endpointTermToSuggestion(yasqe, token!, term));
-  const hasInput = !!token && !!token.string && token.string.trim().length > 0;
-  // Without input, LOV has nothing to search for: the endpoint's most used terms are shown instead
-  if (!hasInput && fromEndpoint.length > 0) return fromEndpoint;
-  const fromLov = (await fetchFromLov(yasqe, type, token)) || [];
-  if (fromEndpoint.length === 0) return fromLov;
+  if (!token) return [];
+  const matched = matchEndpointTerms(endpointTerms, token);
   const known = new Set(matched.map((term) => term.iri));
-  const lovSuggestions: Suggestion[] = fromLov
-    .filter((iri) => !known.has(iri))
-    .map((iri) => ({ text: postprocessIriCompletion(yasqe, token!, iri), section: LOV_SECTION }));
-  return [...fromEndpoint, ...lovSuggestions];
+  const lovTerms = yasqe.config.lovTerms === undefined ? bundledLovTerms : yasqe.config.lovTerms;
+  const fromLov = lovTerms ? searchLov(lovTerms, type, token) : [];
+  const suggestions = [
+    ...matched.map((term) => endpointTermToSuggestion(yasqe, token, term)),
+    ...fromLov
+      .filter((term) => !known.has(term.iri))
+      .map((term) => endpointTermToSuggestion(yasqe, token, term, LOV_SECTION)),
+  ];
+  if (suggestions.length === 0 && !token.string.trim()) {
+    yasqe.showNotification("autocomplete_" + type, "Nothing to autocomplete yet!");
+  }
+  return suggestions;
 };
 
+import { bundledLovTerms, searchLov } from "./lov";
+export type { LovTerms } from "./lov";
 import variableCompleter from "./variables";
 import prefixCompleter from "./prefixes";
 import propertyCompleter from "./properties";

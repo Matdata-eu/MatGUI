@@ -780,7 +780,7 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#> select
   describe("Endpoint term autocompletion", function () {
     beforeEach(async function () {
       await page.evaluate(() => {
-        // Use the real class and property autocompleters, with a fake endpoint and a fake LOV
+        // Use the real class and property autocompleters, with a fake endpoint and fake LOV terms
         window.yasqe.disableCompleter("class-local");
         window.yasqe.disableCompleter("property-local");
         window.yasqe.config.endpointTerms = (_yasqe, type) =>
@@ -808,20 +808,17 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#> select
                   namespace: "http://data.europa.eu/949/",
                 },
               ];
-        const originalFetch = window.fetch;
+        // Bundled LOV terms (no requests to LOV are made)
+        window.yasqe.config.lovTerms = {
+          namespaces: [
+            ["http://data.europa.eu/949/", "era", "OperationalPoint", ""],
+            ["http://example.org/lov#", "lov", "OperationMode Thing", "operates"],
+          ],
+        };
         (window as any).lovRequests = 0;
+        const originalFetch = window.fetch;
         window.fetch = ((input: any, init?: any) => {
-          if (String(input).indexOf("lov.linkeddata.es") >= 0) {
-            (window as any).lovRequests++;
-            (window as any).lovUrl = String(input);
-            const body = {
-              results: [
-                { uri: ["http://data.europa.eu/949/OperationalPoint"] },
-                { uri: ["http://example.org/lov#OperationMode"] },
-              ],
-            };
-            return Promise.resolve(new Response(JSON.stringify(body), { status: 200 }));
-          }
+          if (String(input).indexOf("lov.linkeddata.es") >= 0) (window as any).lovRequests++;
           return originalFetch(input, init);
         }) as typeof fetch;
         return Promise.all([window.yasqe.enableCompleter("class"), window.yasqe.enableCompleter("property")]);
@@ -872,12 +869,18 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#> select
       expect(options[0]).to.contain("era:OperationalPoint");
       expect(options[1]).to.contain("<http://example.org/onto#Operator>");
       // The LOV duplicate of era:OperationalPoint is dropped
-      expect(options[2]).to.contain("<http://example.org/lov#OperationMode>");
+      expect(options[2]).to.contain("lov:OperationMode");
       expect(await getSections()).to.deep.equal(["Used in this endpoint", "Linked Open Vocabularies"]);
-      // A plain word goes to LOV's full text search
-      expect(await page.evaluate(() => (window as any).lovUrl)).to.contain(
-        "lov.linkeddata.es/dataset/api/v2/term/search?q=Operat&",
-      );
+      expect(await page.evaluate(() => (window as any).lovRequests)).to.equal(0);
+    });
+
+    it("Should insert a LOV term with its prefix", async function () {
+      await focusAtEnd("select * where { ?x lov:op");
+      await issueAutocompletionKeyCombination();
+      expect(await waitForAutocompletionPopup()).to.equal(1);
+      await page.keyboard.press("Enter");
+      const value = await page.evaluate(() => window.yasqe.getValue());
+      expect(value).to.equal("PREFIX lov: <http://example.org/lov#>\nselect * where { ?x lov:operates");
     });
 
     it("Should keep using a prefix declared in the query", async function () {
@@ -885,10 +888,6 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#> select
       await issueAutocompletionKeyCombination();
       await waitForAutocompletionPopup();
       expect((await getOptions())[0]).to.contain("e:length");
-      // An IRI goes to LOV's autocompletion, expanded with the declared prefix
-      expect(await page.evaluate(() => (window as any).lovUrl)).to.contain(
-        "lov.linkeddata.es/dataset/api/v2/term/autocomplete?q=http%3A%2F%2Fdata.europa.eu%2F949%2Flen&",
-      );
       await page.keyboard.press("Enter");
       const value = await page.evaluate(() => window.yasqe.getValue());
       expect(value).to.equal("PREFIX e: <http://data.europa.eu/949/> select * where { ?x e:length");

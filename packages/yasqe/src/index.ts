@@ -2389,7 +2389,7 @@ export class Yasqe extends EditorFacade {
 
 export type { TokenizerState, Position, Token } from "./editor/tokenizerRunner";
 export type { Hint, HintList, HintFn } from "./editor/autocompletion";
-export type { EndpointTerm, Suggestion, RichSuggestion } from "./autocompleters";
+export type { EndpointTerm, Suggestion, RichSuggestion, LovTerms } from "./autocompleters";
 export type { EditorOptions } from "./editor/facade";
 export type { ExtraKeys } from "./editor/keymap";
 
@@ -2505,6 +2505,11 @@ export interface Config extends Omit<EditorOptions, "extraKeys"> {
         type: "class" | "property",
       ) => Promise<Autocompleter.EndpointTerm[] | undefined> | Autocompleter.EndpointTerm[] | undefined)
     | undefined;
+  /**
+   * Linked Open Vocabularies terms suggested by the class and property autocompleters. Undefined (default) uses the
+   * list bundled with Yasqe (refreshed with `npm run util:fetchLov`); null leaves out LOV suggestions.
+   */
+  lovTerms: Autocompleter.LovTerms | null | undefined;
   showSnippetsBar: boolean; // Show the snippets bar
   /**
    * Content of the tooltip shown when hovering an IRI or prefixed name (undefined: no tooltip). Yasgui uses

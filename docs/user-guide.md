@@ -858,7 +858,7 @@ Ctrl+clicking on `http://dbpedia.org/resource/European_Union` automatically quer
 Press `Ctrl+Space` after `a` (or `rdf:type`) to get class suggestions, or in the position of a property to get property suggestions. MatGUI suggests:
 
 1. **Used in this endpoint**: the classes and properties the endpoint of the tab actually uses, most used first, with the number of instances (classes) or triples (properties) next to them. This also covers vocabularies that are not registered anywhere, such as railML 3, the ERA ontology or your own ontologies.
-2. **Linked Open Vocabularies**: matching terms from [LOV](https://lov.linkeddata.es/dataset/lov/), as before. Terms that the endpoint already suggested are not repeated.
+2. **Linked Open Vocabularies**: matching classes and properties of the most used vocabularies in [LOV](https://lov.linkeddata.es/dataset/lov/). MatGUI ships this list, so no request is made to LOV while you type. Terms that the endpoint already suggested are not repeated, and a term is inserted as a prefixed name with its `PREFIX` when LOV knows the vocabulary's preferred prefix.
 
 Without typing anything, the endpoint's most used terms are listed. While you type, a suggestion matches on its full IRI, its prefixed name (`era:Op`) or, when you type a plain word (`Operat`), on any part of its local name.
 
@@ -2430,7 +2430,7 @@ The proxy solves this by:
 2. **Wait for Typing Pause**: Autocomplete appears after a brief delay
 3. **Position Cursor Correctly**: Autocomplete context-dependent (prefixes, keywords, etc.)
 4. **Manually Trigger**: Press `Ctrl+Space` to force autocomplete
-5. **Classes and properties**: Suggestions come from the endpoint of the tab and from https://lov.linkeddata.es/dataset/lov/. If your ontology is not in LOV, the endpoint suggestions still cover the terms the endpoint uses, unless they are switched off for that endpoint in the Endpoint overview, or the background query failed (it is retried after an hour; running the Classes or Properties overview query also fills the suggestions). See [Class and Property Autocomplete](#class-and-property-autocomplete).
+5. **Classes and properties**: Suggestions come from the endpoint of the tab and from a list of the most used vocabularies in LOV that ships with MatGUI. Rarely used vocabularies are not in that list. If your ontology is not in it, the endpoint suggestions still cover the terms the endpoint uses, unless they are switched off for that endpoint in the Endpoint overview, or the background query failed (it is retried after an hour; running the Classes or Properties overview query also fills the suggestions). See [Class and Property Autocomplete](#class-and-property-autocomplete).
 
 #### Lost Queries
 
