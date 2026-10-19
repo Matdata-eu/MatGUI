@@ -6,8 +6,9 @@
  *
  * Downloads the LOV N-Quads dump (the catalogue plus the latest version of every vocabulary), keeps the
  * classes and properties per namespace, ranks the namespaces by how many vocabularies use them, and keeps
- * the most used ones until the file reaches MAX_BYTES. The result is written to
- * packages/yasqe/src/lov-terms.json, which is committed and bundled.
+ * the most used ones until the file reaches MAX_BYTES. The namespaces of ALWAYS_INCLUDED come first, whatever
+ * their rank or size; their terms can also be read from the vocabulary itself, for vocabularies that are
+ * missing from the dump. The result is written to packages/yasqe/src/lov-terms.json, which is committed and bundled.
  *
  * Usage: node fetchLovData.js [path-or-url of lov.nq or lov.nq.gz]
  */
@@ -19,11 +20,28 @@ import path from "path";
 import zlib from "zlib";
 import { fileURLToPath } from "url";
 import readline from "readline";
+import { StreamParser } from "n3";
 
 const DUMP_URL = "https://lov.linkeddata.es/lov.nq.gz";
 const OUTPUT_FILE = path.join("packages", "yasqe", "src", "lov-terms.json");
 /** Size budget of the bundled file */
 const MAX_BYTES = 600_000;
+
+/**
+ * Namespaces that are always bundled, first, regardless of their popularity and of the size budget.
+ * `prefix` overrides the prefix from LOV. `sources` are RDF files (Turtle, N-Triples...) of the vocabulary whose
+ * classes and properties in the namespace are added to those of the dump, e.g. when LOV lacks the vocabulary.
+ */
+export const ALWAYS_INCLUDED = [
+  {
+    // ERA ontology: LOV lists it, but the dump has no graph for it
+    namespace: "http://data.europa.eu/949/",
+    prefix: "era",
+    sources: [
+      "https://gitlab.com/era-europa-eu/public/interoperable-data-programme/era-ontology/era-ontology/-/raw/main/ontology.ttl",
+    ],
+  },
+];
 
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 const VANN = "http://purl.org/vocab/vann/";
@@ -137,16 +155,40 @@ export async function collectTerms(quads) {
 }
 
 /**
- * The bundled format: namespaces most used first, as [namespace, prefix, classes, properties].
- * Namespaces are added until the serialized file would exceed maxBytes.
+ * Adds the terms of the always included namespaces to the namespaces of the dump: the configured prefix, and
+ * the classes and properties of extraTerms (namespaces collected from their sources).
  */
-export function toBundle(namespaces, maxBytes = MAX_BYTES, source = DUMP_URL) {
+export function addAlwaysIncluded(namespaces, alwaysIncluded = ALWAYS_INCLUDED, extraTerms = []) {
+  const result = namespaces.map((ns) => ({ ...ns }));
+  for (const { namespace, prefix } of alwaysIncluded) {
+    let ns = result.find((ns) => ns.namespace === namespace);
+    if (!ns) result.push((ns = { namespace, classes: [], properties: [], usedBy: 0 }));
+    if (prefix) ns.prefix = prefix;
+    for (const extra of extraTerms.filter((extra) => extra.namespace === namespace)) {
+      ns.classes = Array.from(new Set([...ns.classes, ...extra.classes])).sort();
+      ns.properties = Array.from(new Set([...ns.properties, ...extra.properties])).sort();
+    }
+  }
+  return result.filter((ns) => ns.classes.length || ns.properties.length);
+}
+
+/**
+ * The bundled format: the always included namespaces, then the others most used first, as
+ * [namespace, prefix, classes, properties]. Namespaces are added until the serialized file would exceed maxBytes,
+ * except the always included ones, which are added regardless.
+ */
+export function toBundle(namespaces, maxBytes = MAX_BYTES, source = DUMP_URL, alwaysIncluded = ALWAYS_INCLUDED) {
   const bundle = { source, generated: new Date().toISOString().substring(0, 10), namespaces: [] };
   let size = JSON.stringify(bundle).length;
-  for (const ns of namespaces) {
+  const always = alwaysIncluded.map(({ namespace }) => namespace);
+  const ordered = [
+    ...always.map((namespace) => namespaces.find((ns) => ns.namespace === namespace)).filter(Boolean),
+    ...namespaces.filter((ns) => always.indexOf(ns.namespace) < 0),
+  ];
+  for (const ns of ordered) {
     const entry = [ns.namespace, ns.prefix || "", ns.classes.join(" "), ns.properties.join(" ")];
     const entrySize = JSON.stringify(entry).length + 1;
-    if (size + entrySize > maxBytes) continue;
+    if (size + entrySize > maxBytes && always.indexOf(ns.namespace) < 0) continue;
     bundle.namespaces.push(entry);
     size += entrySize;
   }
@@ -185,6 +227,26 @@ export async function* readQuads(input, stats = { skipped: 0 }) {
   }
 }
 
+/** The terms of the always included namespaces, read from their sources */
+async function collectExtraTerms(alwaysIncluded = ALWAYS_INCLUDED) {
+  const extraTerms = [];
+  for (const { namespace, sources } of alwaysIncluded) {
+    for (const source of sources || []) {
+      try {
+        const input = /^https?:\/\//.test(source) ? await openUrl(source) : fs.createReadStream(source);
+        const parser = new StreamParser({ baseIRI: source });
+        const terms = (await collectTerms(input.pipe(parser))).filter((ns) => ns.namespace === namespace);
+        const count = terms.reduce((count, ns) => count + ns.classes.length + ns.properties.length, 0);
+        console.log(`Read ${count} terms of ${namespace} from ${source}`);
+        extraTerms.push(...terms);
+      } catch (e) {
+        console.warn(`Could not read ${source}: ${e.message}`);
+      }
+    }
+  }
+  return extraTerms;
+}
+
 async function main() {
   const source = process.argv[2] || DUMP_URL;
   console.log(`Reading LOV dump from ${source}...`);
@@ -192,7 +254,7 @@ async function main() {
   const stats = { skipped: 0 };
   const namespaces = await collectTerms(readQuads(input, stats));
   if (stats.skipped) console.log(`Skipped ${stats.skipped} invalid lines`);
-  const bundle = toBundle(namespaces);
+  const bundle = toBundle(addAlwaysIncluded(namespaces, ALWAYS_INCLUDED, await collectExtraTerms()));
   const terms = bundle.namespaces.reduce(
     (count, [, , classes, properties]) =>
       count + (classes ? classes.split(" ").length : 0) + (properties ? properties.split(" ").length : 0),
