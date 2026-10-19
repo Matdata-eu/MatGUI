@@ -44,6 +44,7 @@
   - [Endpoint Quick Switch](#endpoint-quick-switch)
   - [Configuration Import/Export](#configuration-importexport)
   - [URI Explorer](#uri-explorer)
+  - [IRI Hover Info](#iri-hover-info)
   - [Endpoint Overview](#endpoint-overview)
   - [Query Tabs](#query-tabs)
   - [Settings Modal](#settings-modal)
@@ -851,6 +852,21 @@ Alternatively, use `Ctrl`+`Shift` and click on the URI to executes a CONSTRUCT q
 **Example:**
 Ctrl+clicking on `http://dbpedia.org/resource/European_Union` automatically queries for all triples where the European Union is the subject of.
 
+### IRI Hover Info
+
+Rest the mouse on an IRI or prefixed name in the query editor (for example `era:solNature`) to see what it means, without running anything or losing your results. After a short moment a tooltip shows:
+
+- the label (`rdfs:label` or `skos:prefLabel`), in your browser's language when the endpoint has it, otherwise in English,
+- the full IRI, when you hovered a prefixed name,
+- the description (`rdfs:comment` or `skos:definition`), shortened when it is long,
+- the type, and for properties the domain and range, shortened with the prefixes of your query.
+
+The information is fetched with a small query on the endpoint of the tab, using its authentication and request settings, and is remembered per endpoint and IRI, so hovering the same IRI again is instant. When the endpoint doesn't describe the IRI, MatGUI looks it up in [LOV (Linked Open Vocabularies)](https://lov.linkeddata.es), which knows most published vocabularies; the tooltip then says "Description from LOV".
+
+Prefixed names whose prefix isn't declared in the query get no tooltip. The tooltip also reminds you that Ctrl+click and Ctrl+Shift+click open the [URI Explorer](#uri-explorer).
+
+To switch it off, untick **Show IRI information on hover** in **Settings → Editor**.
+
 ### Endpoint Overview
 
 Get to know an unfamiliar SPARQL endpoint while you write your queries. Click the compass in the bar of icons at the left, press `F8`, or pick **Explore endpoint** in the [search](#search) to open the **Endpoint** view of the [side panel](#side-panel), next to the editor.
@@ -972,6 +988,7 @@ Access comprehensive configuration options through the Settings modal.
 - Select CodeMirror theme for dark mode
 - Switch between the Default and GitHub Dark editor themes in the Settings → Editor tab
 - Includes custom "GitHub Dark" theme matching GitHub's dark default colors
+- Show IRI information on hover (see [IRI Hover Info](#iri-hover-info))
 
 All settings are saved automatically to local storage.
 

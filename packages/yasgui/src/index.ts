@@ -128,6 +128,16 @@ export interface Config<EndpointObject extends CatalogueItem = CatalogueItem> {
    */
   helpUrl?: string | false;
   /**
+   * Show the label, description and type of an IRI when hovering it in the query editor, fetched from the
+   * endpoint of the tab (default: true). Users can switch it off in the editor settings.
+   */
+  iriHover?: boolean;
+  /**
+   * Look up vocabulary terms in LOV (Linked Open Vocabularies) when the endpoint doesn't describe them
+   * (default: true)
+   */
+  iriHoverLovFallback?: boolean;
+  /**
    * "Describe endpoint" panel: service description, VoID and overview queries of the current endpoint
    */
   endpointDescribe: EndpointDescribeConfig;

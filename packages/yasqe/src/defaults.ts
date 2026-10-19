@@ -133,6 +133,8 @@ SELECT * WHERE {
     showFormatButton: true,
     showMapButton: true,
     checkConstructVariables: true,
+    iriHover: undefined,
+    iriHoverDelay: 500,
     snippets: [
       {
         label: "SELECT",
