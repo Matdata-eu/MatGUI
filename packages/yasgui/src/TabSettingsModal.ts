@@ -665,6 +665,37 @@ export default class TabSettingsModal {
     constructValidationSection.appendChild(constructValidationCheckboxContainer);
     constructValidationSection.appendChild(constructValidationHelp);
     container.appendChild(constructValidationSection);
+
+    // IRI hover info Section (not shown when the embedding page switched the feature off)
+    if (this.tab.yasgui.config.iriHover !== false) {
+      const iriHoverSection = document.createElement("div");
+      addClass(iriHoverSection, "settingsSection");
+
+      const iriHoverCheckboxContainer = document.createElement("div");
+      addClass(iriHoverCheckboxContainer, "checkboxContainer");
+
+      const iriHoverCheckbox = document.createElement("input");
+      iriHoverCheckbox.type = "checkbox";
+      iriHoverCheckbox.id = "iriHoverEnabled";
+      iriHoverCheckbox.checked = this.tab.yasgui.persistentConfig.getIriHoverEnabled();
+
+      const iriHoverLabel = document.createElement("label");
+      iriHoverLabel.htmlFor = "iriHoverEnabled";
+      iriHoverLabel.textContent = "Show IRI information on hover";
+
+      const iriHoverHelp = document.createElement("div");
+      iriHoverHelp.textContent =
+        "When hovering an IRI or prefixed name, show its label, description and type, fetched from the endpoint.";
+      addClass(iriHoverHelp, "settingsHelp");
+      iriHoverHelp.style.marginTop = "5px";
+
+      iriHoverCheckboxContainer.appendChild(iriHoverCheckbox);
+      iriHoverCheckboxContainer.appendChild(iriHoverLabel);
+
+      iriHoverSection.appendChild(iriHoverCheckboxContainer);
+      iriHoverSection.appendChild(iriHoverHelp);
+      container.appendChild(iriHoverSection);
+    }
   }
 
   private drawEndpointsSettings(container: HTMLElement) {
@@ -1648,6 +1679,7 @@ export default class TabSettingsModal {
       const formatterSelect = document.getElementById("formatterTypeSelect") as HTMLSelectElement;
       const autoformatCheckbox = document.getElementById("autoformatOnQuery") as HTMLInputElement;
       const constructValidationCheckbox = document.getElementById("checkConstructVariables") as HTMLInputElement;
+      const iriHoverCheckbox = document.getElementById("iriHoverEnabled") as HTMLInputElement | null;
 
       // Save CodeMirror themes for both light and dark modes
       if (codeMirrorThemeLightSelect) {
@@ -1684,6 +1716,9 @@ export default class TabSettingsModal {
       }
       if (constructValidationCheckbox) {
         yasqe.setCheckConstructVariables(constructValidationCheckbox.checked);
+      }
+      if (iriHoverCheckbox) {
+        this.tab.yasgui.persistentConfig.setIriHoverEnabled(iriHoverCheckbox.checked);
       }
       yasqe.saveQuery();
     }

@@ -18,6 +18,7 @@ export interface PersistedJson {
   theme?: "light" | "dark";
   orientation?: "vertical" | "horizontal";
   showSnippetsBar?: boolean;
+  iriHoverEnabled?: boolean; // Show info when hovering an IRI in the editor (default: true)
   disabledDevButtons?: string[]; // Endpoints of developer-configured buttons that are disabled by user
   codeMirrorThemeLight?: string; // User-selected CodeMirror theme for light mode
   codeMirrorThemeDark?: string; // User-selected CodeMirror theme for dark mode
@@ -189,6 +190,15 @@ export default class PersistentConfig {
 
   public setShowSnippetsBar(show: boolean) {
     this.persistedJson.showSnippetsBar = show;
+    this.toStorage();
+  }
+
+  public getIriHoverEnabled(): boolean {
+    return this.persistedJson.iriHoverEnabled !== false;
+  }
+
+  public setIriHoverEnabled(enabled: boolean) {
+    this.persistedJson.iriHoverEnabled = enabled;
     this.toStorage();
   }
 

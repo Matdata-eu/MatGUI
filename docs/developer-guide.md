@@ -708,6 +708,13 @@ interface Config {
   // in the Insert menu of the editor and in the Ctrl+K search
   showSnippetsBar?: boolean;  // default: false
 
+  // Tooltip with the label, description and type of an IRI hovered in the editor,
+  // fetched from the tab's endpoint. Users can also switch it off in Settings → Editor
+  iriHover?: boolean;  // default: true
+
+  // Look up IRIs the endpoint doesn't describe in LOV (lov.linkeddata.es)
+  iriHoverLovFallback?: boolean;  // default: true
+
   // Page opened by the help button of the top bar; false hides the button
   helpUrl?: string | false;  // default: 'https://matgui-doc.matdata.eu/docs/user-guide'
 }
@@ -875,6 +882,11 @@ interface YasqeConfig {
   // Code snippets
   snippets: Snippet[];           // default: 5 SPARQL snippets
   showSnippetsBar: boolean;      // default: true (standalone Yasqe)
+
+  // Tooltip content for an IRI or prefixed name hovered in the editor (Yasgui sets this to
+  // show its label, description and type). Return nothing to show no tooltip.
+  iriHover: ((yasqe: Yasqe, iri: IriAtPosition) => HTMLElement | null | undefined) | undefined;
+  iriHoverDelay: number;         // default: 500 (ms)
 }
 ```
 
