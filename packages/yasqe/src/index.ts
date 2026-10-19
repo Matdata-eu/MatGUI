@@ -21,6 +21,8 @@ import type { Position, Token, TokenizerState } from "./editor/tokenizerRunner";
 import type { ExtraKeys } from "./editor/keymap";
 import type { HintFn, HintList } from "./editor/autocompletion";
 import { isCompletionActive, openCompletion, hideCompletion } from "./editor/autocompletion";
+import { iriHover, IriAtPosition, IriHoverFn } from "./editor/iriHover";
+export type { IriAtPosition, IriHoverFn } from "./editor/iriHover";
 import { YasqeAjaxConfig } from "./sparql";
 import { spfmt } from "@matdata/sparql-formatter";
 import * as L from "leaflet";
@@ -184,6 +186,7 @@ export class Yasqe extends EditorFacade {
       }
     }
     this.config.autocompleters.forEach((c) => this.enableCompleter(c).then(() => {}, console.warn));
+    this.addExtension(iriHover(this, this.config.iriHoverDelay));
     if (this.config.consumeShareLink) {
       this.config.consumeShareLink(this);
       //and: add a hash listener!
@@ -2198,6 +2201,44 @@ export class Yasqe extends EditorFacade {
   public getPrefixesFromQuery(): Prefixes {
     return getPrefixesFromQuery(this);
   }
+  /**
+   * The IRI or prefixed name at a position, with prefixed names expanded using the prefixes of the query.
+   * Returns undefined when there is no IRI there (e.g. a variable, literal or blank node).
+   */
+  public getIriAt(pos: Position): IriAtPosition | undefined {
+    const token = this.getTokenAt(pos);
+    if (!token || !token.type) return undefined;
+    let start = token.start;
+    let end = token.end;
+    // The tokenizer splits a prefixed name ("prefix:local") in a prefix token (string-2) and a local name token
+    // (string), which is also the type of string literals
+    if (token.type === "string-2" && token.string.endsWith(":")) {
+      const next = this.getTokenAt({ line: pos.line, ch: token.end + 1 });
+      if (next && next.type === "string" && next.start === token.end) end = next.end;
+    } else if (token.type === "string" && token.start > 0) {
+      const prev = this.getTokenAt({ line: pos.line, ch: token.start });
+      if (!prev || prev.type !== "string-2" || !prev.string.endsWith(":") || prev.end !== token.start) return undefined;
+      start = prev.start;
+    } else if (token.type !== "variable-3" && token.type !== "string-2") {
+      return undefined;
+    }
+    const text = this.getDoc().getLine(pos.line).slice(start, end);
+    if (text.startsWith("<") && text.endsWith(">")) {
+      return { iri: text.slice(1, -1), text, expanded: true, line: pos.line, start, end };
+    }
+    const match = /^([^:\s]*):(.*)$/.exec(text);
+    // "_:" is a blank node label, not a prefixed name
+    if (!match || match[1] === "_") return undefined;
+    const namespace = this.getPrefixesFromQuery()[match[1]];
+    return {
+      iri: namespace !== undefined ? namespace + match[2] : text,
+      text,
+      expanded: namespace !== undefined,
+      line: pos.line,
+      start,
+      end,
+    };
+  }
   public addPrefixes(prefixes: string | Prefixes): void {
     return addPrefixes(this, prefixes);
   }
@@ -2465,6 +2506,12 @@ export interface Config extends Omit<EditorOptions, "extraKeys"> {
       ) => Promise<Autocompleter.EndpointTerm[] | undefined> | Autocompleter.EndpointTerm[] | undefined)
     | undefined;
   showSnippetsBar: boolean; // Show the snippets bar
+  /**
+   * Content of the tooltip shown when hovering an IRI or prefixed name (undefined: no tooltip). Yasgui uses
+   * this to show the label, description and type of the IRI.
+   */
+  iriHover: IriHoverFn | undefined;
+  iriHoverDelay: number; // Milliseconds the mouse rests on an IRI before the tooltip opens
 }
 export interface PersistentConfig {
   query: string;

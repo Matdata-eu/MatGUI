@@ -134,6 +134,8 @@ SELECT * WHERE {
     showMapButton: true,
     checkConstructVariables: true,
     endpointTerms: undefined,
+    iriHover: undefined,
+    iriHoverDelay: 500,
     snippets: [
       {
         label: "SELECT",

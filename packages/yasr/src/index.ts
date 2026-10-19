@@ -10,6 +10,8 @@ import { DescribePanel } from "./describe/DescribePanel";
 import type { DescribeOptions } from "./describe/DescribePanel";
 import type { DescribeDirection } from "./describe/resourceQuery";
 import { icon, type IconName } from "./describe/icons";
+import { getDefaultViewFromQuery, resolveViewToPlugin } from "./defaultView";
+export { getDefaultViewFromQuery, resolveViewToPlugin } from "./defaultView";
 
 import "./main.scss";
 import "./scss/tokens.scss";
@@ -354,6 +356,30 @@ export class Yasr extends EventEmitter {
     this.emit("change", this);
     this.updatePluginSelectors();
     this.draw();
+  }
+
+  /**
+   * Select the plugin that a `#defaultView:<name>` comment in `query` asks for, without
+   * drawing: call it before [[setResponse]] so the next draw uses that plugin. When the
+   * plugin can't render the results, yasr falls back as usual.
+   *
+   * @returns the selected plugin name, or `undefined` when the query names no known view.
+   */
+  public selectPluginFromQuery(query: string | undefined): string | undefined {
+    const view = getDefaultViewFromQuery(query);
+    if (!view) return undefined;
+    const pluginName = resolveViewToPlugin(view, this.plugins);
+    if (!pluginName) {
+      console.warn(`Query asks for view "${view}", but no matching plugin is registered in yasr.`);
+      return undefined;
+    }
+    if (this.selectedPlugin !== pluginName) {
+      this.selectedPlugin = pluginName;
+      this.storeConfig();
+      this.emit("change", this);
+      this.updatePluginSelectors();
+    }
+    return pluginName;
   }
   private pluginSelectorsEl!: HTMLUListElement;
   drawPluginSelectors() {

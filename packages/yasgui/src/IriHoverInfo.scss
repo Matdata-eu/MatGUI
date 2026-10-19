@@ -1,0 +1,78 @@
+// Tooltip shown when hovering an IRI in the query editor (see IriHoverInfo.ts).
+// CodeMirror puts the `.yasqe_iriHover` section that Yasqe creates in a `.cm-tooltip-hover` host;
+// Yasgui renders the `.yasgui-iriHover` content.
+.cm-tooltip.cm-tooltip-hover:has(> .yasqe_iriHover) {
+  background: var(--yasgui-surface-raised, #fff);
+  color: var(--yasgui-ink-body, #3a4552);
+  border: 1px solid var(--yasgui-line, #dfe5ec);
+  border-radius: var(--yasgui-radius-sm, 6px);
+  box-shadow: var(--yasgui-shadow-raised, 0 12px 32px rgba(28, 38, 51, 0.08));
+  margin-top: 4px;
+}
+
+.yasgui-iriHover {
+  max-width: 420px;
+  padding: 8px 10px;
+  font-family: var(--yasgui-font-family, system-ui, sans-serif);
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: normal;
+
+  &__label {
+    color: var(--yasgui-ink, #1c2633);
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  &__lang {
+    margin-left: 6px;
+    color: var(--yasgui-ink-subtle, #6a7380);
+    font-weight: normal;
+    font-size: 11px;
+  }
+
+  &__iri {
+    color: var(--yasgui-ink-muted, #56606c);
+    font-family: var(--yasgui-font-mono, monospace);
+    font-size: 11.5px;
+    word-break: break-all;
+  }
+
+  &__details {
+    margin-top: 4px;
+  }
+
+  &__comment {
+    margin-bottom: 4px;
+  }
+
+  &__row {
+    display: flex;
+    gap: 8px;
+  }
+
+  &__key {
+    flex: 0 0 52px;
+    color: var(--yasgui-ink-subtle, #6a7380);
+  }
+
+  &__value {
+    font-family: var(--yasgui-font-mono, monospace);
+    font-size: 12px;
+    word-break: break-all;
+  }
+
+  &__status,
+  &__source {
+    color: var(--yasgui-ink-subtle, #6a7380);
+    font-style: italic;
+  }
+
+  &__hint {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--yasgui-line-soft, #edf0f4);
+    color: var(--yasgui-ink-subtle, #6a7380);
+    font-size: 11.5px;
+  }
+}

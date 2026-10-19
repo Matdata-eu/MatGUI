@@ -10,6 +10,7 @@ import Yasqe from "@matdata/yasqe";
 //@ts-ignore ignore unused warning
 import { setup, destroy, closePage, getPage, makeScreenshot, inspectLive, wait } from "./utils.js";
 import "./endpoint-describe-browser.js";
+import "./iri-hover-browser.js";
 
 declare var window: Window & {
   Yasqe: typeof Yasqe;
@@ -301,6 +302,9 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#> select
           polling: 10,
         },
       );
+      // The prefix goes below the leading comment line, not above it
+      const value = await page.evaluate(() => window.yasqe.getValue());
+      expect(value.startsWith("# prefix #\nPREFIX foaf: <http://xmlns.com/foaf/0.1/>\n")).to.equal(true);
     });
     it("should show prefix completions after adding new prefix", async () => {
       await page.evaluate(() => {
@@ -1123,5 +1127,24 @@ describe("Yasr", function () {
     expect(result.storedBeforeDisable).to.equal(true);
     expect(result.restoredResults).to.equal(false);
     expect(result.stillStoredAfterDisable).to.equal(false);
+  });
+
+  it("selects the plugin named by a #defaultView comment in the query", async function () {
+    const result = await page.evaluate(() => {
+      const YasrCtor = (window as any).Yasr;
+      const parent = document.createElement("div");
+      document.body.appendChild(parent);
+      const yasr = new YasrCtor(parent, { persistenceId: null });
+      const picked = yasr.selectPluginFromQuery("#defaultView:Response\nSELECT * WHERE { ?s ?p ?o }");
+      const unknown = yasr.selectPluginFromQuery("#defaultView:Timeline\nSELECT * WHERE { ?s ?p ?o }");
+      const none = yasr.selectPluginFromQuery("SELECT * WHERE { ?s ?p ?o }");
+      yasr.setResponse({ head: { vars: ["s"] }, results: { bindings: [{ s: { type: "uri", value: "urn:a" } }] } });
+      return { picked, unknown, none, selected: yasr.getSelectedPluginName() };
+    });
+
+    expect(result.picked).to.equal("response");
+    expect(result.unknown).to.equal(undefined);
+    expect(result.none).to.equal(undefined);
+    expect(result.selected).to.equal("response");
   });
 });

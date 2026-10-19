@@ -33,6 +33,8 @@ export default function initialize(): Config<CatalogueItem> {
     showCommandPalette: true,
     orientation: "vertical",
     showSnippetsBar: false,
+    iriHover: true,
+    iriHoverLovFallback: true,
     helpUrl: "https://matgui-doc.matdata.eu/docs/user-guide",
     endpointDescribe: {
       enabled: true,

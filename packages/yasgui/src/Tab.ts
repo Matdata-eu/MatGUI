@@ -28,6 +28,7 @@ import { asWorkspaceBackendError } from "./queryManagement/backends/errors";
 import { normalizeQueryFilename } from "./queryManagement/normalizeQueryFilename";
 import { resolveEndpointUrl } from "./urlUtils";
 import InsertMenu, { SnippetLike } from "./InsertMenu";
+import { createIriHover } from "./IriHoverInfo";
 import { icon, iconButton, runShortcutLabel, IconName } from "./icons";
 
 export interface PersistedJsonYasr extends YasrPersistentConfig {
@@ -1392,6 +1393,14 @@ export class Tab extends EventEmitter {
       endpointTerms:
         this.yasgui.config.yasqe?.endpointTerms ??
         ((_yasqe, type) => this.yasgui.endpointDescribe?.getAutocompleteTerms(this, type)),
+      iriHover:
+        this.yasgui.config.yasqe.iriHover ??
+        (this.yasgui.config.iriHover === false
+          ? undefined
+          : (_yasqe, iri) =>
+              this.yasgui.persistentConfig.getIriHoverEnabled()
+                ? createIriHover(this, iri, this.yasgui.config.iriHoverLovFallback !== false)
+                : undefined),
       requestConfig: () => {
         const processedReqConfig: YasguiRequestConfig = {
           //setting defaults
@@ -1640,6 +1649,8 @@ export class Tab extends EventEmitter {
   handleQueryResponse = (_yasqe: Yasqe, response: any, duration: number) => {
     this.emit("queryResponse", this);
     if (!this.yasr) throw new Error("Resultset visualizer not initialized. Cannot draw results");
+    // A `#defaultView:<plugin>` comment in the query picks the result view
+    this.yasr.selectPluginFromQuery(this.yasqe?.getValue());
     this.yasr.setResponse(response, duration);
     if (!this.yasr.results) return;
     if (!this.yasr.results.hasError()) {
@@ -1663,63 +1674,13 @@ export class Tab extends EventEmitter {
 
     // Get position from mouse coordinates
     const pos = this.yasqe.coordsChar({ left: event.clientX, top: event.clientY });
-    const token = this.yasqe.getTokenAt(pos);
-
-    // Check if token is a URI (not a variable)
-    // URIs typically have token.type of 'string-2' or might be in angle brackets
-    let tokenString = token.string.trim();
-
-    // Skip if it's a variable (starts with ? or $)
-    if (tokenString.startsWith("?") || tokenString.startsWith("$")) return;
-
-    // Handle prefixed names that may be split into multiple tokens by the tokenizer
-    // The tokenizer splits "prefix:localname" into two tokens:
-    // - PNAME_LN_PREFIX (e.g., "bnd:") with type "string-2"
-    // - PNAME_LN_LOCAL (e.g., "_subnetwork_bane_KVGB") with type "string"
-    // We need to combine them to get the full prefixed name
-    if (token.type === "string-2" && tokenString.endsWith(":")) {
-      // This is a prefix token, get the next token for the local name
-      const nextToken = this.yasqe.getTokenAt({ line: pos.line, ch: token.end + 1 });
-      if (nextToken && nextToken.type === "string" && nextToken.start === token.end) {
-        tokenString = `${tokenString}${nextToken.string.trim()}`;
-      }
-    } else if (token.type === "string" && token.start > 0) {
-      // This might be a local name token, check if previous token is a prefix
-      const prevToken = this.yasqe.getTokenAt({ line: pos.line, ch: token.start - 1 });
-      if (
-        prevToken &&
-        prevToken.type === "string-2" &&
-        prevToken.string.trim().endsWith(":") &&
-        prevToken.end === token.start
-      ) {
-        tokenString = `${prevToken.string.trim()}${tokenString}`;
-      }
-    }
-
-    // Check if it's a URI - either in angle brackets or a prefixed name
-    const isFullUri = tokenString.startsWith("<") && tokenString.endsWith(">");
-    const isPrefixedName = /^[\w-]+:/.test(tokenString);
-
-    if (!isFullUri && !isPrefixedName) return;
+    // Check if the token is a URI: either in angle brackets or a prefixed name (not a variable)
+    const iri = this.yasqe.getIriAt(pos);
+    if (!iri) return;
 
     event.preventDefault();
     event.stopPropagation();
-
-    // Extract the URI
-    let uri = tokenString;
-    if (isFullUri) {
-      // Remove angle brackets
-      uri = tokenString.slice(1, -1);
-    } else if (isPrefixedName) {
-      // Expand prefixed name to full URI
-      const prefixes = this.yasqe.getPrefixesFromQuery();
-      const [prefix, ...localParts] = tokenString.split(":");
-      const localName = localParts.join(":");
-      const prefixUri = prefixes[prefix];
-      if (prefixUri) {
-        uri = prefixUri + localName;
-      }
-    }
+    const uri = iri.iri;
 
     // Construct the query based on whether Shift is held
     let constructQuery: string;

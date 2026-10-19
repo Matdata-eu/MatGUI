@@ -15,11 +15,22 @@ export function addPrefixes(yasqe: Yasqe, prefixes: string | Prefixes) {
 
 export function addPrefixAsString(yasqe: Yasqe, prefixString: string) {
   yasqe.getDoc().replaceRange("PREFIX " + prefixString + "\n", {
-    line: 0,
+    line: getFirstLineAfterLeadingComments(yasqe),
     ch: 0,
   });
 
   yasqe.collapsePrefixes(false);
+}
+/**
+ * The first line below the comment lines the query starts with, so that added prefixes
+ * don't push a leading comment such as `#defaultView:Map` down.
+ */
+export function getFirstLineAfterLeadingComments(yasqe: Yasqe): number {
+  const doc = yasqe.getDoc();
+  let line = 0;
+  while (line <= doc.lastLine() && doc.getLine(line).trim().startsWith("#")) line++;
+  // A query that is nothing but comments gets its prefixes at the top
+  return line > doc.lastLine() ? 0 : line;
 }
 export function removePrefixes(yasqe: Yasqe, prefixes: Prefixes) {
   var escapeRegex = function (string: string) {

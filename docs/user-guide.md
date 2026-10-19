@@ -45,6 +45,7 @@
   - [Configuration Import/Export](#configuration-importexport)
   - [URI Explorer](#uri-explorer)
   - [Class and Property Autocomplete](#class-and-property-autocomplete)
+  - [IRI Hover Info](#iri-hover-info)
   - [Endpoint Overview](#endpoint-overview)
   - [Query Tabs](#query-tabs)
   - [Settings Modal](#settings-modal)
@@ -700,6 +701,8 @@ MatGUI includes standard prefixes like:
 2. Open Settings (gear icon in the top bar) to manage your prefix collection
 3. Enable/disable auto-capture in Settings
 
+Prefixes are added below the comment lines a query starts with, so a leading comment such as `#defaultView:Geo` (see [Plugin Selection](#plugin-selection)) stays on top.
+
 **Auto-completion:**
 When typing a prefix declaration, Matgui queries [prefix.cc](https://prefix.cc) to suggest standard URIs:
 
@@ -873,6 +876,21 @@ MatGUI reuses what the endpoint overview already knows about the endpoint, so in
 
 Counting all properties of a very large public endpoint is expensive. Open the [Endpoint Overview](#endpoint-overview) for that endpoint and clear **Suggest this endpoint's classes and properties in autocomplete**: MatGUI then neither queries the endpoint nor shows its terms, and only the Linked Open Vocabularies suggestions remain. The choice is remembered per endpoint.
 
+### IRI Hover Info
+
+Rest the mouse on an IRI or prefixed name in the query editor (for example `era:solNature`) to see what it means, without running anything or losing your results. After a short moment a tooltip shows:
+
+- the label (`rdfs:label` or `skos:prefLabel`), in your browser's language when the endpoint has it, otherwise in English,
+- the full IRI, when you hovered a prefixed name,
+- the description (`rdfs:comment` or `skos:definition`), shortened when it is long,
+- the type, and for properties the domain and range, shortened with the prefixes of your query.
+
+The information is fetched with a small query on the endpoint of the tab, using its authentication and request settings, and is remembered per endpoint and IRI, so hovering the same IRI again is instant. When the endpoint doesn't describe the IRI, MatGUI looks it up in [LOV (Linked Open Vocabularies)](https://lov.linkeddata.es), which knows most published vocabularies; the tooltip then says "Description from LOV".
+
+Prefixed names whose prefix isn't declared in the query get no tooltip. The tooltip also reminds you that Ctrl+click and Ctrl+Shift+click open the [URI Explorer](#uri-explorer).
+
+To switch it off, untick **Show IRI information on hover** in **Settings → Editor**.
+
 ### Endpoint Overview
 
 Get to know an unfamiliar SPARQL endpoint while you write your queries. Click the compass in the bar of icons at the left, press `F8`, or pick **Explore endpoint** in the [search](#search) to open the **Endpoint** view of the [side panel](#side-panel), next to the editor.
@@ -995,6 +1013,7 @@ Access comprehensive configuration options through the Settings modal.
 - Select CodeMirror theme for dark mode
 - Switch between the Default and GitHub Dark editor themes in the Settings → Editor tab
 - Includes custom "GitHub Dark" theme matching GitHub's dark default colors
+- Show IRI information on hover (see [IRI Hover Info](#iri-hover-info))
 
 All settings are saved automatically to local storage.
 
@@ -2098,6 +2117,22 @@ Matgui automatically selects the most appropriate plugin based on:
 - Use the plugin selector buttons at the top of the results area
 - Available plugins depend on the query results
 - Your selection is saved per tab
+
+**Selection from the Query:**
+
+Start the query with a `#defaultView:` comment to pick the view its results open in, the same way the [Wikidata Query Service](https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service/Wikidata_Query_Help/Result_Views) does:
+
+```sparql
+#defaultView:Geo
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+SELECT ?station ?wkt WHERE { ?station geo:hasGeometry/geo:asWKT ?wkt }
+```
+
+- Use a plugin name (`Table`, `Geo`, `Graph`, `Chart`, `Response`); the casing doesn't matter
+- Wikidata view names work too: `Map` opens the Geo plugin, and `LineChart`, `BarChart`, `ScatterChart`, `AreaChart` and `BubbleChart` open the Chart plugin
+- Each run applies the comment again, so it wins over the plugin you picked by hand for that tab
+- When the plugin can't show the results (for example `#defaultView:Geo` on a query without geometries), MatGUI falls back to a plugin that can, as usual
+- Inserting prefixes keeps the comment on the first line
 
 ---
 
