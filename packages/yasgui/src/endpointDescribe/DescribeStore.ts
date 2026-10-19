@@ -39,6 +39,8 @@ export interface PanelUiState {
 export interface StoredDescribeState {
   ui: PanelUiState;
   endpoints: { [endpoint: string]: EndpointEntry };
+  /** Endpoints whose classes and properties are not suggested in autocompletion */
+  autocompleteDisabled?: string[];
 }
 
 export interface StorageAdapter {
@@ -67,6 +69,7 @@ export default class DescribeStore {
     this.state = {
       ui: { ...getDefaultUiState(), ...(stored?.ui || {}) },
       endpoints: stored?.endpoints && typeof stored.endpoints === "object" ? stored.endpoints : {},
+      autocompleteDisabled: Array.isArray(stored?.autocompleteDisabled) ? stored!.autocompleteDisabled : [],
     };
   }
 
@@ -112,6 +115,15 @@ export default class DescribeStore {
     delete this.state.endpoints[endpoint];
     this.persist();
   }
+  public isAutocompleteEnabled(endpoint: string): boolean {
+    return (this.state.autocompleteDisabled || []).indexOf(endpoint) < 0;
+  }
+  public setAutocompleteEnabled(endpoint: string, enabled: boolean) {
+    const disabled = (this.state.autocompleteDisabled || []).filter((e) => e !== endpoint);
+    if (!enabled) disabled.push(endpoint);
+    this.state.autocompleteDisabled = disabled;
+    this.persist();
+  }
   public getEndpoints(): string[] {
     return Object.keys(this.state.endpoints);
   }
@@ -128,7 +140,11 @@ export default class DescribeStore {
     for (const endpoint of Object.keys(this.state.endpoints)) {
       if (endpoints.indexOf(endpoint) < 0) delete this.state.endpoints[endpoint];
     }
-    const persisted: StoredDescribeState = { ui: this.state.ui, endpoints: {} };
+    const persisted: StoredDescribeState = {
+      ui: this.state.ui,
+      endpoints: {},
+      autocompleteDisabled: this.state.autocompleteDisabled,
+    };
     for (const endpoint of endpoints) {
       const entry = this.state.endpoints[endpoint];
       const results: EndpointEntry["results"] = {};

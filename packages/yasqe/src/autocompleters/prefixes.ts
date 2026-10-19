@@ -51,8 +51,9 @@ var conf: Autocompleter.CompleterConfig = {
               // var completions = yasqe.autocompleters.getTrie(completerName).autoComplete(currentPrefix);
               token.autocompletionString = currentPrefix;
               yasqe.autocompleters[this.name]?.getCompletions(token).then((suggestions) => {
-                if (suggestions.length) {
-                  yasqe.addPrefixes(suggestions[0]);
+                const suggestion = suggestions[0];
+                if (suggestion) {
+                  yasqe.addPrefixes(typeof suggestion === "string" ? suggestion : suggestion.text);
                   // Re-activate auto-completer after adding prefixes, so another auto-completer can kick in
                   yasqe.autocomplete();
                 }

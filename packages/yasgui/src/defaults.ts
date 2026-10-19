@@ -39,6 +39,7 @@ export default function initialize(): Config<CatalogueItem> {
       timeoutMs: 60000,
       maxConcurrentQueries: 2,
       fetchMetadata: true,
+      autocomplete: true,
     },
     endpointButtons: undefined,
     endpointCatalogueOptions: {

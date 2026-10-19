@@ -878,6 +878,27 @@ interface YasqeConfig {
 }
 ```
 
+#### Endpoint Terms for Autocompletion
+
+The class and property autocompleters list terms used in the endpoint before the Linked Open Vocabularies suggestions. MatGUI fills them from its Endpoint overview. A standalone Yasqe (or an embedding page that wants its own source) can provide them with `endpointTerms`:
+
+```typescript
+interface EndpointTerm {
+  iri: string;
+  count?: number;      // shown next to the suggestion
+  prefix?: string;     // with namespace: insert a prefixed name and declare the prefix
+  namespace?: string;
+}
+
+const yasqe = new Yasqe(element, {
+  endpointTerms: async (yasqe, type /* "class" | "property" */) => {
+    return [{ iri: "http://data.europa.eu/949/OperationalPoint", count: 52311, prefix: "era", namespace: "http://data.europa.eu/949/" }];
+  },
+});
+```
+
+Return the terms most used first; Yasqe filters them on what the user typed and shows at most 50. Setting `yasqe.endpointTerms` in the MatGUI config replaces the Endpoint overview as the source.
+
 > In Yasgui the snippets are offered in the **Insert** menu of the query bar and the snippets bar is hidden by default (Yasgui option `showSnippetsBar`, default `false`). Set `showSnippetsBar: true` in the Yasgui configuration to show the bar as before.
 
 ```typescript
@@ -2006,6 +2027,10 @@ interface EndpointDescribeConfig {
 
   // Fetch the service description and VoID when the panel opens
   fetchMetadata: boolean;  // default: true
+
+  // Suggest the classes and properties used in the endpoint in the editor's autocomplete.
+  // Users can still switch this off per endpoint in the panel.
+  autocomplete: boolean;  // default: true
 }
 
 interface DescribeQuery {

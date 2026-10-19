@@ -773,6 +773,115 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#> select
     });
   });
 
+  describe("Endpoint term autocompletion", function () {
+    beforeEach(async function () {
+      await page.evaluate(() => {
+        // Use the real class and property autocompleters, with a fake endpoint and a fake LOV
+        window.yasqe.disableCompleter("class-local");
+        window.yasqe.disableCompleter("property-local");
+        window.yasqe.config.endpointTerms = (_yasqe, type) =>
+          type === "class"
+            ? [
+                {
+                  iri: "http://data.europa.eu/949/OperationalPoint",
+                  count: 52000,
+                  prefix: "era",
+                  namespace: "http://data.europa.eu/949/",
+                },
+                {
+                  iri: "http://data.europa.eu/949/SectionOfLine",
+                  count: 31000,
+                  prefix: "era",
+                  namespace: "http://data.europa.eu/949/",
+                },
+                { iri: "http://example.org/onto#Operator", count: 12 },
+              ]
+            : [
+                {
+                  iri: "http://data.europa.eu/949/length",
+                  count: 90000,
+                  prefix: "era",
+                  namespace: "http://data.europa.eu/949/",
+                },
+              ];
+        const originalFetch = window.fetch;
+        (window as any).lovRequests = 0;
+        window.fetch = ((input: any, init?: any) => {
+          if (String(input).indexOf("lov.linkeddata.es") >= 0) {
+            (window as any).lovRequests++;
+            const body = {
+              results: [
+                { uri: ["http://data.europa.eu/949/OperationalPoint"] },
+                { uri: ["http://example.org/lov#OperationMode"] },
+              ],
+            };
+            return Promise.resolve(new Response(JSON.stringify(body), { status: 200 }));
+          }
+          return originalFetch(input, init);
+        }) as typeof fetch;
+        return Promise.all([window.yasqe.enableCompleter("class"), window.yasqe.enableCompleter("property")]);
+      });
+    });
+    function focusAtEnd(query: string) {
+      return page.evaluate((query) => {
+        window.yasqe.setValue(query);
+        window.yasqe.focus();
+        window.yasqe.getDoc().setCursor({ line: 0, ch: query.length });
+      }, query);
+    }
+    function getOptions() {
+      return page.evaluate(() =>
+        Array.from(document.querySelectorAll(".CodeMirror-hints li")).map((li) => li.textContent || ""),
+      );
+    }
+    function getSections() {
+      return page.evaluate(() =>
+        Array.from(document.querySelectorAll(".CodeMirror-hints completion-section")).map((s) => s.textContent || ""),
+      );
+    }
+
+    it("Should suggest the most used classes of the endpoint without input", async function () {
+      await focusAtEnd("select * where { ?x a ");
+      await issueAutocompletionKeyCombination();
+      expect(await waitForAutocompletionPopup()).to.equal(3);
+      const options = await getOptions();
+      expect(options[0]).to.contain("era:OperationalPoint").and.to.contain((52000).toLocaleString());
+      expect(options[2]).to.contain("<http://example.org/onto#Operator>");
+      expect(await page.evaluate(() => (window as any).lovRequests)).to.equal(0);
+    });
+
+    it("Should insert a prefixed name and declare the missing prefix", async function () {
+      await focusAtEnd("select * where { ?x a ");
+      await issueAutocompletionKeyCombination();
+      await waitForAutocompletionPopup();
+      await page.keyboard.press("Enter");
+      const value = await page.evaluate(() => window.yasqe.getValue());
+      expect(value).to.equal("PREFIX era: <http://data.europa.eu/949/>\nselect * where { ?x a era:OperationalPoint");
+    });
+
+    it("Should match the local name and list LOV suggestions after the endpoint ones", async function () {
+      await focusAtEnd("select * where { ?x a Operat");
+      await issueAutocompletionKeyCombination();
+      expect(await waitForAutocompletionPopup()).to.equal(3);
+      const options = await getOptions();
+      expect(options[0]).to.contain("era:OperationalPoint");
+      expect(options[1]).to.contain("<http://example.org/onto#Operator>");
+      // The LOV duplicate of era:OperationalPoint is dropped
+      expect(options[2]).to.contain("<http://example.org/lov#OperationMode>");
+      expect(await getSections()).to.deep.equal(["Used in this endpoint", "Linked Open Vocabularies"]);
+    });
+
+    it("Should keep using a prefix declared in the query", async function () {
+      await focusAtEnd("PREFIX e: <http://data.europa.eu/949/> select * where { ?x e:len");
+      await issueAutocompletionKeyCombination();
+      await waitForAutocompletionPopup();
+      expect((await getOptions())[0]).to.contain("e:length");
+      await page.keyboard.press("Enter");
+      const value = await page.evaluate(() => window.yasqe.getValue());
+      expect(value).to.equal("PREFIX e: <http://data.europa.eu/949/> select * where { ?x e:length");
+    });
+  });
+
   describe("CONSTRUCT Variable Validation", function () {
     it("Should show warning for undefined variables in CONSTRUCT", async function () {
       await page.evaluate(() => {

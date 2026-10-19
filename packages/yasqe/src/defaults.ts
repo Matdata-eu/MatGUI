@@ -133,6 +133,7 @@ SELECT * WHERE {
     showFormatButton: true,
     showMapButton: true,
     checkConstructVariables: true,
+    endpointTerms: undefined,
     snippets: [
       {
         label: "SELECT",

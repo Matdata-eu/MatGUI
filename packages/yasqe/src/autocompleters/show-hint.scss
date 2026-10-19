@@ -43,3 +43,23 @@ li.CodeMirror-hint-active {
   background: #08f;
   color: white;
 }
+
+// Usage count of a suggestion from the endpoint
+.CodeMirror-hints .cm-completionDetail {
+  margin-left: 1em;
+  float: right;
+  font-style: normal;
+  opacity: 0.6;
+}
+
+// Heading above the suggestions of one source (endpoint or Linked Open Vocabularies)
+.CodeMirror-hints completion-section {
+  display: list-item;
+  padding: 2px 4px 1px;
+  font-family: system-ui, sans-serif;
+  font-size: 85%;
+  font-weight: 600;
+  opacity: 0.65;
+  cursor: default;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+}

@@ -5,6 +5,7 @@ import {
   buildQuery,
   defaultCategories,
   defaultDescribeQueries,
+  DescribeBinding,
   DescribeQueryContext,
   wktExtent,
 } from "../../packages/yasgui/src/endpointDescribe/describeQueries.js";
@@ -17,6 +18,7 @@ import {
   fetchEndpointMetadata,
   getWellKnownVoidUrl,
   parseRdf,
+  EndpointMetadata,
 } from "../../packages/yasgui/src/endpointDescribe/metadataSources.js";
 import {
   describeQueryError,
@@ -24,10 +26,16 @@ import {
   isPartialResponse,
 } from "../../packages/yasgui/src/endpointDescribe/responseUtils.js";
 import DescribeStore, {
+  DescribeResult,
   MAX_ENDPOINTS,
   MAX_PERSISTED_ROWS,
   StoredDescribeState,
 } from "../../packages/yasgui/src/endpointDescribe/DescribeStore.js";
+import {
+  AUTOCOMPLETE_RETRY_MS,
+  collectTerms,
+  mergeTerms,
+} from "../../packages/yasgui/src/endpointDescribe/endpointTerms.js";
 
 const expect = chai.expect;
 
@@ -296,7 +304,92 @@ describe("Endpoint describe metadata (SD / VoID)", () => {
   });
 });
 
+describe("Endpoint terms for autocompletion", () => {
+  const uri = (value: string) => ({ type: "uri", value });
+  const literal = (value: string) => ({ type: "literal", value });
+  const done = (bindings: DescribeBinding[], hasMore = false): DescribeResult => ({
+    status: "done",
+    vars: [],
+    bindings,
+    fetchedAt: Date.now(),
+    hasMore,
+  });
+  const voidMetadata = (classPartitions: Array<{ iri: string; entities?: number }>): EndpointMetadata => ({
+    fetchedAt: Date.now(),
+    sdStatus: "unavailable",
+    voidStatus: "ok",
+    datasets: [
+      { iri: "_:d", sparqlEndpoints: [], vocabularies: [], classPartitions, propertyPartitions: [], linksets: [] },
+    ],
+  });
+
+  it("merges sources, keeping the highest count, most used first", () => {
+    expect(
+      mergeTerms(
+        [{ iri: "a", count: 1 }, { iri: "b" }],
+        [
+          { iri: "a", count: 5 },
+          { iri: "c", count: 3 },
+        ],
+      ),
+    ).to.deep.equal([{ iri: "a", count: 5 }, { iri: "c", count: 3 }, { iri: "b" }]);
+  });
+
+  it("reuses a complete overview result without querying", () => {
+    const results: { [id: string]: DescribeResult } = {
+      classes: done([
+        { class: uri("http://example.org/A"), instances: literal("10") },
+        { class: { type: "bnode", value: "b0" }, instances: literal("2") },
+      ]),
+    };
+    const collected = collectTerms("class", (id) => results[id], undefined);
+    expect(collected.terms).to.deep.equal([{ iri: "http://example.org/A", count: 10 }]);
+    expect(collected.needsQuery).to.equal(false);
+  });
+
+  it("queries when the overview only holds the first page", () => {
+    const results = { classes: done([{ class: uri("http://example.org/A"), instances: literal("10") }], true) };
+    expect(collectTerms("class", (id) => (results as any)[id], undefined).needsQuery).to.equal(true);
+  });
+
+  it("uses VoID class partitions instead of a query", () => {
+    const collected = collectTerms(
+      "class",
+      () => undefined,
+      voidMetadata([{ iri: "http://example.org/B", entities: 7 }]),
+    );
+    expect(collected.terms).to.deep.equal([{ iri: "http://example.org/B", count: 7 }]);
+    expect(collected.needsQuery).to.equal(false);
+  });
+
+  it("reads the background query result and doesn't retry a recent failure", () => {
+    const fromQuery = {
+      "autocomplete-properties": done([{ property: uri("http://example.org/p"), uses: literal("4") }]),
+    };
+    const collected = collectTerms("property", (id) => (fromQuery as any)[id], undefined);
+    expect(collected.terms).to.deep.equal([{ iri: "http://example.org/p", count: 4 }]);
+    expect(collected.needsQuery).to.equal(false);
+
+    const failed = (fetchedAt: number): DescribeResult => ({ status: "error", vars: [], bindings: [], fetchedAt });
+    expect(collectTerms("property", () => failed(Date.now()), undefined).needsQuery).to.equal(false);
+    expect(
+      collectTerms("property", () => failed(Date.now() - AUTOCOMPLETE_RETRY_MS - 1), undefined).needsQuery,
+    ).to.equal(true);
+  });
+});
+
 describe("Endpoint describe store", () => {
+  it("remembers the endpoints for which autocompletion is switched off", () => {
+    let stored: StoredDescribeState | undefined;
+    const storage = { get: () => stored, set: (state: StoredDescribeState) => (stored = state) };
+    const store = new DescribeStore(storage);
+    expect(store.isAutocompleteEnabled("https://example.org/sparql")).to.equal(true);
+    store.setAutocompleteEnabled("https://example.org/sparql", false);
+    expect(new DescribeStore(storage).isAutocompleteEnabled("https://example.org/sparql")).to.equal(false);
+    store.setAutocompleteEnabled("https://example.org/sparql", true);
+    expect(new DescribeStore(storage).isAutocompleteEnabled("https://example.org/sparql")).to.equal(true);
+  });
+
   function memoryStorage() {
     let stored: StoredDescribeState | undefined;
     return {

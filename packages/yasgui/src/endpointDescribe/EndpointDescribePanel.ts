@@ -17,6 +17,8 @@ import {
 } from "./describeQueries";
 import { EndpointMetadata, fetchEndpointMetadata, VoidDataset } from "./metadataSources";
 import { describeQueryError, isPartialResponse } from "./responseUtils";
+import { autocompleteQueries, collectTerms, TermType } from "./endpointTerms";
+import type { EndpointTerm } from "@matdata/yasqe";
 import type SidePanel from "../sidePanel/SidePanel";
 import "./EndpointDescribePanel.scss";
 
@@ -33,6 +35,11 @@ export interface EndpointDescribeConfig {
   maxConcurrentQueries: number;
   /** Automatically fetch the SPARQL service description and VoID description when the panel opens */
   fetchMetadata: boolean;
+  /**
+   * Suggest the classes and properties used in the endpoint in the editor's autocompletion. Users can switch
+   * this off per endpoint in the overview.
+   */
+  autocomplete: boolean;
 }
 
 export const defaultEndpointDescribeConfig: EndpointDescribeConfig = {
@@ -40,7 +47,11 @@ export const defaultEndpointDescribeConfig: EndpointDescribeConfig = {
   timeoutMs: 60000,
   maxConcurrentQueries: 2,
   fetchMetadata: true,
+  autocomplete: true,
 };
+
+/** How long autocompletion waits for terms that are still loading, before showing the other suggestions */
+const AUTOCOMPLETE_WAIT_MS = 3000;
 
 const MIN_WIDTH = 280;
 const SPARQL_JSON = "application/sparql-results+json,application/sparql-results+xml;q=0.8";
@@ -106,6 +117,7 @@ export default class EndpointDescribePanel {
   private activeCount = 0;
   private metadataController: AbortController | undefined;
   private renderedEndpoint: string | undefined | null = null;
+  private autocompleteLoads = new Map<string, Promise<void>>();
   /** Set when the overview is shown as the "Endpoint" view of the side panel */
   private host?: SidePanel;
 
@@ -424,6 +436,20 @@ export default class EndpointDescribePanel {
     this.drawerEl.appendChild(body);
   }
 
+  private renderAutocompleteToggle(endpoint: string): HTMLElement {
+    const label = el("label", "yasgui-describe__autocomplete");
+    label.title =
+      "Suggest the classes and properties of this endpoint while you type (Ctrl+Space). " +
+      "When the overview has no results yet, a limited query fetches the most used ones. " +
+      "Switch this off for very large endpoints.";
+    const checkbox = el("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = this.store.isAutocompleteEnabled(endpoint);
+    checkbox.addEventListener("change", () => this.setAutocompleteEnabled(endpoint, checkbox.checked));
+    label.append(checkbox, document.createTextNode(" Suggest this endpoint's classes and properties in autocomplete"));
+    return label;
+  }
+
   private renderMetadata() {
     const container = this.metadataEl;
     container.innerHTML = "";
@@ -432,6 +458,7 @@ export default class EndpointDescribePanel {
       container.appendChild(el("p", "yasgui-describe__muted", "Select an endpoint to explore it."));
       return;
     }
+    if (this.config.autocomplete) container.appendChild(this.renderAutocompleteToggle(endpoint));
     const metadata = this.store.getMetadata(endpoint);
     const card = el("div", "yasgui-describe__card");
     const heading = el("div", "yasgui-describe__card-heading");
@@ -702,11 +729,14 @@ export default class EndpointDescribePanel {
     return { ...prefixes, ...fromQuery };
   }
 
-  public shortenIri(iri: string): { prefixed: string; prefix: string; namespace: string } | undefined {
+  public shortenIri(
+    iri: string,
+    prefixes: { [prefix: string]: string } = this.getPrefixes(),
+  ): { prefixed: string; prefix: string; namespace: string } | undefined {
     const localPart = (namespace: string) => iri.substring(namespace.length);
     const isValidLocal = (local: string) => /^[\w-]*$/.test(local) && !/^-/.test(local);
     let best: { prefix: string; namespace: string } | undefined;
-    for (const [prefix, namespace] of Object.entries(this.getPrefixes())) {
+    for (const [prefix, namespace] of Object.entries(prefixes)) {
       if (iri.startsWith(namespace) && isValidLocal(localPart(namespace))) {
         if (!best || namespace.length > best.namespace.length) best = { prefix, namespace };
       }
@@ -746,6 +776,83 @@ export default class EndpointDescribePanel {
       requestConfig: { endpoint },
     } as any);
     tab.setQuery(queryString);
+  }
+
+  /**
+   * Autocompletion
+   */
+  public isAutocompleteEnabled(endpoint: string): boolean {
+    return this.config.autocomplete && this.store.isAutocompleteEnabled(endpoint);
+  }
+  public setAutocompleteEnabled(endpoint: string, enabled: boolean) {
+    this.store.setAutocompleteEnabled(endpoint, enabled);
+    if (this.endpoint === endpoint) this.renderMetadata();
+  }
+
+  /**
+   * The classes or properties used in the endpoint of a tab, most used first, for the editor's autocompletion.
+   * Uses what the overview already knows; otherwise fetches the most used terms in the background.
+   */
+  public async getAutocompleteTerms(tab: Tab, type: TermType): Promise<EndpointTerm[]> {
+    const endpoint = tab.getEndpoint();
+    if (!endpoint || !this.isAutocompleteEnabled(endpoint)) return [];
+    const collect = () =>
+      collectTerms(type, (id) => this.store.getResult(endpoint, id), this.store.getMetadata(endpoint));
+    let collected = collect();
+    if (collected.needsQuery) {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      await Promise.race([
+        this.loadAutocompleteTerms(tab, endpoint, type),
+        new Promise<void>((resolve) => (timer = setTimeout(resolve, AUTOCOMPLETE_WAIT_MS))),
+      ]);
+      clearTimeout(timer);
+      collected = collect();
+    }
+    const prefixes = this.getPrefixes();
+    return collected.terms.map((term) => {
+      const shortened = this.shortenIri(term.iri, prefixes);
+      return shortened ? { ...term, prefix: shortened.prefix, namespace: shortened.namespace } : term;
+    });
+  }
+
+  private loadAutocompleteTerms(tab: Tab, endpoint: string, type: TermType): Promise<void> {
+    const key = `${endpoint}\n${type}`;
+    const pending = this.autocompleteLoads.get(key);
+    if (pending) return pending;
+    const load = (async () => {
+      // The VoID description may list the classes and properties, which saves a query
+      if (this.config.fetchMetadata && !this.store.getMetadata(endpoint)) await this.loadMetadata(endpoint, false);
+      const collected = collectTerms(
+        type,
+        (id) => this.store.getResult(endpoint, id),
+        this.store.getMetadata(endpoint),
+      );
+      if (!collected.needsQuery || tab.getEndpoint() !== endpoint) return;
+      const query = autocompleteQueries[type];
+      const queryKey = `${endpoint}\n${query.id}`;
+      if (this.running.has(queryKey)) return;
+      const running: RunningQuery = { controller: new AbortController(), timedOut: false };
+      this.running.set(queryKey, running);
+      await new Promise<void>((resolve) => {
+        const finish = () => {
+          this.running.delete(queryKey);
+          resolve();
+        };
+        this.enqueue(
+          queryKey,
+          async () => {
+            try {
+              await this.executeQuery(tab, endpoint, query, running, false);
+            } finally {
+              finish();
+            }
+          },
+          finish,
+        );
+      });
+    })().finally(() => this.autocompleteLoads.delete(key));
+    this.autocompleteLoads.set(key, load);
+    return load;
   }
 
   /**
