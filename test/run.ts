@@ -847,7 +847,9 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#> select
       await issueAutocompletionKeyCombination();
       expect(await waitForAutocompletionPopup()).to.equal(3);
       const options = await getOptions();
-      expect(options[0]).to.contain("era:OperationalPoint").and.to.contain((52000).toLocaleString());
+      // The count is formatted in the browser's locale, which can differ from Node's
+      const count = await page.evaluate(() => (52000).toLocaleString());
+      expect(options[0]).to.contain("era:OperationalPoint").and.to.contain(count);
       expect(options[2]).to.contain("<http://example.org/onto#Operator>");
       expect(await page.evaluate(() => (window as any).lovRequests)).to.equal(0);
     });
