@@ -699,6 +699,8 @@ MatGUI includes standard prefixes like:
 2. Open Settings (gear icon in the top bar) to manage your prefix collection
 3. Enable/disable auto-capture in Settings
 
+Prefixes are added below the comment lines a query starts with, so a leading comment such as `#defaultView:Geo` (see [Plugin Selection](#plugin-selection)) stays on top.
+
 **Auto-completion:**
 When typing a prefix declaration, Matgui queries [prefix.cc](https://prefix.cc) to suggest standard URIs:
 
@@ -2073,6 +2075,22 @@ Matgui automatically selects the most appropriate plugin based on:
 - Use the plugin selector buttons at the top of the results area
 - Available plugins depend on the query results
 - Your selection is saved per tab
+
+**Selection from the Query:**
+
+Start the query with a `#defaultView:` comment to pick the view its results open in, the same way the [Wikidata Query Service](https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service/Wikidata_Query_Help/Result_Views) does:
+
+```sparql
+#defaultView:Geo
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+SELECT ?station ?wkt WHERE { ?station geo:hasGeometry/geo:asWKT ?wkt }
+```
+
+- Use a plugin name (`Table`, `Geo`, `Graph`, `Chart`, `Response`); the casing doesn't matter
+- Wikidata view names work too: `Map` opens the Geo plugin, and `LineChart`, `BarChart`, `ScatterChart`, `AreaChart` and `BubbleChart` open the Chart plugin
+- Each run applies the comment again, so it wins over the plugin you picked by hand for that tab
+- When the plugin can't show the results (for example `#defaultView:Geo` on a query without geometries), MatGUI falls back to a plugin that can, as usual
+- Inserting prefixes keeps the comment on the first line
 
 ---
 

@@ -1735,37 +1735,21 @@ export default class TabSettingsModal {
     const savedPrefixes = this.tab.yasgui.persistentConfig.getPrefixes();
     if (!savedPrefixes.trim()) return;
 
-    // Get current query and find where PREFIX declarations end
-    const currentQuery = yasqe.getValue();
-    const lines = currentQuery.split("\n");
+    const lines = yasqe.getValue().split("\n");
 
-    let firstNonPrefixLine = 0;
-    for (let i = 0; i < lines.length; i++) {
-      const trimmed = lines[i].trim();
-      // Skip empty lines and PREFIX lines
-      if (trimmed.length > 0 && !trimmed.toUpperCase().startsWith("PREFIX")) {
-        firstNonPrefixLine = i;
-        break;
-      }
+    // Keep leading comment lines (such as `#defaultView:Map`) above the prefixes
+    let i = 0;
+    const leadingComments: string[] = [];
+    while (i < lines.length && lines[i].trim().startsWith("#")) leadingComments.push(lines[i++]);
+
+    // Drop the existing PREFIX declarations (and blank lines); the saved prefixes replace them
+    while (i < lines.length && (lines[i].trim().length === 0 || lines[i].trim().toUpperCase().startsWith("PREFIX"))) {
+      i++;
     }
+    const restOfQuery = lines.slice(i).join("\n").trim();
 
-    // If we didn't find a non-PREFIX line, all lines are PREFIX or empty
-    if (firstNonPrefixLine === 0 && lines.length > 0) {
-      // Check if there's any content at all
-      const hasContent = lines.some((line: string) => line.trim().length > 0);
-      if (
-        !hasContent ||
-        lines.every((line: string) => line.trim().length === 0 || line.trim().toUpperCase().startsWith("PREFIX"))
-      ) {
-        firstNonPrefixLine = lines.length;
-      }
-    }
-
-    // Keep the rest of the query (non-PREFIX lines)
-    const restOfQuery = lines.slice(firstNonPrefixLine).join("\n").trim();
-
-    // Build new query with saved prefixes + rest of query
-    const newQuery = savedPrefixes + (restOfQuery ? "\n\n" + restOfQuery : "");
+    const header = leadingComments.length ? leadingComments.join("\n") + "\n" : "";
+    const newQuery = header + savedPrefixes + (restOfQuery ? "\n\n" + restOfQuery : "");
     yasqe.setValue(newQuery);
     yasqe.focus();
   }

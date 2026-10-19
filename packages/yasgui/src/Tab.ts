@@ -1636,6 +1636,8 @@ export class Tab extends EventEmitter {
   handleQueryResponse = (_yasqe: Yasqe, response: any, duration: number) => {
     this.emit("queryResponse", this);
     if (!this.yasr) throw new Error("Resultset visualizer not initialized. Cannot draw results");
+    // A `#defaultView:<plugin>` comment in the query picks the result view
+    this.yasr.selectPluginFromQuery(this.yasqe?.getValue());
     this.yasr.setResponse(response, duration);
     if (!this.yasr.results) return;
     if (!this.yasr.results.hasError()) {
