@@ -334,11 +334,15 @@ export const fetchFromLov = (
   //   .append($(yutils.svg.getElement(require("../imgs.js").loader)).addClass("notificationLoader"));
   // doRequests();
 
+  // LOV API v2 (https://lov.linkeddata.es/dataset/api): "autocomplete" completes (prefixed) IRIs,
+  // "search" is a full text search, which suits a plain word better
+  const q = (token.autocompletionString || token.string).trim();
+  const isIri = q.indexOf(":") >= 0;
   const params = new URLSearchParams();
-  if (token.autocompletionString) params.append("q", token.autocompletionString);
+  params.append("q", q);
   params.append("page_size", "50");
   params.append("type", type);
-  const url = `${reqProtocol}lov.linkeddata.es/dataset/lov/api/v2/autocomplete/terms?${params.toString()}`;
+  const url = `${reqProtocol}lov.linkeddata.es/dataset/api/v2/term/${isIri ? "autocomplete" : "search"}?${params.toString()}`;
   return fetch(url)
     .then((response) => {
       if (!response.ok) {
@@ -347,10 +351,11 @@ export const fetchFromLov = (
       return response.json();
     })
     .then((result) => {
-      if (result.results) {
-        return result.results.map((r: any) => r.uri[0]);
-      }
-      return [];
+      if (!result || !Array.isArray(result.results)) return [];
+      // Depending on the API version, `uri` is a string or a list with one string
+      return result.results
+        .map((r: any) => (Array.isArray(r?.uri) ? r.uri[0] : r?.uri))
+        .filter((uri: unknown): uri is string => typeof uri === "string" && uri.length > 0);
     })
     .catch((_e) => {
       yasqe.showNotification(notificationKey, "Failed fetching suggestions");

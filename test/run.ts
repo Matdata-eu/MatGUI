@@ -813,6 +813,7 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#> select
         window.fetch = ((input: any, init?: any) => {
           if (String(input).indexOf("lov.linkeddata.es") >= 0) {
             (window as any).lovRequests++;
+            (window as any).lovUrl = String(input);
             const body = {
               results: [
                 { uri: ["http://data.europa.eu/949/OperationalPoint"] },
@@ -873,6 +874,10 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#> select
       // The LOV duplicate of era:OperationalPoint is dropped
       expect(options[2]).to.contain("<http://example.org/lov#OperationMode>");
       expect(await getSections()).to.deep.equal(["Used in this endpoint", "Linked Open Vocabularies"]);
+      // A plain word goes to LOV's full text search
+      expect(await page.evaluate(() => (window as any).lovUrl)).to.contain(
+        "lov.linkeddata.es/dataset/api/v2/term/search?q=Operat&",
+      );
     });
 
     it("Should keep using a prefix declared in the query", async function () {
@@ -880,6 +885,10 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#> select
       await issueAutocompletionKeyCombination();
       await waitForAutocompletionPopup();
       expect((await getOptions())[0]).to.contain("e:length");
+      // An IRI goes to LOV's autocompletion, expanded with the declared prefix
+      expect(await page.evaluate(() => (window as any).lovUrl)).to.contain(
+        "lov.linkeddata.es/dataset/api/v2/term/autocomplete?q=http%3A%2F%2Fdata.europa.eu%2F949%2Flen&",
+      );
       await page.keyboard.press("Enter");
       const value = await page.evaluate(() => window.yasqe.getValue());
       expect(value).to.equal("PREFIX e: <http://data.europa.eu/949/> select * where { ?x e:length");
