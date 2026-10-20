@@ -11,11 +11,13 @@ import { default as Yasqe, PartialConfig as YasqeConfig, RequestConfig } from "@
 import { default as Yasr, Config as YasrConfig } from "@matdata/yasr";
 import { addClass, removeClass } from "@matdata/yasgui-utils";
 import ChartPlugin from "@matdata/yasgui-chart-plugin";
+import ExplainPlugin from "@matdata/yasgui-explain-plugin";
 import GeoPlugin from "@matdata/yasgui-geo-plugin";
 import GraphPlugin from "@matdata/yasgui-graph-plugin";
 import TablePlugin from "@matdata/yasgui-table-plugin";
 import { moveTabIdToFront, removeTabId } from "./tabNavigationHistory";
 import "@matdata/yasgui-chart-plugin/dist/yasgui-chart-plugin.min.css";
+import "@matdata/yasgui-explain-plugin/dist/yasgui-explain-plugin.min.css";
 import "@matdata/yasgui-graph-plugin/dist/yasgui-graph-plugin.min.css";
 import "@matdata/yasgui-table-plugin/dist/yasgui-table-plugin.min.css";
 import { ThemeManager, Theme } from "./ThemeManager";
@@ -35,6 +37,7 @@ Yasr.registerPlugin("Table", TablePlugin);
 Yasr.registerPlugin("Geo", GeoPlugin as any);
 Yasr.registerPlugin("Graph", GraphPlugin);
 Yasr.registerPlugin("Chart", ChartPlugin as any);
+Yasr.registerPlugin("Explain", ExplainPlugin as any);
 if (window) {
   //We're storing yasqe and yasr as a member of Yasgui, but _also_ in the window
   //That way, we dont have to tweak e.g. pro plugins to register themselves to both
