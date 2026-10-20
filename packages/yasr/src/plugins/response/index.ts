@@ -14,6 +14,7 @@ import { turtle } from "codemirror-lang-turtle";
 import { javascript } from "@codemirror/legacy-modes/mode/javascript";
 import { addClass, removeClass } from "@matdata/yasgui-utils";
 import { DeepReadonly } from "ts-essentials";
+import { icon } from "../../describe/icons";
 import {
   extractUriAtOffset,
   buildSubjectOfQuery,
@@ -53,9 +54,7 @@ export default class Response implements Plugin<PluginConfig> {
     return true;
   }
   public getIcon() {
-    const icon = document.createElement("i");
-    icon.className = "fas fa-align-left";
-    return icon;
+    return icon("file-code");
   }
   download(filename?: string) {
     if (!this.yasr.results) return;
