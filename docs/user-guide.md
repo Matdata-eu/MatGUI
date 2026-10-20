@@ -2121,7 +2121,7 @@ Each operation of the plan can be folded. **Expand all**, **Collapse all** and *
 
 **More Information:**
 
-Visit the [Explain Plugin repository](https://github.com/Matdata-eu/yasgui-plan-plugin) for full documentation and the [online demo](https://matdata-eu.github.io/yasgui-plan-plugin/).
+Visit the [Explain Plugin repository](https://github.com/Matdata-eu/yasgui-explain-plugin) for full documentation and the [online demo](https://matdata-eu.github.io/yasgui-explain-plugin/).
 
 ### Error Plugin
 
