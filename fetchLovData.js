@@ -41,6 +41,18 @@ export const ALWAYS_INCLUDED = [
       "https://gitlab.com/era-europa-eu/public/interoperable-data-programme/era-ontology/era-ontology/-/raw/main/ontology.ttl",
     ],
   },
+  {
+    // railML 3 ontology (not in LOV)
+    namespace: "http://ontology.railml.org/railml3#",
+    prefix: "railml",
+    sources: ["https://ontology.railml.org/ontology.ttl"],
+  },
+  {
+    // RailTopoModel, as published in the railML ontology
+    namespace: "http://ontology.railml.org/railtopomodel#",
+    prefix: "rtm",
+    sources: ["https://ontology.railml.org/ontology.ttl"],
+  },
 ];
 
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
