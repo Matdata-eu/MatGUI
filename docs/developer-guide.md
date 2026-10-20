@@ -3285,7 +3285,7 @@ export default class ChartPlugin implements Plugin {
 }
 ```
 
-### Host API for Result Plugins (yasr hostApi v1)
+### Host API for Result Plugins (yasr hostApi v2)
 
 YASR exposes a small host API so plugins share one describe panel and one toolbar style. Feature-detect it with `yasr.hostApi`, never with version strings, and keep your own fallback for older hosts:
 
@@ -3302,6 +3302,7 @@ const bar = host?.toolbar && typeof this.yasr.getPluginToolbar === "function" ? 
 - `yasr.describe(iri, { direction?, source?, newHistory? }): Promise<void>` opens the shared describe panel. It runs a CONSTRUCT query through `yasr.executeQuery` with `Accept: text/turtle` and never rejects; errors show in the panel. `newHistory: false` adds to the panel's back/forward history instead of starting a new one. `yasr.closeDescribe()` closes it, `yasr.isDescribeOpen()` reports its state, and YASR emits `"describe"` with `(yasr, iri, direction)` each time a resource is shown.
 - `yasr.getPluginToolbar()` returns `div.yasr_pluginToolbar`, a full-width bar under the YASR header. YASR empties it before every `draw()` and hides it while it is empty. A plugin that redraws itself must remove its own items first. Build controls inside it with `.yasr_toolbarButton` (toggle with `aria-pressed="true"` or `.is-active`), `.yasr_toolbarSelect` (`<label><span>Label</span><select>`), `.yasr_toolbarSearch` (`<input type="search">`), `.yasr_toolbarGroup` and `.yasr_toolbarSpacer` (a direct child of the slot). Put "View settings" last, as a `.yasr_toolbarButton` with the Lucide `sliders-horizontal` icon.
 - Hosts can set the YASR config hook `openQueryInNewTab(query)` to enable the panel's "Open as query" button. YASGUI sets it to open a new tab on the same endpoint.
+- `yasr.executeQuery(query, options)` runs a background request with the endpoint, method, headers and authentication of the tab and resolves with the raw response (`status`, `headers`, `content`). Since host API 2 (`hostApi.queryRequest`), `options.extraArgs` adds request parameters next to the query (for example `{ explain: "details" }`) and `options.endpoint` sends the request to another URL with the same settings (for example Stardog's `/{db}/explain`). Older hosts ignore both, so a plugin that needs them checks `hostApi.queryRequest` first.
 - Style with `var(--yasgui-…, fallback)`. Inside `.yasr`, the `--yasr-ui-*` shorthands (for example `--yasr-ui-brand`, `--yasr-ui-line`) already carry light and dark fallbacks.
 
 ### Plugin Best Practices

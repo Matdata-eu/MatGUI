@@ -64,6 +64,7 @@
   - [Graph Plugin](#graph-plugin)
   - [Geo Plugin](#geo-plugin)
   - [Chart Plugin](#chart-plugin)
+  - [Explain Plugin](#explain-plugin)
   - [Error Plugin](#error-plugin)
   - [Plugin Selection](#plugin-selection)
   - [Describing a Resource](#describing-a-resource)
@@ -2069,6 +2070,58 @@ Your choices are saved per tab. When the query returns other variables, the char
 **More Information:**
 
 Visit the [Chart Plugin repository](https://github.com/Matdata-eu/yasgui-chart-plugin) for full documentation and the [online demo](https://matdata-eu.github.io/yasgui-chart-plugin/).
+
+### Explain Plugin
+
+Shows how your query is executed. The **Explain** tab has two parts:
+
+- **Execution plan**: the operations the triple store ran for your query, with the rows and the time of each. MatGUI asks the endpoint for it with one extra request after your query completed, using the authentication and request settings of the tab. The slowest operation is highlighted, which is usually the answer to "why is this query slow".
+- **Algebra**: your query translated to SPARQL algebra, the form in which engines plan it (`project`, `join`, `leftjoin`, `filter`, `union`, ...). It is computed in MatGUI itself and works for any endpoint. Syntax errors are reported here with the parser's message.
+
+**Best For:**
+
+- Finding the join or scan that takes the time in a slow query
+- Checking that a `FILTER` or `OPTIONAL` is evaluated where you think it is
+- Learning how a query reads in SPARQL algebra
+
+---
+
+**Supported engines:**
+
+| Engine | What the plan shows |
+|---|---|
+| QLever | The operation tree with time, rows and cache status per operation |
+| GraphDB | The chosen order of the patterns with estimated sizes (no timings) |
+| Stardog | The profiled plan with rows, wall time and memory per operator |
+| Blazegraph | Blazegraph's explain page (syntax tree, operator plan, statistics) |
+| Amazon Neptune | Neptune's explain table, one row per operator |
+
+Virtuoso, Jena Fuseki, Oxigraph, RDF4J and Comunica publish no plan over the SPARQL protocol; for those endpoints only the algebra is shown.
+
+---
+
+**Getting Started:**
+
+1. Run your query.
+2. Open the **Explain** tab. The algebra appears at once.
+3. MatGUI recognises the engine from the endpoint URL (QLever, GraphDB, Blazegraph, Stardog and Neptune have recognisable URLs). When it does not, pick the engine in the **Engine** list; the choice is remembered for that endpoint. **No plan** switches the request off for an endpoint.
+4. **Refresh plan** asks the engine again, for example after the endpoint's cache warmed up.
+
+Each operation of the plan can be folded. **Expand all**, **Collapse all** and **Copy** act on the whole tree; **Download** in the results header saves the plan and the algebra as a text file. The algebra's **Copy** gives the s-expression notation used by Apache Jena ARQ and the SPARQL specification, handy for issues and documentation.
+
+---
+
+**Good to know:**
+
+- The plan request is a second, separate request. Your results are never changed by it, and when it fails (unsupported engine, authentication, CORS) only the plan section says so.
+- QLever answers the plan request from its result cache, so operations that were already cached show their original times in their details.
+- The GraphDB plan is asked with the `onto:explain` pseudo graph. RDF4J shares GraphDB's URL layout but has no explain, so the request fails there.
+
+---
+
+**More Information:**
+
+Visit the [Explain Plugin repository](https://github.com/Matdata-eu/yasgui-plan-plugin) for full documentation and the [online demo](https://matdata-eu.github.io/yasgui-plan-plugin/).
 
 ### Error Plugin
 
