@@ -42,11 +42,13 @@ export interface Yasr {
  * Plugins should check `yasr.hostApi?.describe` / `yasr.hostApi?.toolbar`, never version strings.
  */
 export interface YasrHostApi {
-  readonly version: 1;
+  readonly version: 2;
   /** `yasr.describe()` / `yasr.closeDescribe()` and the "describe" event are available. */
   readonly describe: true;
   /** `yasr.getPluginToolbar()` and the shared `.yasr_toolbar*` classes are available. */
   readonly toolbar: true;
+  /** `yasr.executeQuery()` honours `extraArgs` and `endpoint` in its options (host API 2). */
+  readonly queryRequest: true;
 }
 export class Yasr extends EventEmitter {
   public results?: Parser;
@@ -80,7 +82,12 @@ export class Yasr extends EventEmitter {
   public utils = { addScript: addScript, addCSS: addCss, sanitize: sanitize };
 
   /** Host capabilities for feature detection by plugins. */
-  public readonly hostApi: YasrHostApi = Object.freeze({ version: 1, describe: true, toolbar: true } as const);
+  public readonly hostApi: YasrHostApi = Object.freeze({
+    version: 2,
+    describe: true,
+    toolbar: true,
+    queryRequest: true,
+  } as const);
   private describePanel: DescribePanel | undefined;
 
   constructor(parent: HTMLElement, conf: Partial<Config> = {}, data?: any) {
@@ -837,6 +844,10 @@ export interface PluginQueryOptions {
   acceptHeader?: string;
   /** Optional abort signal for cancelling in-flight background queries. */
   signal?: AbortSignal;
+  /** Extra request parameters sent next to the query, e.g. `{ explain: "details" }` (host API 2). */
+  extraArgs?: { [name: string]: string | string[] };
+  /** Send the request to this URL instead of the tab's endpoint, with the tab's settings (host API 2). */
+  endpoint?: string;
 }
 
 export interface PluginConfig {

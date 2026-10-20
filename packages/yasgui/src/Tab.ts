@@ -1841,6 +1841,8 @@ export class Tab extends EventEmitter {
           customQuery: query,
           customAccept: options?.acceptHeader,
           signal: options?.signal,
+          extraArgs: options?.extraArgs,
+          customEndpoint: options?.endpoint,
           silent: true,
         });
         return response;

@@ -54,6 +54,7 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.1.0",
     "@matdata/yasgui-chart-plugin": "^1.2.0",
+    "@matdata/yasgui-explain-plugin": "^1.0.0",
     "@matdata/yasgui-geo-plugin": "^1.3.0",
     "@matdata/yasgui-graph-plugin": "^1.7.0",
     "@matdata/yasgui-table-plugin": "^1.7.1",
