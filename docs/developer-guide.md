@@ -1042,7 +1042,7 @@ Return the terms most used first; Yasqe filters them on what the user typed and 
 
 #### Linked Open Vocabularies Terms
 
-The LOV suggestions come from `packages/yasqe/src/lov-terms.json`, which is bundled with Yasqe: no request is made to the LOV API at runtime. The file holds the classes and properties of the most used LOV vocabularies (ranked by the number of vocabularies that use them, up to about 600 KB) and is generated from the LOV N-Quads dump:
+The LOV suggestions come from `packages/yasqe/src/lov-terms.json`, which is bundled with Yasqe: no request is made to the LOV API at runtime. The file holds the classes and properties of the most used LOV vocabularies (ranked by the number of vocabularies that use them, up to about 600 KB) and is generated from the LOV N-Quads dump. The namespaces in `ALWAYS_INCLUDED` in `fetchLovData.js` (the ERA ontology, railML 3 and RailTopoModel) are added first, whatever their rank or the size budget, and their terms are read from the vocabulary's own source when the dump has none:
 
 ```bash
 npm run util:fetchLov                      # downloads https://lov.linkeddata.es/lov.nq.gz

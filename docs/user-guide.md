@@ -858,7 +858,7 @@ Ctrl+clicking on `http://dbpedia.org/resource/European_Union` automatically quer
 Press `Ctrl+Space` after `a` (or `rdf:type`) to get class suggestions, or in the position of a property to get property suggestions. MatGUI suggests:
 
 1. **Used in this endpoint**: the classes and properties the endpoint of the tab actually uses, most used first, with the number of instances (classes) or triples (properties) next to them. This also covers vocabularies that are not registered anywhere, such as railML 3, the ERA ontology or your own ontologies.
-2. **Linked Open Vocabularies**: matching classes and properties of the most used vocabularies in [LOV](https://lov.linkeddata.es/dataset/lov/). MatGUI ships this list, so no request is made to LOV while you type. Terms that the endpoint already suggested are not repeated, and a term is inserted as a prefixed name with its `PREFIX` when LOV knows the vocabulary's preferred prefix.
+2. **Linked Open Vocabularies**: matching classes and properties of the most used vocabularies in [LOV](https://lov.linkeddata.es/dataset/lov/). MatGUI ships this list, so no request is made to LOV while you type. Terms that the endpoint already suggested are not repeated, and a term is inserted as a prefixed name with its `PREFIX` when LOV knows the vocabulary's preferred prefix. The ERA ontology (`era:`), railML 3 (`railml:`) and RailTopoModel (`rtm:`) are always included, even though they are not in LOV.
 
 Without typing anything, the endpoint's most used terms are listed. While you type, a suggestion matches on its full IRI, its prefixed name (`era:Op`) or, when you type a plain word (`Operat`), on any part of its local name.
 
