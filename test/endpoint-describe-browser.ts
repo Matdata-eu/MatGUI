@@ -7,6 +7,22 @@ import { setup, destroy, closePage, getPage } from "./utils.js";
 
 const expect = chai.expect;
 
+async function debugElement(page: puppeteer.Page, selector: string) {
+  const info = await page.evaluate((sel) => {
+    const el = document.querySelector(sel) as HTMLElement | null;
+    if (!el) return { missing: true };
+    const chain: string[] = [];
+    for (let n: HTMLElement | null = el; n && n !== document.body; n = n.parentElement) {
+      const cs = getComputedStyle(n);
+      const r = n.getBoundingClientRect();
+      chain.push(`${n.tagName}.${(n.className || "").toString().slice(0, 60)} d=${cs.display} v=${cs.visibility} h=${n.hidden} ${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)}`);
+    }
+    return { chain, viewport: [innerWidth, innerHeight], panel: (window as any).yasgui?.sidePanel?.getState?.() };
+  }, selector);
+  console.log("DEBUG", selector, JSON.stringify(info, null, 1));
+}
+
+
 const ENDPOINT = "http://describe.test/sparql";
 const OTHER_ENDPOINT = "http://other.test/sparql";
 
@@ -216,6 +232,7 @@ describe("Endpoint describe panel", function () {
 
   it("doesn't query an endpoint for which autocompletion is switched off", async function () {
     await openPanel();
+    await debugElement(page, ".yasgui-describe__autocomplete input");
     await page.click(".yasgui-describe__autocomplete input");
     await autocompleteAtEnd("SELECT * WHERE { ?s a ");
     await new Promise((resolve) => setTimeout(resolve, 500));
