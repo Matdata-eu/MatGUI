@@ -81,6 +81,22 @@ export async function getPage(browser: Browser, path: string) {
   });
   return page;
 }
+/**
+ * Click an element once it is visible. Panels that re-render right after they open can replace the element
+ * between finding and clicking it, so a failed click is retried with a fresh element.
+ */
+export async function clickWhenVisible(page: Page, selector: string, attempts = 5) {
+  for (let attempt = 1; ; attempt++) {
+    await page.waitForSelector(selector, { visible: true });
+    try {
+      await page.click(selector);
+      return;
+    } catch (e) {
+      if (attempt >= attempts) throw e;
+      await wait(100);
+    }
+  }
+}
 export function makeScreenshot(page: Page, name?: string) {
   return page.screenshot({ type: "png", path: `./test/screenshots/${name ?? Date.now()}.png` });
 }
