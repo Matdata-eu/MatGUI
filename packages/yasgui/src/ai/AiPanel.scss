@@ -1,4 +1,15 @@
 // "AI" view of the side panel (see AiPanel.ts) and the AI section of the settings (AiSettingsForm.ts)
+// Accent of the privacy notice and of the selected service in the settings
+:root {
+  --yasgui-ai-accent: #4f46e5;
+  --yasgui-ai-accent-soft: rgba(79, 70, 229, 0.06);
+}
+
+[data-theme="dark"] {
+  --yasgui-ai-accent: #818cf8;
+  --yasgui-ai-accent-soft: #1b2033;
+}
+
 .yasgui-sidePanel__view[data-view="assistant"] {
   position: relative;
   min-height: 320px;
@@ -215,9 +226,17 @@
     }
   }
 
+  &__consent {
+    border: 0;
+    border-left: 3px solid var(--yasgui-ai-accent);
+    border-radius: 4px var(--yasgui-radius-md, 10px) var(--yasgui-radius-md, 10px) 4px;
+    background: var(--yasgui-surface-sunken, #edf1f6);
+  }
+
   &__consent.answered {
     padding: 4px 10px;
-    border-style: dashed;
+    border-left-color: var(--yasgui-line-strong, #808893);
+    background: transparent;
     font-size: 12px;
     color: var(--yasgui-ink-subtle, #6a7380);
 
@@ -458,12 +477,21 @@
 
   &__choice {
     display: flex;
-    align-items: flex-start;
-    gap: 8px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--yasgui-border-color, #dfe5ec);
+    border-radius: var(--yasgui-radius-md, 10px);
+    background: var(--yasgui-bg-secondary, #fff);
     cursor: pointer;
 
+    &:has(input:checked) {
+      border-color: var(--yasgui-ai-accent);
+      background: var(--yasgui-ai-accent-soft);
+    }
+
     input {
-      margin-top: 3px;
+      margin: 0;
     }
 
     strong {
@@ -489,7 +517,7 @@
   &__choiceHelp {
     display: block;
     font-size: 12px;
-    opacity: 0.8;
+    color: var(--yasgui-text-secondary, #666);
   }
 
   &__own[hidden] {
