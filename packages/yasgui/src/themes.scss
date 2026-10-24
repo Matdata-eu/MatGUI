@@ -8,6 +8,11 @@
   --yasgui-surface-raised: #ffffff;
   --yasgui-surface-sunken: #edf1f6;
   --yasgui-surface-selected: #e6ecf3;
+  // Editor highlights. The active line is translucent because CodeMirror draws the
+  // selection layer behind the text lines, so an opaque fill would hide the selection.
+  --yasgui-editor-active-line: rgba(28, 38, 51, 0.05);
+  --yasgui-editor-selection: rgba(5, 99, 187, 0.22);
+  --yasgui-editor-selection-focused: rgba(5, 99, 187, 0.3);
   --yasgui-line: #dfe5ec;
   --yasgui-line-soft: #edf0f4;
   --yasgui-line-strong: #808893;
@@ -99,6 +104,9 @@
   --yasgui-surface-raised: #141920;
   --yasgui-surface-sunken: #1c222b;
   --yasgui-surface-selected: #232b36;
+  --yasgui-editor-active-line: rgba(255, 255, 255, 0.04);
+  --yasgui-editor-selection: rgba(90, 168, 242, 0.25);
+  --yasgui-editor-selection-focused: rgba(90, 168, 242, 0.35);
   --yasgui-line: #252d38;
   --yasgui-line-soft: #1d242d;
   --yasgui-line-strong: #6f7e8c;

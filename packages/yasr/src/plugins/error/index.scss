@@ -11,6 +11,40 @@
         padding-top: 3px;
         padding-bottom: 3px;
       }
+      .yasr_errorAiActions {
+        float: right;
+        display: flex;
+        gap: 6px;
+        margin-right: 12px;
+      }
+      .yasr_errorAiButton {
+        font: inherit;
+        font-size: 13px;
+        padding: 3px 10px;
+        border-radius: var(--yasgui-radius-button, 8px);
+        border: 1px solid var(--yasgui-line, #dfe5ec);
+        background: var(--yasgui-surface-raised, #fff);
+        color: var(--yasgui-ink-body, #3a4552);
+        cursor: pointer;
+        &:hover {
+          border-color: var(--yasgui-line-strong, #808893);
+          color: var(--yasgui-ink, #1c2633);
+        }
+        &:focus-visible {
+          outline: 2px solid var(--yasgui-focus, #044a8c);
+          outline-offset: 1px;
+        }
+      }
+      .yasr_errorAiFix {
+        background: var(--yasgui-brand-fill, #0563bb);
+        border-color: var(--yasgui-brand-fill, #0563bb);
+        color: var(--yasgui-on-brand, #fff);
+        &:hover {
+          background: var(--yasgui-brand-fill-strong, #044a8c);
+          border-color: var(--yasgui-brand-fill-strong, #044a8c);
+          color: var(--yasgui-on-brand, #fff);
+        }
+      }
       span.status {
         display: inline-block;
         padding: 0.35em 0.5rem;

@@ -22,13 +22,13 @@ export interface PersistedJson {
   disabledDevButtons?: string[]; // Endpoints of developer-configured buttons that are disabled by user
   codeMirrorThemeLight?: string; // User-selected CodeMirror theme for light mode
   codeMirrorThemeDark?: string; // User-selected CodeMirror theme for dark mode
-  sidePanel?: SidePanelState; // Left side panel (Queries / Endpoint)
+  sidePanel?: SidePanelState; // Left side panel (Queries / Endpoint / AI)
 }
 export interface SidePanelState {
   open: boolean;
   collapsed: boolean;
   pinned: boolean;
-  view: "queries" | "endpoint";
+  view: "queries" | "endpoint" | "assistant";
   width: number;
 }
 function getDefaults(): PersistedJson {

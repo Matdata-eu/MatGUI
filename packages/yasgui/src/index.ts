@@ -25,6 +25,8 @@ import QueryBrowser from "./queryManagement/QueryBrowser";
 import EndpointDescribePanel, { EndpointDescribeConfig } from "./endpointDescribe/EndpointDescribePanel";
 import SidePanel from "./sidePanel/SidePanel";
 import CommandPalette from "./CommandPalette";
+import AiAssistant from "./ai/AiAssistant";
+import type { AiConfig } from "./ai/types";
 import "./index.scss";
 import "./themes.scss";
 import "./github-dark-theme.scss";
@@ -144,6 +146,12 @@ export interface Config<EndpointObject extends CatalogueItem = CatalogueItem> {
    * "Describe endpoint" panel: service description, VoID and overview queries of the current endpoint
    */
   endpointDescribe: EndpointDescribeConfig;
+  /**
+   * AI assistant: natural language to SPARQL, explaining and fixing queries, explaining results. Talks to an
+   * OpenAI-compatible API with the user's own key, or to a proxy of the embedding site (`ai.proxy`). Set
+   * `ai: { enabled: false }` to remove it, including "Copy for AI".
+   */
+  ai: Partial<AiConfig>;
 }
 export type PartialConfig = {
   [P in keyof Config]?: Config[P] extends object ? Partial<Config[P]> : Config[P];
@@ -197,6 +205,8 @@ export class Yasgui extends EventEmitter {
   public sidePanel: SidePanel;
   /** Ctrl+K search for saved queries, commands and settings (unless `showCommandPalette` is false) */
   public commandPalette: CommandPalette | undefined;
+  /** AI assistant (the "AI" view of the side panel), unless `ai.enabled` is false */
+  public aiAssistant: AiAssistant | undefined;
   public mainEl: HTMLDivElement;
   private recentTabIds: string[] = [];
   private navigationSnapshot: string[] | null = null;
@@ -248,6 +258,8 @@ export class Yasgui extends EventEmitter {
 
     this.queryBrowser = new QueryBrowser(this);
     this.queryBrowser.attachToSidePanel(this.sidePanel, this.sidePanel.addView("queries", "Queries", "fileText"));
+    // Created before the tabs, so their results views get the assistant hooks
+    if (this.config.ai?.enabled !== false) this.aiAssistant = new AiAssistant(this);
     this.on("tabClose", (_yasgui, tab) => {
       this.removeTabFromRecentHistory(tab.getId());
     });
@@ -562,6 +574,7 @@ export class Yasgui extends EventEmitter {
   public destroy() {
     this.removeAllListeners();
     this.endpointDescribe?.destroy();
+    this.aiAssistant?.destroy();
     this.commandPalette?.destroy();
     this.sidePanel.destroy();
     this.tabElements.destroy();

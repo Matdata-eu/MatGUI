@@ -47,6 +47,7 @@
   - [Class and Property Autocomplete](#class-and-property-autocomplete)
   - [IRI Hover Info](#iri-hover-info)
   - [Endpoint Overview](#endpoint-overview)
+  - [AI Assistant](#ai-assistant)
   - [Query Tabs](#query-tabs)
   - [Settings Modal](#settings-modal)
   - [SPARQL Endpoints Management](#sparql-endpoints-management)
@@ -87,6 +88,7 @@
     - [Lost Queries](#lost-queries)
     - [Theme/Layout Not Saving](#themelayout-not-saving)
     - [Formatting Issues](#formatting-issues)
+    - [AI Assistant Issues](#ai-assistant-issues)
   - [Getting Help](#getting-help)
   - [Best Practices](#best-practices)
 - [Additional Resources](#additional-resources)
@@ -417,10 +419,11 @@ You can also find a snippet with the [search](#search) (`Ctrl+K`). The snippets 
 
 ### Side Panel
 
-The side panel on the left has two views, selected with **Queries** and **Endpoint** at its top:
+The side panel on the left has three views, selected with **Queries**, **Endpoint** and **AI** at its top:
 
 - **Queries**: the query browser for your workspaces. Pick a workspace, search, open a saved query in a new tab, or save the current tab with **Save current tab**
 - **Endpoint**: the endpoint overview of the current endpoint (see [Endpoint Overview](#endpoint-overview))
+- **AI**: the AI assistant, which writes, explains and fixes queries (see [AI Assistant](#ai-assistant)). The **AI** button in the editor toolbar opens it too. A site can switch it off, and then this view is not shown
 
 While the panel is closed, a narrow bar of icons stays at the left edge: **Open side panel**, then one button per view. Click a view to open the panel on it. You can also press `Ctrl+B` (`⌘B` on a Mac) to show or hide the panel, `F8` to toggle the Endpoint view, or use **Show saved queries** and **Explore endpoint** in the [search](#search).
 
@@ -943,6 +946,87 @@ The endpoint overview lives in the side panel, so it shares the panel's controls
 - Drag the right edge of the panel to change its width.
 - On small screens the panel opens over the editor.
 
+### AI Assistant
+
+The AI assistant helps you write and understand queries. Open it with the **AI** button in the editor toolbar, the sparkles icon in the bar at the left, or **Ask AI…** in the [search](#search) (`Ctrl+K`). It lives in the **AI** view of the [side panel](#side-panel).
+
+It can:
+
+- **Write a query from a question.** Type what you want to know in your own words ("Which tunnels are longer than 5 km?") and press `Enter` (`Shift+Enter` adds a new line). The assistant answers with a query and a short explanation. Ask follow-up questions in the same conversation ("now only in Belgium"); the **+** button starts a new conversation.
+- **Explain the query** in the editor in plain language: a one-sentence summary, then the parts of the query, and possible problems such as a missing `LIMIT`.
+- **Fix the query.** When the query has a syntax error, or the endpoint answers with an error, click **Fix query** in the AI view or **Fix with AI** in the error view of the results. When the query runs but returns nothing, the button becomes **Why no results?**.
+- **Explain the results**: a summary of what the results show, notable values, and anything that looks wrong.
+
+Queries in an answer get buttons: **Use in editor** replaces your query (press `Ctrl+Z` in the editor to get the old one back), **Insert** puts the query at the cursor, **New tab** opens it in a new tab with the same endpoint, and **Copy** copies it. Nothing is ever run automatically: you decide when to run a query.
+
+> AI answers can be wrong. The assistant may use a class or property that doesn't exist, or misread what you meant. Check a query, and its results, before you rely on it.
+
+**Setting up an AI service**
+
+The assistant works with any service that offers an OpenAI-compatible API. Open **Settings → AI** (or the gear in the AI view). Under **AI services** you see:
+
+- **The AI service of the site**, when the site you use MatGUI on provides one (it may offer more than one). You need no key of your own.
+- **Your own services.** Click **Add service**, pick a provider in the **Base URL** list or enter another URL, and fill in your **API key** and the **Model**. **Name** is how the service is shown in the AI view; it defaults to the provider or host. Use **Test connection** to check the key and to list the models of the service. The key is optional: local models and some proxies need none. Add as many services as you like, and change or remove them with **Edit** and **Remove**.
+- **No AI service**: nothing is sent anywhere. See "Without an AI service" below.
+
+Select the service the assistant uses by default and click **Save**. In the AI view, the service name at the top is a list: pick another service there to use it for your next questions, until you reload the page. "No AI service: copy a prompt" in that list makes the actions copy prompts instead.
+
+The Base URL list includes OpenAI, Anthropic (Claude), Google Gemini, Mistral, Moonshot (Kimi), DeepSeek, xAI (Grok), OpenRouter, Groq, Together AI, Fireworks AI, Cerebras, Hugging Face, Scaleway, Azure OpenAI, Ollama and LM Studio. Some of them:
+
+  | Service                   | Base URL                                                   |
+  | ------------------------- | ---------------------------------------------------------- |
+  | OpenAI                    | `https://api.openai.com/v1` (the default)                  |
+  | Anthropic (Claude)        | `https://api.anthropic.com/v1`                             |
+  | Google Gemini             | `https://generativelanguage.googleapis.com/v1beta/openai` |
+  | Mistral                   | `https://api.mistral.ai/v1`                                |
+  | OpenRouter                | `https://openrouter.ai/api/v1`                             |
+  | Groq                      | `https://api.groq.com/openai/v1`                           |
+  | Azure OpenAI              | `https://<resource>.openai.azure.com/openai/v1`            |
+  | Ollama (your computer)    | `http://localhost:11434/v1` (no key needed)                |
+  | LM Studio (your computer) | `http://localhost:1234/v1` (no key needed)                 |
+
+  Enter the base URL without an endpoint path: when you paste a URL ending in `/chat/completions` or `/messages`, MatGUI drops that part. A few services need something extra, which MatGUI handles for you:
+  - **Anthropic**: MatGUI adds the header Anthropic asks of browser requests (`anthropic-dangerous-direct-browser-access`) and uses its OpenAI-compatible endpoint, with Claude model names such as `claude-sonnet-4-5`.
+  - **Azure OpenAI**: the key is sent in the `api-key` header, as Azure expects. The model is the name of your deployment.
+
+  The service must accept requests from a browser (CORS). OpenAI, Anthropic, Google Gemini and OpenRouter do; when **Test connection** can't reach another service, that service probably doesn't, and the AI service of the site or a local model is the way to go. Models on your own computer need one setting:
+  - **Ollama** only accepts the MatGUI site when it is started with `OLLAMA_ORIGINS` set to that site, for example `OLLAMA_ORIGINS=https://matgui.matdata.eu ollama serve`.
+  - **LM Studio**: turn on **Enable CORS** in the settings of its local server.
+  - Your browser may ask whether the site may access devices on your local network. Allow it, or requests to `localhost` fail.
+
+  Small local models often can't run check queries (tool calls). MatGUI then asks again without them, so the answer comes without checks on the endpoint.
+
+Your API keys are stored in this browser only (in its local storage). Each key is sent only to the base URL of its service, and it is never included in exported settings ([Configuration Import/Export](#configuration-importexport)) or share links. Anyone who uses the same browser profile can read it, so use a key with a spending limit, and click **Forget key** on a shared computer.
+
+**Without an AI service: Copy for AI**
+
+You don't need an API key to get help. Without an AI service, the actions of the AI view, and **Copy for AI** in the error view, copy a ready-made prompt to the clipboard: the instructions, the context of your endpoint, your query and, for a fix, the error. Paste it in ChatGPT, Claude, Le Chat, Copilot or any other AI chat. The AI view shows the copied prompt, so you see exactly what you are about to paste. With an AI service set up, **Copy query for AI** in the search does the same.
+
+**What is sent, and to whom**
+
+Nothing is sent until you click an action or send a question. Before the first request to a service, the AI view shows what the request includes and where it goes, and asks you to confirm. Tick **Don't ask again** to skip this for that service; **Ask me again** in **Settings → AI** brings the question back.
+
+| Action          | Sent to the AI service                                                                                                                       |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ask a question  | Your question, the query in the editor, the endpoint URL, and the names of the classes and properties used in the endpoint with their counts |
+| Fix query       | The query, the error message, the endpoint URL, and the class and property names                                                             |
+| Explain query   | The query and the endpoint URL                                                                                                               |
+| Explain results | The query, the endpoint URL and the first 50 result rows (the site can change this number)                                                   |
+
+Follow-up questions also send the earlier questions and answers of the conversation. Result data is only sent by **Explain results**, and by check queries (below). Your endpoint credentials and your other tabs are never sent.
+
+Every answer has a **What was sent** section with the exact text of the request, and shows which service and model answered.
+
+**Check queries**
+
+To give better answers, the assistant may run a few small check queries on the endpoint of the tab before it answers, for example to see whether a class exists or which values a property has. Check queries are read-only (`SELECT` or `ASK`), return at most 20 rows, and at most 5 are run per question. They run from your browser with the endpoint and authentication settings of the tab, and their results are sent to the AI service. Each check query and its result is shown in the answer.
+
+To switch them off, untick **Let the assistant run check queries on the endpoint** in **Settings → AI**. When a service or model doesn't support this (some local models don't), the assistant answers without check queries.
+
+**Where the endpoint context comes from**
+
+The class and property names come from the same place as the [autocomplete](#class-and-property-autocomplete): the endpoint's VoID description, the [Endpoint Overview](#endpoint-overview) results, or one limited background query. When you switched autocomplete off for an endpoint, the assistant gets only your prefixes for it. Telling the assistant which vocabulary to use ("use the ERA ontology") also helps.
+
 ### Query Tabs
 
 Manage multiple queries simultaneously with tabs.
@@ -1015,6 +1099,15 @@ Access comprehensive configuration options through the Settings modal.
 - Switch between the Default and GitHub Dark editor themes in the Settings → Editor tab
 - Includes custom "GitHub Dark" theme matching GitHub's dark default colors
 - Show IRI information on hover (see [IRI Hover Info](#iri-hover-info))
+
+**AI Tab:**
+
+- Choose the AI service: the service of the site (when it provides one), your own API key, or none ("Copy for AI" only)
+- Base URL, API key and model of your own service, with **Test connection** and **Forget key**
+- Let the assistant run check queries on the endpoint
+- Bring back the privacy notice for services you chose not to be asked about again
+
+See [AI Assistant](#ai-assistant).
 
 All settings are saved automatically to local storage.
 
@@ -2156,6 +2249,8 @@ Displays error messages and diagnostic information when queries fail.
 - **404**: Endpoint not found
 - **500**: Server error
 
+**AI help:** with the [AI assistant](#ai-assistant), the error view shows **Fix with AI**, which explains the error and suggests a corrected query, and **Copy for AI**, which copies the query and the error as a prompt for an AI chat of your choice.
+
 ### Plugin Selection
 
 **Automatic Selection:**
@@ -2528,6 +2623,22 @@ The proxy solves this by:
 2. **Try Different Formatter**: Switch between sparql-formatter and legacy in Settings
 3. **Manual Formatting**: Format query manually if auto-format fails
 4. **Report Invalid Results**: If formatter produces incorrect output, it's a bug
+
+#### AI Assistant Issues
+
+**Symptoms:**
+
+- The AI actions copy a prompt instead of answering
+- "Could not reach …" or an error from the AI service
+- Answers use classes or properties that don't exist
+
+**Solutions:**
+
+1. **No AI service set up**: without a service, the actions copy a prompt ([Copy for AI](#ai-assistant)). Add a service in **Settings → AI**, or pick one in the list at the top of the AI view.
+2. **Key refused (401)**: check the API key in **Settings → AI**, and that it belongs to the service of the base URL.
+3. **Model not found (404)**: use **Test connection** and pick a model from the list.
+4. **Could not reach the service**: check the base URL (it usually ends in `/v1`). The service must allow requests from a browser (CORS); for Ollama, start it with `OLLAMA_ORIGINS` set to the MatGUI site.
+5. **Invented names**: keep **check queries** switched on, open the [Endpoint Overview](#endpoint-overview) and run its Classes and Properties queries so the assistant knows more of the endpoint, or name the vocabulary in your question.
 
 ### Getting Help
 

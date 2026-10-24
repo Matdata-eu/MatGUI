@@ -741,6 +741,16 @@ export class Tab extends EventEmitter {
     addClass(divider, "yasgui-editorToolbar__divider", "desktopOnly");
     toolbar.appendChild(divider);
 
+    if (this.yasgui.aiAssistant) {
+      const aiButton = iconButton("sparkles", "AI", {
+        className: "yasgui-editorToolbar__button yasgui-aiButton",
+        showLabel: true,
+        title: "AI assistant: ask for a query, explain or fix this query",
+      });
+      aiButton.addEventListener("click", () => this.yasgui.aiAssistant?.panel.toggle());
+      toolbar.insertBefore(aiButton, divider);
+    }
+
     this.initOrientationToggle();
     this.yasqeWrapperEl.appendChild(toolbar);
   }
@@ -1861,6 +1871,24 @@ export class Tab extends EventEmitter {
       } as Partial<PersistedJson>);
       tab.setQuery(query);
     };
+
+    // "Fix with AI" / "Copy for AI" in the error view, and `yasr.askAssistant()` for plugins
+    if (this.yasgui.aiAssistant) {
+      const assistant = this.yasgui.aiAssistant;
+      const fixTask = (error: { status?: number; text: string; statusText?: string }) =>
+        assistant.createTask("fix", {
+          error: { source: "endpoint", status: error.status, message: error.text || error.statusText },
+        });
+      yasrConf.assistant = {
+        isConnected: () => assistant.isConnected(),
+        fixError: (error) => void assistant.run(fixTask(error)),
+        copyErrorPrompt: (error) => {
+          const task = fixTask(error);
+          return task ? assistant.copy(task) : Promise.resolve(false);
+        },
+        ask: (request) => assistant.askFromPlugin(request),
+      };
+    }
 
     this.yasr = new Yasr(this.yasrWrapperEl, yasrConf, this.persistentJson.yasr.response);
     // Expose the tab reference so plugins (e.g. table plugin) can reach yasqe

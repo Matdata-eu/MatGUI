@@ -2,6 +2,7 @@ import { Config } from "./";
 import Yasr from "@matdata/yasr";
 import { default as Yasqe } from "@matdata/yasqe";
 import { CatalogueItem } from "./endpointSelect";
+import { defaultAiConfig } from "./ai/types";
 
 export default function initialize(): Config<CatalogueItem> {
   return {
@@ -43,6 +44,7 @@ export default function initialize(): Config<CatalogueItem> {
       fetchMetadata: true,
       autocomplete: true,
     },
+    ai: { ...defaultAiConfig },
     endpointButtons: undefined,
     endpointCatalogueOptions: {
       getData: () => {

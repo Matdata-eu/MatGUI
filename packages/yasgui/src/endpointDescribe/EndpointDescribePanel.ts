@@ -171,7 +171,7 @@ export default class EndpointDescribePanel {
   private attachToSidePanel(sidePanel: SidePanel) {
     this.host = sidePanel;
     const legacy = { ...this.store.getUiState() };
-    sidePanel.addView("endpoint", "Endpoint", "compass").appendChild(this.rootEl);
+    sidePanel.addView("endpoint", "Endpoint", "compass", { before: "assistant" }).appendChild(this.rootEl);
     this.rootEl.removeAttribute("role");
     sidePanel.onChange(() => this.syncWithHost());
     sidePanel.restore(legacy);

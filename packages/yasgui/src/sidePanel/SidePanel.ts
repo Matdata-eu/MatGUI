@@ -150,8 +150,14 @@ export default class SidePanel {
 
   /**
    * Register a view (tab) of the panel. Returns the element its content should be appended to.
+   * With `before`, the view is placed before that view (when it exists) instead of at the end.
    */
-  public addView(view: SidePanelView, label: string, iconName: IconName): HTMLDivElement {
+  public addView(
+    view: SidePanelView,
+    label: string,
+    iconName: IconName,
+    options: { before?: SidePanelView } = {},
+  ): HTMLDivElement {
     const existing = this.views.get(view);
     if (existing) return existing.container;
     const tabButton = document.createElement("button");
@@ -170,21 +176,31 @@ export default class SidePanel {
       this.show(next.view);
       next.tabButton.focus();
     });
-    this.tabsEl.appendChild(tabButton);
+    const next = options.before ? this.views.get(options.before) : undefined;
+    this.tabsEl.insertBefore(tabButton, next ? next.tabButton : null);
 
     const railButton = iconButton(iconName, label, { className: "yasgui-sidePanel__railButton" });
     railButton.dataset.view = view;
     railButton.addEventListener("click", () => this.show(view));
-    this.railEl.appendChild(railButton);
+    this.railEl.insertBefore(railButton, next ? next.railButton : null);
 
     const container = document.createElement("div");
     addClass(container, "yasgui-sidePanel__view");
     container.dataset.view = view;
     container.setAttribute("role", "tabpanel");
     container.setAttribute("aria-labelledby", tabButton.id);
-    this.viewsEl.appendChild(container);
+    this.viewsEl.insertBefore(container, next ? next.container : null);
 
-    this.views.set(view, { view, label, icon: iconName, tabButton, railButton, container });
+    const entry = { view, label, icon: iconName, tabButton, railButton, container };
+    if (next) {
+      // Keep the map in display order, for the arrow keys and the default view
+      const entries = Array.from(this.views.entries());
+      const index = entries.findIndex(([key]) => key === options.before);
+      entries.splice(index, 0, [view, entry]);
+      this.views = new Map(entries);
+    } else {
+      this.views.set(view, entry);
+    }
     this.apply(false);
     return container;
   }
