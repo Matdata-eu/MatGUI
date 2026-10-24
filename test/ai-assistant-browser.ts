@@ -7,6 +7,22 @@ import { setup, destroy, closePage, getPage } from "./utils.js";
 
 const expect = chai.expect;
 
+async function debugElement(page: puppeteer.Page, selector: string) {
+  const info = await page.evaluate((sel) => {
+    const el = document.querySelector(sel) as HTMLElement | null;
+    if (!el) return { missing: true };
+    const chain: string[] = [];
+    for (let n: HTMLElement | null = el; n && n !== document.body; n = n.parentElement) {
+      const cs = getComputedStyle(n);
+      const r = n.getBoundingClientRect();
+      chain.push(`${n.tagName}.${(n.className || "").toString().slice(0, 60)} d=${cs.display} v=${cs.visibility} h=${n.hidden} ${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)}`);
+    }
+    return { chain, viewport: [innerWidth, innerHeight], panel: (window as any).yasgui?.sidePanel?.getState?.() };
+  }, selector);
+  console.log("DEBUG", selector, JSON.stringify(info, null, 1));
+}
+
+
 const ENDPOINT = "http://ai-data.test/sparql";
 const AI_BASE = "http://ai-service.test/v1";
 const QUERY = "SELECT * WHERE {\n  ?s ?p ?o\n}\nLIMIT 10";
@@ -132,6 +148,7 @@ describe("AI assistant", function () {
   it("copies a prompt when no AI service is set up, and sends nothing", async function () {
     await page.click(".yasgui-aiButton");
     await page.waitForSelector(".yasgui-sidePanel__view[data-view='assistant']:not([hidden])");
+    await debugElement(page, ".yasgui-ai__actions .yasgui-ai__action");
     await page.click(".yasgui-ai__actions .yasgui-ai__action");
     await page.waitForSelector(".yasgui-ai__copied");
     const prompt = await page.$eval(".yasgui-ai__copied .yasgui-ai__sentText", (el) => el.textContent || "");
