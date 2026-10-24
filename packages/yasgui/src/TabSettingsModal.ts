@@ -8,6 +8,7 @@ import PersistentConfig from "./PersistentConfig";
 import { deduplicatePrefixes } from "./prefixUtils";
 import { WorkspaceSettingsForm } from "./queryManagement/WorkspaceSettingsForm";
 import { icon, IconName } from "./icons";
+import AiSettingsForm from "./ai/AiSettingsForm";
 
 const AcceptOptionsMap: { key: string; value: string }[] = [
   { key: "JSON", value: "application/sparql-results+json" },
@@ -38,6 +39,7 @@ export default class TabSettingsModal {
   private modalContent!: HTMLElement;
   private hamburgerContainer!: HTMLElement;
   private prefixTextarea!: HTMLTextAreaElement;
+  private aiSettingsForm?: AiSettingsForm;
   private autoCaptureCheckbox!: HTMLInputElement;
   private hamburgerMenuButton!: HTMLButtonElement;
   private hamburgerDropdown!: HTMLElement;
@@ -265,47 +267,64 @@ export default class TabSettingsModal {
     requestTab.textContent = "Request";
     addClass(requestTab, "modalNavButton", "active");
     requestTab.onclick = () => this.switchTab("request");
+    requestTab.dataset.tab = "request";
 
     const endpointsTab = document.createElement("button");
     endpointsTab.textContent = "SPARQL Endpoints";
     addClass(endpointsTab, "modalNavButton");
     endpointsTab.onclick = () => this.switchTab("endpoints");
+    endpointsTab.dataset.tab = "endpoints";
 
     const workspacesTab = document.createElement("button");
     workspacesTab.textContent = "Workspaces";
     addClass(workspacesTab, "modalNavButton");
     workspacesTab.onclick = () => this.switchTab("workspaces");
+    workspacesTab.dataset.tab = "workspaces";
 
     const prefixTab = document.createElement("button");
     prefixTab.textContent = "Prefixes";
     addClass(prefixTab, "modalNavButton");
     prefixTab.onclick = () => this.switchTab("prefix");
+    prefixTab.dataset.tab = "prefix";
 
     const editorTab = document.createElement("button");
     editorTab.textContent = "Editor";
     addClass(editorTab, "modalNavButton");
     editorTab.onclick = () => this.switchTab("editor");
+    editorTab.dataset.tab = "editor";
 
     const importExportTab = document.createElement("button");
     importExportTab.textContent = "Import/Export";
     addClass(importExportTab, "modalNavButton");
     importExportTab.onclick = () => this.switchTab("importexport");
+    importExportTab.dataset.tab = "importexport";
 
     const shortcutsTab = document.createElement("button");
     shortcutsTab.textContent = "Keyboard Shortcuts";
     addClass(shortcutsTab, "modalNavButton");
     shortcutsTab.onclick = () => this.switchTab("shortcuts");
+    shortcutsTab.dataset.tab = "shortcuts";
 
     const aboutTab = document.createElement("button");
     aboutTab.textContent = "About";
     addClass(aboutTab, "modalNavButton");
     aboutTab.onclick = () => this.switchTab("about");
+    aboutTab.dataset.tab = "about";
 
     sidebar.appendChild(requestTab);
     sidebar.appendChild(endpointsTab);
     sidebar.appendChild(workspacesTab);
     sidebar.appendChild(prefixTab);
     sidebar.appendChild(editorTab);
+    const assistant = this.tab.yasgui.aiAssistant;
+    if (assistant) {
+      const aiTab = document.createElement("button");
+      aiTab.textContent = "AI";
+      addClass(aiTab, "modalNavButton");
+      aiTab.onclick = () => this.switchTab("ai");
+      aiTab.dataset.tab = "ai";
+      sidebar.appendChild(aiTab);
+    }
     sidebar.appendChild(importExportTab);
     sidebar.appendChild(shortcutsTab);
     sidebar.appendChild(aboutTab);
@@ -363,6 +382,14 @@ export default class TabSettingsModal {
     contentArea.appendChild(workspacesContent);
     contentArea.appendChild(prefixContent);
     contentArea.appendChild(editorContent);
+    if (assistant) {
+      const aiContent = document.createElement("div");
+      addClass(aiContent, "modalTabContent");
+      aiContent.id = "ai-content";
+      this.aiSettingsForm = new AiSettingsForm(assistant);
+      this.aiSettingsForm.draw(aiContent);
+      contentArea.appendChild(aiContent);
+    }
     contentArea.appendChild(importExportContent);
     contentArea.appendChild(shortcutsContent);
     contentArea.appendChild(aboutContent);
@@ -396,17 +423,8 @@ export default class TabSettingsModal {
     const buttons = this.modalContent.querySelectorAll(".modalNavButton");
     const contents = this.modalContent.querySelectorAll(".modalTabContent");
 
-    buttons.forEach((btn, index) => {
-      if (
-        (tabName === "request" && index === 0) ||
-        (tabName === "endpoints" && index === 1) ||
-        (tabName === "workspaces" && index === 2) ||
-        (tabName === "prefix" && index === 3) ||
-        (tabName === "editor" && index === 4) ||
-        (tabName === "importexport" && index === 5) ||
-        (tabName === "shortcuts" && index === 6) ||
-        (tabName === "about" && index === 7)
-      ) {
+    buttons.forEach((btn) => {
+      if ((btn as HTMLElement).dataset.tab === tabName) {
         addClass(btn as HTMLElement, "active");
       } else {
         removeClass(btn as HTMLElement, "active");
@@ -1618,7 +1636,7 @@ export default class TabSettingsModal {
 
   /**
    * Open the settings modal, optionally on a section:
-   * "request", "endpoints", "workspaces", "prefix", "editor", "importexport", "shortcuts" or "about"
+   * "request", "endpoints", "workspaces", "prefix", "editor", "ai", "importexport", "shortcuts" or "about"
    */
   public open(section?: string) {
     if (section) this.switchTab(section);
@@ -1659,6 +1677,7 @@ export default class TabSettingsModal {
 
     this.prefixTextarea.value = prefixes;
     this.autoCaptureCheckbox.checked = autoCapture;
+    this.aiSettingsForm?.load();
   }
 
   private save() {
@@ -1670,6 +1689,7 @@ export default class TabSettingsModal {
     const deduplicated = deduplicatePrefixes(prefixText);
     this.tab.yasgui.persistentConfig.setPrefixes(deduplicated);
     this.tab.yasgui.persistentConfig.setAutoCaptureEnabled(autoCapture);
+    this.aiSettingsForm?.save();
 
     // Save editor settings
     const yasqe = this.tab.getYasqe();

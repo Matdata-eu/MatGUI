@@ -286,6 +286,59 @@ export default class CommandPalette {
         run: () => yasgui.endpointDescribe?.toggle(),
       });
     }
+    const assistant = yasgui.aiAssistant;
+    if (assistant) {
+      const connected = assistant.isConnected();
+      const run = (kind: "explainQuery" | "fix" | "explainResults") => () =>
+        void assistant.run(assistant.createTask(kind));
+      const copy = (kind: "explainQuery" | "fix") => () => {
+        const task = assistant.createTask(kind);
+        if (task) void assistant.copy(task);
+      };
+      commands.push(
+        {
+          section: "commands",
+          label: "Ask AI…",
+          icon: "sparkles",
+          keywords: "assistant question natural language generate write query llm chatgpt",
+          run: () => assistant.panel.focusQuestion(),
+        },
+        {
+          section: "commands",
+          label: connected ? "Explain query with AI" : "Copy query for AI (explain)",
+          icon: "sparkles",
+          keywords: "assistant describe llm",
+          run: run("explainQuery"),
+        },
+      );
+      if (assistant.getQueryError()) {
+        commands.push({
+          section: "commands",
+          label: connected ? "Fix query with AI" : "Copy query and error for AI",
+          icon: "sparkles",
+          keywords: "assistant error repair no results llm",
+          run: run("fix"),
+        });
+      }
+      if (connected && assistant.hasResults()) {
+        commands.push({
+          section: "commands",
+          label: "Explain results with AI",
+          icon: "sparkles",
+          keywords: "assistant summarise summarize llm",
+          run: run("explainResults"),
+        });
+      }
+      if (connected) {
+        commands.push({
+          section: "commands",
+          label: "Copy query for AI",
+          icon: "sparkles",
+          keywords: "assistant prompt clipboard chatgpt claude",
+          run: copy("explainQuery"),
+        });
+      }
+    }
     commands.push(
       {
         section: "commands",
@@ -350,6 +403,7 @@ export default class CommandPalette {
       ["workspaces", "Workspaces", "git repository query management"],
       ["prefix", "Prefixes", "namespaces"],
       ["editor", "Editor", "theme font snippets autocomplete"],
+      ...(yasgui.aiAssistant ? [["ai", "AI", "assistant api key openai model llm"] as [string, string, string]] : []),
       ["importexport", "Import / export", "backup configuration"],
       ["shortcuts", "Keyboard shortcuts", "keys"],
       ["about", "About", "version"],
