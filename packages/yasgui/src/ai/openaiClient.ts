@@ -1,5 +1,5 @@
 /**
- * Minimal client for OpenAI-compatible chat completions APIs (OpenAI, Azure OpenAI, Mistral, Ollama, LM Studio,
+ * Minimal client for OpenAI-compatible chat completions APIs (OpenAI, Anthropic, Azure OpenAI, Mistral, Ollama, LM Studio,
  * vLLM, or a proxy of the embedding site). Requests go straight from the browser to the service.
  */
 import type { AiConnection } from "./types";
@@ -53,6 +53,13 @@ export function joinUrl(baseUrl: string, path: string): string {
 async function buildHeaders(connection: AiConnection): Promise<{ [name: string]: string }> {
   const headers: { [name: string]: string } = { "Content-Type": "application/json" };
   if (connection.apiKey) headers["Authorization"] = `Bearer ${connection.apiKey}`;
+  if (connection.host === "api.anthropic.com") {
+    // Anthropic only accepts browser requests that opt in with this header, and its own endpoints (such as
+    // `models`) read the key from `x-api-key`
+    headers["anthropic-dangerous-direct-browser-access"] = "true";
+    headers["anthropic-version"] = "2023-06-01";
+    if (connection.apiKey) headers["x-api-key"] = connection.apiKey;
+  }
   if (connection.getHeaders) Object.assign(headers, await connection.getHeaders());
   return headers;
 }

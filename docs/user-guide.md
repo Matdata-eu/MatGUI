@@ -970,6 +970,7 @@ The assistant works with any service that offers an OpenAI-compatible API. Open 
   | Service                   | Base URL                                        |
   | ------------------------- | ----------------------------------------------- |
   | OpenAI                    | `https://api.openai.com/v1` (the default)       |
+  | Anthropic (Claude)        | `https://api.anthropic.com/v1`                  |
   | Mistral                   | `https://api.mistral.ai/v1`                     |
   | OpenRouter                | `https://openrouter.ai/api/v1`                  |
   | Groq                      | `https://api.groq.com/openai/v1`                |
@@ -977,7 +978,9 @@ The assistant works with any service that offers an OpenAI-compatible API. Open 
   | Ollama (your computer)    | `http://localhost:11434/v1` (no key needed)     |
   | LM Studio (your computer) | `http://localhost:1234/v1` (no key needed)      |
 
-  The service must accept requests from a browser (CORS). OpenAI and OpenRouter do; when **Test connection** can't reach another service, that service probably doesn't, and the AI service of the site or a local model is the way to go. Ollama only accepts the MatGUI site when it is started with `OLLAMA_ORIGINS` set to that site, for example `OLLAMA_ORIGINS=https://matgui.matdata.eu ollama serve`.
+  Enter the base URL without an endpoint path: when you paste a URL ending in `/chat/completions` or `/messages`, MatGUI drops that part. For Anthropic, MatGUI adds the header Anthropic asks of browser requests (`anthropic-dangerous-direct-browser-access`) and uses its OpenAI-compatible endpoint, with Claude model names such as `claude-sonnet-4-5`.
+
+  The service must accept requests from a browser (CORS). OpenAI, Anthropic and OpenRouter do; when **Test connection** can't reach another service, that service probably doesn't, and the AI service of the site or a local model is the way to go. Ollama only accepts the MatGUI site when it is started with `OLLAMA_ORIGINS` set to that site, for example `OLLAMA_ORIGINS=https://matgui.matdata.eu ollama serve`.
 
 - **No AI service**: nothing is sent anywhere. See "Without an AI service" below.
 

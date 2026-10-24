@@ -426,8 +426,10 @@
   }
 }
 
-// Settings
+// Settings. The colour is set here because the form's labels and choices have no class of the settings modal.
 .yasgui-aiSettings {
+  color: var(--yasgui-text-primary, #000);
+
   &__choices {
     display: flex;
     flex-direction: column;

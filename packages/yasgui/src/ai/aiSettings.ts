@@ -28,6 +28,17 @@ export function isLocalUrl(url: string): boolean {
 }
 
 /**
+ * Base URL without the endpoint path that people often paste with it, such as `.../v1/chat/completions` or
+ * Anthropic's `.../v1/messages`: the client adds `chat/completions` and `models` itself.
+ */
+export function normalizeBaseUrl(url: string): string {
+  return url
+    .trim()
+    .replace(/\/+$/, "")
+    .replace(/\/(chat\/completions|completions|messages|models)$/, "");
+}
+
+/**
  * The service requests go to, or undefined when none is set up (the assistant then only copies prompts).
  */
 export function resolveConnection(config: AiConfig, settings: AiUserSettings): AiConnection | undefined {
@@ -35,7 +46,7 @@ export function resolveConnection(config: AiConfig, settings: AiUserSettings): A
   const proxy = config.proxy;
   const wantsOwn = settings.service === "own" || (!settings.service && !proxy && !!settings.apiKey);
   if (wantsOwn && config.allowOwnKey) {
-    const baseUrl = (settings.baseUrl || config.defaultBaseUrl || "").trim();
+    const baseUrl = normalizeBaseUrl(settings.baseUrl || config.defaultBaseUrl || "");
     if (!baseUrl) return undefined;
     if (!settings.apiKey && !isLocalUrl(baseUrl)) return undefined;
     return {

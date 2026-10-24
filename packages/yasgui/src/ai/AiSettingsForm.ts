@@ -92,7 +92,7 @@ export default class AiSettingsForm {
       el(
         "div",
         "settingsHelp",
-        "Any service with an OpenAI-compatible API works: OpenAI, Azure OpenAI, Mistral, OpenRouter, Groq, or a model on your own computer with Ollama (http://localhost:11434/v1) or LM Studio (http://localhost:1234/v1).",
+        "Any service with an OpenAI-compatible API works: OpenAI, Anthropic (https://api.anthropic.com/v1), Azure OpenAI, Mistral, OpenRouter, Groq, or a model on your own computer with Ollama (http://localhost:11434/v1) or LM Studio (http://localhost:1234/v1).",
       ),
     );
     const field = (labelText: string, input: HTMLInputElement, help?: string) => {
