@@ -186,6 +186,17 @@ export interface ExecuteQueryOptions {
    * Useful for queries that should describe the whole endpoint.
    */
   skipGraphArgs?: boolean;
+  /**
+   * Extra request parameters sent next to the query, e.g. `{ explain: "details" }`.
+   * They are added after the configured arguments and do not replace the query.
+   */
+  extraArgs?: { [name: string]: string | string[] };
+  /**
+   * Send the request to this URL instead of the configured endpoint, with the same
+   * method, headers and authentication. Useful for engine-specific paths such as
+   * Stardog's `/{db}/explain`.
+   */
+  customEndpoint?: string;
 }
 
 const GRAPH_ARG_NAMES = [
@@ -211,6 +222,7 @@ export async function executeQuery(
     if (!populatedConfig) {
       return; // Nothing to query
     }
+    if (options?.customEndpoint) populatedConfig.url = options.customEndpoint;
     const abortController = new AbortController();
     if (options?.signal) {
       if (options.signal.aborted) {
@@ -275,6 +287,10 @@ export async function executeQuery(
     } else {
       // Add all args from config
       appendArgsToParams(populatedConfig.args, options?.skipGraphArgs ? GRAPH_ARG_NAMES : []);
+    }
+    if (options?.extraArgs) {
+      // Extra parameters never replace the query itself
+      appendArgsToParams(options.extraArgs, ["query", "update"]);
     }
 
     if (populatedConfig.reqMethod === "POST") {
