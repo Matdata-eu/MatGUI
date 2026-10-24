@@ -4,7 +4,12 @@ import { describe, it } from "mocha";
 import { prepareCheckQuery, formatBindings, formatTerm } from "../../packages/yasgui/src/ai/checkQuery.js";
 import { buildSchemaContext, compactIri } from "../../packages/yasgui/src/ai/schemaContext.js";
 import { buildCopyPrompt, buildPrompt, extractQueries } from "../../packages/yasgui/src/ai/prompts.js";
-import { normalizeBaseUrl, resolveConnection } from "../../packages/yasgui/src/ai/aiSettings.js";
+import {
+  listConnections,
+  migrateSettings,
+  normalizeBaseUrl,
+  resolveConnection,
+} from "../../packages/yasgui/src/ai/aiSettings.js";
 import { describeErrorBody, joinUrl, listModels } from "../../packages/yasgui/src/ai/openaiClient.js";
 import { defaultAiConfig } from "../../packages/yasgui/src/ai/types.js";
 
@@ -172,31 +177,61 @@ SELECT ?copy ?add WHERE { ?copy ex:Create ?add ; ex:label "DELETE me" }`;
 
     it("is undefined without a service, which leaves Copy for AI", () => {
       expect(resolveConnection(defaultAiConfig, {})).to.equal(undefined);
-      expect(resolveConnection(defaultAiConfig, { service: "own" })).to.equal(undefined);
+      expect(listConnections(defaultAiConfig, {})).to.deep.equal([]);
     });
 
-    it("uses the user's own key and the default base URL", () => {
-      const connection = resolveConnection(defaultAiConfig, { service: "own", apiKey: "sk-1", model: "m" });
-      expect(connection).to.include({ kind: "own", baseUrl: "https://api.openai.com/v1", apiKey: "sk-1", model: "m" });
-      expect(connection?.host).to.equal("api.openai.com");
+    it("uses the user's own service, with the default base URL when it has none", () => {
+      const connection = resolveConnection(defaultAiConfig, {
+        services: [{ id: "a", apiKey: "sk-1", model: "m" }],
+      });
+      expect(connection).to.include({
+        id: "a",
+        kind: "own",
+        baseUrl: "https://api.openai.com/v1",
+        apiKey: "sk-1",
+        model: "m",
+        label: "api.openai.com",
+      });
     });
 
-    it("needs no key for a local service", () => {
-      const connection = resolveConnection(defaultAiConfig, { service: "own", baseUrl: "http://localhost:11434/v1" });
-      expect(connection?.kind).to.equal("own");
+    it("accepts a service without key, such as a local model or a proxy", () => {
+      const services = [{ id: "a", name: "Team proxy", baseUrl: "https://ai.example/v1" }];
+      expect(resolveConnection(defaultAiConfig, { services })).to.include({ label: "Team proxy", host: "ai.example" });
     });
 
-    it("uses the proxy of the site by default, and the user's choice otherwise", () => {
-      const config = { ...defaultAiConfig, proxy };
-      expect(resolveConnection(config, {})).to.include({ kind: "proxy", label: "Site AI", host: "site.example" });
-      expect(resolveConnection(config, { service: "own", apiKey: "k" })?.kind).to.equal("own");
-      expect(resolveConnection(config, { service: "off" })).to.equal(undefined);
+    it("picks the chosen service, else the default, else the first one", () => {
+      const config = { ...defaultAiConfig, proxy: [proxy, { url: "https://eu.example/v1", label: "EU AI" }] };
+      const services = [
+        { id: "a", baseUrl: "https://api.anthropic.com/v1", apiKey: "k" },
+        { id: "b", baseUrl: "https://api.mistral.ai/v1", apiKey: "k" },
+      ];
+      expect(listConnections(config, { services }).map((c) => c.id)).to.deep.equal(["site:0", "site:1", "a", "b"]);
+      expect(resolveConnection(config, { services })?.id).to.equal("site:0");
+      expect(resolveConnection(config, { services, defaultService: "b" })?.id).to.equal("b");
+      expect(resolveConnection(config, { services, defaultService: "b" }, "site:1")?.label).to.equal("EU AI");
+      expect(resolveConnection(config, { services, defaultService: "b" }, "gone")?.id).to.equal("b");
+      expect(resolveConnection(config, { services, defaultService: "off" })).to.equal(undefined);
+      expect(resolveConnection(config, { services, defaultService: "off" }, "a")?.id).to.equal("a");
     });
 
-    it("ignores the user's key when the site doesn't allow own keys", () => {
+    it("ignores the user's services when the site doesn't allow own keys", () => {
       const config = { ...defaultAiConfig, allowOwnKey: false, proxy };
-      expect(resolveConnection(config, { service: "own", apiKey: "k" })).to.equal(undefined);
+      const settings = { services: [{ id: "a", apiKey: "k" }], defaultService: "a" };
+      expect(resolveConnection(config, settings)?.kind).to.equal("proxy");
       expect(resolveConnection({ ...config, enabled: false }, {})).to.equal(undefined);
+    });
+
+    it("moves the settings of the single-service version to the list of services", () => {
+      expect(
+        migrateSettings({ service: "own", baseUrl: "https://x.test/v1", apiKey: "k", checkQueries: false }),
+      ).to.deep.equal({
+        services: [{ id: "own-1", baseUrl: "https://x.test/v1", apiKey: "k", model: undefined }],
+        defaultService: "own-1",
+        checkQueries: false,
+      });
+      expect(migrateSettings({ service: "proxy" })).to.deep.equal({ defaultService: "site:0" });
+      const current = { services: [{ id: "a" }], defaultService: "a" };
+      expect(migrateSettings(current)).to.equal(current);
     });
 
     it("drops an endpoint path pasted with the base URL", () => {
@@ -204,9 +239,7 @@ SELECT ?copy ?add WHERE { ?copy ex:Create ?add ; ex:label "DELETE me" }`;
       expect(normalizeBaseUrl("https://api.openai.com/v1/chat/completions/")).to.equal("https://api.openai.com/v1");
       expect(normalizeBaseUrl("https://openrouter.ai/api/v1")).to.equal("https://openrouter.ai/api/v1");
       const connection = resolveConnection(defaultAiConfig, {
-        service: "own",
-        apiKey: "k",
-        baseUrl: "https://api.anthropic.com/v1/messages",
+        services: [{ id: "a", apiKey: "k", baseUrl: "https://api.anthropic.com/v1/messages" }],
       });
       expect(connection?.baseUrl).to.equal("https://api.anthropic.com/v1");
     });
@@ -219,7 +252,7 @@ SELECT ?copy ?add WHERE { ?copy ex:Create ?add ; ex:label "DELETE me" }`;
         return new Response(JSON.stringify({ data: [{ id: "claude-b" }, { id: "claude-a" }] }), { status: 200 });
       }) as typeof fetch;
       try {
-        const base = { kind: "own" as const, apiKey: "sk-ant", label: "" };
+        const base = { id: "a", kind: "own" as const, apiKey: "sk-ant", label: "" };
         const models = await listModels({
           ...base,
           baseUrl: "https://api.anthropic.com/v1",

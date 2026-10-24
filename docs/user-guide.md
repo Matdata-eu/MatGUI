@@ -962,10 +962,15 @@ Queries in an answer get buttons: **Use in editor** replaces your query (press `
 
 **Setting up an AI service**
 
-The assistant works with any service that offers an OpenAI-compatible API. Open **Settings → AI** (or the gear in the AI view) and choose:
+The assistant works with any service that offers an OpenAI-compatible API. Open **Settings → AI** (or the gear in the AI view). Under **AI services** you see:
 
-- **The AI service of the site**, when the site you use MatGUI on provides one. You need no key of your own.
-- **My own API key**: enter the **Base URL** of the service, your **API key** and the **Model**. Use **Test connection** to check the key and to list the models of the service. Some examples:
+- **The AI service of the site**, when the site you use MatGUI on provides one (it may offer more than one). You need no key of your own.
+- **Your own services.** Click **Add service**, pick a provider in the **Base URL** list or enter another URL, and fill in your **API key** and the **Model**. **Name** is how the service is shown in the AI view; it defaults to the provider or host. Use **Test connection** to check the key and to list the models of the service. The key is optional: local models and some proxies need none. Add as many services as you like, and change or remove them with **Edit** and **Remove**.
+- **No AI service**: nothing is sent anywhere. See "Without an AI service" below.
+
+Select the service the assistant uses by default and click **Save**. In the AI view, the service name at the top is a list: pick another service there to use it for your next questions, until you reload the page. "No AI service: copy a prompt" in that list makes the actions copy prompts instead.
+
+The Base URL list includes OpenAI, Anthropic (Claude), Google Gemini, Mistral, Moonshot (Kimi), DeepSeek, xAI (Grok), OpenRouter, Groq, Together AI, Fireworks AI, Cerebras, Hugging Face, Scaleway, Azure OpenAI, Ollama and LM Studio. Some of them:
 
   | Service                   | Base URL                                                   |
   | ------------------------- | ---------------------------------------------------------- |
@@ -990,9 +995,7 @@ The assistant works with any service that offers an OpenAI-compatible API. Open 
 
   Small local models often can't run check queries (tool calls). MatGUI then asks again without them, so the answer comes without checks on the endpoint.
 
-- **No AI service**: nothing is sent anywhere. See "Without an AI service" below.
-
-Your API key is stored in this browser only (in its local storage). It is sent only to the base URL you entered, and it is never included in exported settings ([Configuration Import/Export](#configuration-importexport)) or share links. Anyone who uses the same browser profile can read it, so use a key with a spending limit, and click **Forget key** on a shared computer.
+Your API keys are stored in this browser only (in its local storage). Each key is sent only to the base URL of its service, and it is never included in exported settings ([Configuration Import/Export](#configuration-importexport)) or share links. Anyone who uses the same browser profile can read it, so use a key with a spending limit, and click **Forget key** on a shared computer.
 
 **Without an AI service: Copy for AI**
 
@@ -2578,7 +2581,7 @@ The proxy solves this by:
 
 **Solutions:**
 
-1. **No AI service set up**: without a service, the actions copy a prompt ([Copy for AI](#ai-assistant)). Choose a service in **Settings → AI**.
+1. **No AI service set up**: without a service, the actions copy a prompt ([Copy for AI](#ai-assistant)). Add a service in **Settings → AI**, or pick one in the list at the top of the AI view.
 2. **Key refused (401)**: check the API key in **Settings → AI**, and that it belongs to the service of the base URL.
 3. **Model not found (404)**: use **Test connection** and pick a model from the list.
 4. **Could not reach the service**: check the base URL (it usually ends in `/v1`). The service must allow requests from a browser (CORS); for Ollama, start it with `OLLAMA_ORIGINS` set to the MatGUI site.

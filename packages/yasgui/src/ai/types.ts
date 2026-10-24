@@ -26,8 +26,11 @@ export interface AiProxyConfig {
 export interface AiConfig {
   /** Show the AI features (default: true). False hides the AI panel, buttons, commands and settings. */
   enabled: boolean;
-  /** AI service of the embedding site. When set, it is the default for users who did not enter their own key. */
-  proxy?: AiProxyConfig;
+  /**
+   * AI service(s) of the embedding site. When set, the first one is the default for users who did not pick
+   * another default. Users choose between these and their own services in the AI view.
+   */
+  proxy?: AiProxyConfig | AiProxyConfig[];
   /** Let users enter their own API key and base URL (default: true) */
   allowOwnKey: boolean;
   /** Base URL suggested to users who bring their own key (default: OpenAI) */
@@ -60,12 +63,29 @@ export const defaultAiConfig: AiConfig = {
   timeoutMs: 90000,
 };
 
-/** Which AI service the user picked in the settings */
-export type AiServiceChoice = "proxy" | "own" | "off";
+/** An AI service the user added in the settings: an OpenAI-compatible API or a proxy */
+export interface AiServiceSettings {
+  id: string;
+  /** Name shown in the AI view, e.g. "Claude"; the host of the base URL when empty */
+  name?: string;
+  /** Empty for the `defaultBaseUrl` of the config */
+  baseUrl?: string;
+  /** Optional: local models and some proxies need none */
+  apiKey?: string;
+  model?: string;
+}
+
+/** Id of the "no AI service" choice: the actions copy a prompt */
+export const AI_SERVICE_OFF = "off";
 
 /** Settings of the user, stored in this browser only and never exported or shared */
 export interface AiUserSettings {
-  service?: AiServiceChoice;
+  /** The user's own services */
+  services?: AiServiceSettings[];
+  /** Id of the default service: one of `services`, "site:<n>" for a service of the site, or "off" */
+  defaultService?: string;
+  /** Settings of versions with one service, moved to `services` when loaded */
+  service?: "proxy" | "own" | "off";
   baseUrl?: string;
   apiKey?: string;
   model?: string;
@@ -77,6 +97,8 @@ export interface AiUserSettings {
 
 /** The AI service requests go to */
 export interface AiConnection {
+  /** Id of the service: "site:<n>" for the services of the site, the service id for the user's own */
+  id: string;
   kind: "proxy" | "own";
   baseUrl: string;
   model?: string;

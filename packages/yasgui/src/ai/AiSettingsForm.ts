@@ -1,11 +1,14 @@
 /**
- * "AI" section of the settings: which AI service answers, and the user's own base URL, API key and model.
+ * "AI" section of the settings: the user's own AI services (base URL, API key, model), the services of the site,
+ * and which one is the default.
  */
 import { addClass } from "@matdata/yasgui-utils";
 import type AiAssistant from "./AiAssistant";
-import { hostOf, isLocalUrl } from "./aiSettings";
+import { hostOf, isLocalUrl, newServiceId, normalizeBaseUrl, ownConnection, siteServices } from "./aiSettings";
 import { listModels } from "./openaiClient";
-import type { AiServiceChoice } from "./types";
+import { aiProviders, providerOf } from "./providers";
+import { AI_SERVICE_OFF } from "./types";
+import type { AiServiceSettings } from "./types";
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string) {
   const element = document.createElement(tag);
@@ -15,7 +18,9 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, t
 }
 
 export default class AiSettingsForm {
-  private serviceInputs: HTMLInputElement[] = [];
+  private servicesEl!: HTMLDivElement;
+  private editorTitle!: HTMLLabelElement;
+  private nameInput!: HTMLInputElement;
   private baseUrlInput!: HTMLInputElement;
   private apiKeyInput!: HTMLInputElement;
   private modelInput!: HTMLInputElement;
@@ -24,12 +29,17 @@ export default class AiSettingsForm {
   private ownFields!: HTMLDivElement;
   private testResult!: HTMLDivElement;
   private consentEl!: HTMLDivElement;
+  /** The user's own services as edited in the form; stored on save */
+  private services: AiServiceSettings[] = [];
+  private defaultId: string = AI_SERVICE_OFF;
+  private editingId: string | undefined;
+  private formId = Math.random().toString(36).substring(7);
 
   constructor(private assistant: AiAssistant) {}
 
   public draw(container: HTMLElement) {
     const config = this.assistant.config;
-    const id = Math.random().toString(36).substring(7);
+    const id = this.formId;
 
     const intro = el("div", "settingsSection");
     intro.appendChild(el("label", "settingsLabel", "AI assistant"));
@@ -42,57 +52,39 @@ export default class AiSettingsForm {
     );
     container.appendChild(intro);
 
-    // Service choice
-    const serviceSection = el("div", "settingsSection");
-    serviceSection.appendChild(el("label", "settingsLabel", "AI service"));
-    const choices: Array<{ value: AiServiceChoice; label: string; help: string }> = [];
-    if (config.proxy) {
-      choices.push({
-        value: "proxy",
-        label: `${config.proxy.label || hostOf(config.proxy.url)} (provided by this site)`,
-        help: `Requests go to ${hostOf(config.proxy.url)}. You need no key of your own.`,
-      });
-    }
+    // Services
+    const servicesSection = el("div", "settingsSection");
+    servicesSection.appendChild(el("label", "settingsLabel", "AI services"));
+    servicesSection.appendChild(
+      el(
+        "div",
+        "settingsHelp",
+        config.allowOwnKey
+          ? "Add the AI services you want to use and pick the default one. You can switch between them in the AI view."
+          : "Pick the default AI service. You can switch between them in the AI view.",
+      ),
+    );
+    this.servicesEl = el("div", "yasgui-aiSettings__choices");
+    this.servicesEl.setAttribute("role", "radiogroup");
+    this.servicesEl.setAttribute("aria-label", "Default AI service");
+    servicesSection.appendChild(this.servicesEl);
     if (config.allowOwnKey) {
-      choices.push({
-        value: "own",
-        label: "My own API key",
-        help: "Requests go straight from your browser to the service you choose.",
-      });
+      const add = el("button", "secondaryButton yasgui-aiSettings__add", "Add service");
+      add.type = "button";
+      add.addEventListener("click", () => this.addService());
+      servicesSection.appendChild(add);
     }
-    choices.push({
-      value: "off",
-      label: "No AI service",
-      help: "Nothing is sent. The AI actions copy a prompt to the clipboard.",
-    });
-    const group = el("div", "yasgui-aiSettings__choices");
-    group.setAttribute("role", "radiogroup");
-    group.setAttribute("aria-label", "AI service");
-    for (const choice of choices) {
-      const label = el("label", "yasgui-aiSettings__choice");
-      const input = el("input");
-      input.type = "radio";
-      input.name = `aiService-${id}`;
-      input.value = choice.value;
-      input.addEventListener("change", () => this.updateVisibility());
-      this.serviceInputs.push(input);
-      const text = el("span");
-      text.appendChild(el("strong", undefined, choice.label));
-      text.appendChild(el("span", "yasgui-aiSettings__choiceHelp", choice.help));
-      label.append(input, text);
-      group.appendChild(label);
-    }
-    serviceSection.appendChild(group);
-    container.appendChild(serviceSection);
+    container.appendChild(servicesSection);
 
-    // Own key
+    // Editor of one of the user's own services
     this.ownFields = el("div", "settingsSection yasgui-aiSettings__own");
-    this.ownFields.appendChild(el("label", "settingsLabel", "Your AI service"));
+    this.editorTitle = el("label", "settingsLabel", "Service");
+    this.ownFields.appendChild(this.editorTitle);
     this.ownFields.appendChild(
       el(
         "div",
         "settingsHelp",
-        "Any service with an OpenAI-compatible API works: OpenAI, Anthropic (https://api.anthropic.com/v1), Azure OpenAI, Mistral, OpenRouter, Groq, or a model on your own computer with Ollama (http://localhost:11434/v1) or LM Studio (http://localhost:1234/v1).",
+        "Any service with an OpenAI-compatible API works, or a proxy that offers one. Pick a provider from the Base URL list or enter another URL.",
       ),
     );
     const field = (labelText: string, input: HTMLInputElement, help?: string) => {
@@ -105,11 +97,32 @@ export default class AiSettingsForm {
       this.ownFields.appendChild(wrapper);
       return wrapper;
     };
+
     this.baseUrlInput = el("input", "yasgui-aiSettings__input");
     this.baseUrlInput.type = "url";
     this.baseUrlInput.placeholder = config.defaultBaseUrl;
     this.baseUrlInput.spellcheck = false;
-    field("Base URL", this.baseUrlInput, "Requests go to <base URL>/chat/completions.");
+    const providerList = el("datalist");
+    providerList.id = `ai-providers-${id}`;
+    for (const provider of aiProviders) {
+      const option = el("option");
+      option.value = provider.baseUrl;
+      option.label = provider.note ? `${provider.name} (${provider.note})` : provider.name;
+      providerList.appendChild(option);
+    }
+    this.baseUrlInput.setAttribute("list", providerList.id);
+    const baseUrlField = field(
+      "Base URL",
+      this.baseUrlInput,
+      "Requests go to <base URL>/chat/completions. Clear the field to see all providers in the list.",
+    );
+    baseUrlField.appendChild(providerList);
+    this.baseUrlInput.addEventListener("input", () => this.editorChanged());
+
+    this.nameInput = el("input", "yasgui-aiSettings__input");
+    this.nameInput.type = "text";
+    field("Name", this.nameInput, "Shown in the AI view. The provider or host when empty.");
+    this.nameInput.addEventListener("input", () => this.editorChanged());
 
     this.apiKeyInput = el("input", "yasgui-aiSettings__input");
     this.apiKeyInput.type = "password";
@@ -119,8 +132,9 @@ export default class AiSettingsForm {
     const keyField = field(
       "API key",
       this.apiKeyInput,
-      "Stored in this browser only. It is sent only to the base URL above, and never included in exported settings or share links. Anyone using this browser profile can read it; use a key with a spending limit.",
+      "Stored in this browser only. It is sent only to the base URL above, and never included in exported settings or share links. Anyone using this browser profile can read it; use a key with a spending limit. Leave it empty for local models and proxies that need no key.",
     );
+    this.apiKeyInput.addEventListener("input", () => this.editorChanged());
     const keyActions = el("div", "yasgui-aiSettings__row");
     const show = el("button", "secondaryButton", "Show");
     show.type = "button";
@@ -133,7 +147,8 @@ export default class AiSettingsForm {
     forget.type = "button";
     forget.addEventListener("click", () => {
       this.apiKeyInput.value = "";
-      this.assistant.settings.update({ apiKey: undefined });
+      this.editorChanged();
+      this.forgetStoredKey();
       this.testResult.textContent = "The API key was removed from this browser.";
     });
     keyActions.append(show, forget);
@@ -148,14 +163,18 @@ export default class AiSettingsForm {
     this.modelInput.setAttribute("list", this.modelList.id);
     const modelField = field("Model", this.modelInput, "Use “Test connection” to list the models of the service.");
     modelField.appendChild(this.modelList);
+    this.modelInput.addEventListener("input", () => this.editorChanged());
 
     const testRow = el("div", "yasgui-aiSettings__row");
     const test = el("button", "secondaryButton", "Test connection");
     test.type = "button";
     test.addEventListener("click", () => void this.testConnection());
+    const done = el("button", "secondaryButton", "Done");
+    done.type = "button";
+    done.addEventListener("click", () => this.edit(undefined));
     this.testResult = el("div", "settingsHelp yasgui-aiSettings__testResult");
     this.testResult.setAttribute("aria-live", "polite");
-    testRow.append(test, this.testResult);
+    testRow.append(test, done, this.testResult);
     this.ownFields.appendChild(testRow);
     container.appendChild(this.ownFields);
 
@@ -187,13 +206,133 @@ export default class AiSettingsForm {
     this.load();
   }
 
-  private selectedService(): AiServiceChoice {
-    const checked = this.serviceInputs.find((input) => input.checked);
-    return (checked?.value as AiServiceChoice) || "off";
+  private editing(): AiServiceSettings | undefined {
+    return this.services.find((service) => service.id === this.editingId);
   }
 
-  private updateVisibility() {
-    this.ownFields.hidden = this.selectedService() !== "own";
+  /** Name shown for one of the user's own services */
+  private serviceName(service: AiServiceSettings): string {
+    const baseUrl = service.baseUrl || this.assistant.config.defaultBaseUrl;
+    return service.name?.trim() || providerOf(baseUrl)?.name || hostOf(baseUrl) || "New service";
+  }
+
+  private renderServices() {
+    const config = this.assistant.config;
+    this.servicesEl.innerHTML = "";
+    const row = (value: string, title: string, help: string, actions: HTMLButtonElement[] = []) => {
+      const label = el("label", "yasgui-aiSettings__choice");
+      const input = el("input");
+      input.type = "radio";
+      input.name = `aiDefault-${this.formId}`;
+      input.value = value;
+      input.checked = value === this.defaultId;
+      input.addEventListener("change", () => (this.defaultId = value));
+      const text = el("span", "yasgui-aiSettings__choiceText");
+      text.appendChild(el("strong", undefined, title));
+      text.appendChild(el("span", "yasgui-aiSettings__choiceHelp", help));
+      label.append(input, text);
+      if (actions.length) {
+        const buttons = el("span", "yasgui-aiSettings__choiceActions");
+        buttons.append(...actions);
+        label.appendChild(buttons);
+      }
+      this.servicesEl.appendChild(label);
+    };
+    siteServices(config).forEach((proxy, index) => {
+      row(
+        `site:${index}`,
+        `${proxy.label || hostOf(proxy.url)} (provided by this site)`,
+        `Requests go to ${hostOf(proxy.url)}. You need no key of your own.`,
+      );
+    });
+    if (config.allowOwnKey) {
+      for (const service of this.services) {
+        const edit = el("button", "secondaryButton", service.id === this.editingId ? "Editing" : "Edit");
+        edit.type = "button";
+        edit.disabled = service.id === this.editingId;
+        edit.addEventListener("click", (event) => {
+          event.preventDefault();
+          this.edit(service.id);
+        });
+        const remove = el("button", "secondaryButton", "Remove");
+        remove.type = "button";
+        remove.setAttribute("aria-label", `Remove ${this.serviceName(service)}`);
+        remove.addEventListener("click", (event) => {
+          event.preventDefault();
+          this.removeService(service.id);
+        });
+        const baseUrl = normalizeBaseUrl(service.baseUrl || config.defaultBaseUrl);
+        const details = [
+          hostOf(baseUrl),
+          service.model || config.defaultModel,
+          service.apiKey ? "own API key" : isLocalUrl(baseUrl) ? "on your computer" : "no API key",
+        ].filter(Boolean);
+        row(service.id, this.serviceName(service), details.join(" · "), [edit, remove]);
+      }
+    }
+    row(AI_SERVICE_OFF, "No AI service", "Nothing is sent. The AI actions copy a prompt to the clipboard.");
+  }
+
+  private addService() {
+    const service: AiServiceSettings = { id: newServiceId() };
+    this.services.push(service);
+    if (this.defaultId === AI_SERVICE_OFF && !siteServices(this.assistant.config).length) this.defaultId = service.id;
+    this.edit(service.id);
+    this.baseUrlInput.focus();
+  }
+
+  private removeService(serviceId: string) {
+    this.services = this.services.filter((service) => service.id !== serviceId);
+    if (this.defaultId === serviceId) {
+      const sites = siteServices(this.assistant.config);
+      this.defaultId = sites.length ? "site:0" : this.services[0]?.id || AI_SERVICE_OFF;
+    }
+    if (this.editingId === serviceId) this.edit(undefined);
+    else this.renderServices();
+  }
+
+  /** Show the editor for one of the user's own services, or hide it */
+  private edit(serviceId: string | undefined) {
+    this.editingId = serviceId;
+    const service = this.editing();
+    this.ownFields.hidden = !service;
+    if (service) {
+      this.editorTitle.textContent = `Service: ${this.serviceName(service)}`;
+      this.baseUrlInput.value = service.baseUrl || "";
+      this.nameInput.value = service.name || "";
+      this.nameInput.placeholder = this.serviceName({ ...service, name: undefined });
+      this.apiKeyInput.value = service.apiKey || "";
+      this.apiKeyInput.type = "password";
+      this.modelInput.value = service.model || "";
+      this.modelList.innerHTML = "";
+      this.testResult.textContent = "";
+      this.testResult.classList.remove("ok");
+    }
+    this.renderServices();
+  }
+
+  private editorChanged() {
+    const service = this.editing();
+    if (!service) return;
+    service.baseUrl = this.baseUrlInput.value.trim() || undefined;
+    service.name = this.nameInput.value.trim() || undefined;
+    service.apiKey = this.apiKeyInput.value.trim() || undefined;
+    service.model = this.modelInput.value.trim() || undefined;
+    this.nameInput.placeholder = this.serviceName({ ...service, name: undefined });
+    this.editorTitle.textContent = `Service: ${this.serviceName(service)}`;
+    this.renderServices();
+  }
+
+  /** "Forget key" removes the key from storage right away, not only when the settings are saved */
+  private forgetStoredKey() {
+    const stored = this.assistant.settings.get().services || [];
+    if (stored.some((service) => service.id === this.editingId && service.apiKey)) {
+      this.assistant.settings.update({
+        services: stored.map((service) =>
+          service.id === this.editingId ? { ...service, apiKey: undefined } : service,
+        ),
+      });
+    }
   }
 
   private renderConsents() {
@@ -224,52 +363,50 @@ export default class AiSettingsForm {
   public load() {
     if (!this.baseUrlInput) return;
     const settings = this.assistant.settings.get();
-    const config = this.assistant.config;
-    const current = this.assistant.getConnection();
-    const service: AiServiceChoice =
-      settings.service ||
-      (current?.kind === "own" ? "own" : config.proxy ? "proxy" : config.allowOwnKey ? "own" : "off");
-    for (const input of this.serviceInputs) input.checked = input.value === service;
-    if (!this.serviceInputs.some((input) => input.checked)) {
-      const off = this.serviceInputs.find((input) => input.value === "off");
-      if (off) off.checked = true;
-    }
-    this.baseUrlInput.value = settings.baseUrl || "";
-    this.apiKeyInput.value = settings.apiKey || "";
-    this.modelInput.value = settings.model || "";
+    this.services = (settings.services || []).map((service) => ({ ...service }));
+    const ids = this.assistant.getConnections().map((connection) => connection.id);
+    this.defaultId =
+      settings.defaultService === AI_SERVICE_OFF || ids.includes(settings.defaultService || "")
+        ? settings.defaultService!
+        : ids[0] || AI_SERVICE_OFF;
     if (this.checkQueriesInput) this.checkQueriesInput.checked = settings.checkQueries !== false;
-    this.testResult.textContent = "";
-    this.updateVisibility();
+    // Someone with only their own service most likely came to change it
+    const own = this.services.length === 1 && !siteServices(this.assistant.config).length;
+    this.edit(own ? this.services[0].id : undefined);
     this.renderConsents();
   }
 
   public save() {
     if (!this.baseUrlInput) return;
+    const services = this.services
+      .filter((service) => service.baseUrl || service.apiKey || service.model || service.name)
+      .map((service) => {
+        const cleaned: AiServiceSettings = { id: service.id };
+        if (service.name) cleaned.name = service.name;
+        if (service.baseUrl) cleaned.baseUrl = normalizeBaseUrl(service.baseUrl);
+        if (service.apiKey) cleaned.apiKey = service.apiKey;
+        if (service.model) cleaned.model = service.model;
+        return cleaned;
+      });
+    const kept = this.defaultId === AI_SERVICE_OFF || this.defaultId.startsWith("site:");
     this.assistant.settings.update({
-      service: this.selectedService(),
-      baseUrl: this.baseUrlInput.value.trim() || undefined,
-      apiKey: this.apiKeyInput.value.trim() || undefined,
-      model: this.modelInput.value.trim() || undefined,
+      services: services.length ? services : undefined,
+      defaultService: kept || services.some((service) => service.id === this.defaultId) ? this.defaultId : undefined,
       checkQueries: this.checkQueriesInput ? this.checkQueriesInput.checked : undefined,
     });
+    // The new default applies right away, also in the AI view
+    this.assistant.selectService(undefined);
   }
 
   private async testConnection() {
-    const baseUrl = this.baseUrlInput.value.trim() || this.assistant.config.defaultBaseUrl;
-    const apiKey = this.apiKeyInput.value.trim();
-    if (!apiKey && !isLocalUrl(baseUrl)) {
-      this.testResult.textContent = "Enter an API key first.";
-      return;
-    }
+    const service = this.editing();
+    const connection = service && ownConnection(this.assistant.config, service);
+    if (!connection) return;
+    const baseUrl = connection.baseUrl;
+    this.testResult.classList.remove("ok");
     this.testResult.textContent = `Connecting to ${hostOf(baseUrl)}…`;
     try {
-      const models = await listModels({
-        kind: "own",
-        baseUrl,
-        apiKey: apiKey || undefined,
-        host: hostOf(baseUrl),
-        label: hostOf(baseUrl),
-      });
+      const models = await listModels(connection);
       this.modelList.innerHTML = "";
       for (const model of models) {
         const option = el("option");

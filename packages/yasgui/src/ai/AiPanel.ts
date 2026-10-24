@@ -2,7 +2,6 @@
  * The "AI" view of the side panel: quick actions (explain or fix the query, explain the results), a question
  * box, and the answers. Every answer shows what was sent and to whom, and every check query the model ran.
  */
-import { addClass } from "@matdata/yasgui-utils";
 import type { Yasgui } from "../";
 import { icon, iconButton } from "../icons";
 import type AiAssistant from "./AiAssistant";
@@ -11,6 +10,7 @@ import type { ChatMessage } from "./openaiClient";
 import type { AiTask } from "./prompts";
 import { extractQueries, looksLikeSparql } from "./prompts";
 import { renderMarkdown } from "./markdown";
+import { AI_SERVICE_OFF } from "./types";
 import type { AiConnection } from "./types";
 import "./AiPanel.scss";
 
@@ -173,15 +173,34 @@ export default class AiPanel {
     const connection = this.assistant.getConnection();
     this.statusEl.innerHTML = "";
     const dot = el("span", `yasgui-ai__dot ${connection ? "connected" : ""}`);
-    const text = el("span", "yasgui-ai__statusText");
-    if (connection) {
-      text.textContent = connection.model ? `${connection.label} · ${connection.model}` : connection.label;
-      text.title =
-        connection.kind === "proxy"
-          ? `Answers come from ${connection.label} (${connection.host}), the AI service of this site`
-          : `Answers come from ${connection.host}, with your own API key`;
+    const describe = (candidate: AiConnection) =>
+      candidate.kind === "proxy"
+        ? `Answers come from ${candidate.label} (${candidate.host}), the AI service of this site`
+        : `Answers come from ${candidate.host}${candidate.apiKey ? ", with your own API key" : ""}`;
+    const connections = this.assistant.getConnections();
+    let text: HTMLElement;
+    if (connections.length) {
+      // Pick the service for the next questions; the default is set in the settings
+      const select = el("select", "yasgui-ai__statusText yasgui-ai__serviceSelect");
+      select.setAttribute("aria-label", "AI service");
+      for (const candidate of connections) {
+        const option = el(
+          "option",
+          undefined,
+          candidate.model ? `${candidate.label} · ${candidate.model}` : candidate.label,
+        );
+        option.value = candidate.id;
+        select.appendChild(option);
+      }
+      const off = el("option", undefined, "No AI service: copy a prompt");
+      off.value = AI_SERVICE_OFF;
+      select.appendChild(off);
+      select.value = connection?.id || AI_SERVICE_OFF;
+      select.title = connection ? describe(connection) : "The actions copy a prompt for an AI chat of your choice";
+      select.addEventListener("change", () => this.assistant.selectService(select.value));
+      text = select;
     } else {
-      text.textContent = "No AI service: actions copy a prompt";
+      text = el("span", "yasgui-ai__statusText", "No AI service: actions copy a prompt");
       text.title = "Set up an AI service in the settings to get answers here";
     }
     const settings = iconButton("settings", "AI settings", { className: "yasgui-ai__iconButton", size: 16 });

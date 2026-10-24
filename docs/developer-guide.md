@@ -2116,8 +2116,8 @@ Disable the panel with `endpointDescribe: { enabled: false }`. The panel can als
 
 The AI assistant writes queries from questions in natural language, explains and fixes queries, and explains results (see the [user guide](user-guide.md#ai-assistant)). It talks to any **OpenAI-compatible chat completions API** (`POST <baseUrl>/chat/completions`), in one of two ways:
 
-- **Bring your own key**: users enter a base URL, API key and model in **Settings → AI**. Requests go straight from the browser to that service, so it must allow CORS.
-- **Proxy of the embedding site**: set `ai.proxy`. Requests go to your proxy, which holds the provider key server side and can add authentication, quotas, logging, or a fixed model and provider (for example one hosted in the EU).
+- **Bring your own key**: users add one or more services (base URL, API key, model) in **Settings → AI**, and pick a default. Requests go straight from the browser to that service, so it must allow CORS. The Base URL field suggests popular providers (`src/ai/providers.ts`).
+- **Proxy of the embedding site**: set `ai.proxy` (one proxy, or a list, for example one per model or region). Requests go to your proxy, which holds the provider key server side and can add authentication, quotas, logging, or a fixed model and provider (for example one hosted in the EU).
 
 Without either, the assistant still works as **Copy for AI**: its actions copy a ready-made prompt to the clipboard.
 
@@ -2126,15 +2126,9 @@ interface AiConfig {
   // Show the AI features. false removes the AI view, buttons, commands, settings and "Copy for AI"
   enabled: boolean; // default: true
 
-  // AI service of the embedding site. When set, it is the default for users without their own key
-  proxy?: {
-    url: string; // OpenAI-compatible base URL, e.g. "https://example.org/ai/v1"
-    label?: string; // shown in the privacy notice and settings, e.g. "ERA AI service"
-    model?: string; // sent as "model"; leave unset when the proxy picks the model
-    headers?: Record<string, string> | (() => Record<string, string> | Promise<Record<string, string>>);
-    withCredentials?: boolean; // send cookies (fetch credentials: "include")
-    privacyUrl?: string; // linked from the privacy notice
-  };
+  // AI service of the embedding site, or a list of them. When set, the first one is the default for users
+  // who didn't pick another default; users switch between these and their own services in the AI view
+  proxy?: AiProxyConfig | AiProxyConfig[];
 
   // Let users enter their own base URL and API key
   allowOwnKey: boolean; // default: true
@@ -2156,6 +2150,15 @@ interface AiConfig {
 
   // Timeout of one request to the AI service, in milliseconds
   timeoutMs: number; // default: 90000
+}
+
+interface AiProxyConfig {
+  url: string; // OpenAI-compatible base URL, e.g. "https://example.org/ai/v1"
+  label?: string; // shown in the privacy notice, settings and AI view, e.g. "ERA AI service"
+  model?: string; // sent as "model"; leave unset when the proxy picks the model
+  headers?: Record<string, string> | (() => Record<string, string> | Promise<Record<string, string>>);
+  withCredentials?: boolean; // send cookies (fetch credentials: "include")
+  privacyUrl?: string; // linked from the privacy notice
 }
 ```
 
@@ -2220,7 +2223,7 @@ app.listen(8080);
 **Privacy and security**
 
 - Nothing is sent until the user clicks an action. Before the first request to a host, the AI view lists what is sent and where, and asks for confirmation (users can skip it per host). Every answer has a "What was sent" section with the exact request.
-- The user's settings, including the API key, are stored under their own localStorage key (`<persistenceId>_ai`, namespace `yasgui-ai`). They are not part of the persisted Yasgui configuration, so configuration export and share links never contain the key. The key is only sent, as `Authorization: Bearer`, to the base URL the user entered.
+- The user's settings, including the API key, are stored under their own localStorage key (`<persistenceId>_ai`, namespace `yasgui-ai`). They are not part of the persisted Yasgui configuration, so configuration export and share links never contain the key. Each key is only sent to the base URL of its service: as `Authorization: Bearer`, plus `x-api-key` for Anthropic, or as `api-key` for Azure OpenAI.
 - Endpoint credentials are never part of a prompt. Check queries run in the browser through `tab.runBackgroundQuery()`, with the tab's endpoint and authentication; only their (at most 20) result rows go to the model. Updates and CONSTRUCT/DESCRIBE queries are refused, and a LIMIT of at most 20 is enforced.
 - Generated queries are never run automatically.
 - Model answers are rendered as Markdown by building DOM nodes, never as HTML, so an answer can't inject markup.

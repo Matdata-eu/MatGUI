@@ -48,6 +48,26 @@
     white-space: nowrap;
   }
 
+  &__serviceSelect {
+    max-width: 100%;
+    padding: 2px 4px;
+    border: 1px solid transparent;
+    border-radius: var(--yasgui-radius-sm, 6px);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--yasgui-line, #dfe5ec);
+    }
+
+    option {
+      background: var(--yasgui-surface-raised, #fff);
+      color: var(--yasgui-ink, #1c2633);
+    }
+  }
+
   &__iconButton {
     display: inline-flex;
     align-items: center;
@@ -450,6 +470,20 @@
       display: block;
       font-weight: 600;
     }
+  }
+
+  &__choiceText {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__choiceActions {
+    display: flex;
+    gap: 6px;
+  }
+
+  &__add {
+    margin-top: 10px;
   }
 
   &__choiceHelp {

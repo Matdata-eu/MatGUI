@@ -1,10 +1,12 @@
 /**
- * The user's AI settings (service, base URL, API key, model) and which service requests go to.
+ * The user's AI settings (their own services with base URL, API key and model, and the default one) and which
+ * service requests go to.
  * The settings are stored in this browser only, under their own storage key: they are not part of the
  * persisted Yasgui config, so configuration export and share links never include the API key.
  */
 import { Storage as YStorage } from "@matdata/yasgui-utils";
-import type { AiConfig, AiConnection, AiUserSettings } from "./types";
+import { AI_SERVICE_OFF } from "./types";
+import type { AiConfig, AiConnection, AiProxyConfig, AiServiceSettings, AiUserSettings } from "./types";
 
 /** Ten years: the settings stay until the user clears them */
 const SETTINGS_EXPIRY_SECONDS = 60 * 60 * 24 * 365 * 10;
@@ -38,40 +40,87 @@ export function normalizeBaseUrl(url: string): string {
     .replace(/\/(chat\/completions|completions|messages|models)$/, "");
 }
 
+/** The AI services of the embedding site */
+export function siteServices(config: AiConfig): AiProxyConfig[] {
+  const proxies = Array.isArray(config.proxy) ? config.proxy : config.proxy ? [config.proxy] : [];
+  return proxies.filter((proxy) => !!proxy?.url);
+}
+
+function siteConnection(proxy: AiProxyConfig, index: number): AiConnection {
+  const headers = proxy.headers;
+  return {
+    id: `site:${index}`,
+    kind: "proxy",
+    baseUrl: proxy.url,
+    model: proxy.model,
+    host: hostOf(proxy.url),
+    label: proxy.label || hostOf(proxy.url),
+    privacyUrl: proxy.privacyUrl,
+    withCredentials: proxy.withCredentials,
+    getHeaders: headers ? async () => (typeof headers === "function" ? await headers() : headers) : undefined,
+  };
+}
+
+/** Connection to one of the user's own services, or undefined when it has no base URL */
+export function ownConnection(config: AiConfig, service: AiServiceSettings): AiConnection | undefined {
+  const baseUrl = normalizeBaseUrl(service.baseUrl || config.defaultBaseUrl || "");
+  if (!baseUrl) return undefined;
+  return {
+    id: service.id,
+    kind: "own",
+    baseUrl,
+    apiKey: service.apiKey || undefined,
+    model: (service.model || config.defaultModel || "").trim() || undefined,
+    host: hostOf(baseUrl),
+    label: service.name?.trim() || hostOf(baseUrl),
+  };
+}
+
+/** All services the user can pick: the services of the site first, then the user's own */
+export function listConnections(config: AiConfig, settings: AiUserSettings): AiConnection[] {
+  if (!config.enabled) return [];
+  const connections = siteServices(config).map(siteConnection);
+  if (config.allowOwnKey) {
+    for (const service of settings.services || []) {
+      const connection = ownConnection(config, service);
+      if (connection) connections.push(connection);
+    }
+  }
+  return connections;
+}
+
 /**
- * The service requests go to, or undefined when none is set up (the assistant then only copies prompts).
+ * The service requests go to: the one with `id` (picked in the AI view), else the user's default, else the
+ * first one. Undefined when none is set up or the user chose "No AI service" (the assistant then only copies
+ * prompts).
  */
-export function resolveConnection(config: AiConfig, settings: AiUserSettings): AiConnection | undefined {
-  if (!config.enabled || settings.service === "off") return undefined;
-  const proxy = config.proxy;
-  const wantsOwn = settings.service === "own" || (!settings.service && !proxy && !!settings.apiKey);
-  if (wantsOwn && config.allowOwnKey) {
-    const baseUrl = normalizeBaseUrl(settings.baseUrl || config.defaultBaseUrl || "");
-    if (!baseUrl) return undefined;
-    if (!settings.apiKey && !isLocalUrl(baseUrl)) return undefined;
-    return {
-      kind: "own",
-      baseUrl,
-      apiKey: settings.apiKey || undefined,
-      model: (settings.model || config.defaultModel || "").trim() || undefined,
-      host: hostOf(baseUrl),
-      label: hostOf(baseUrl),
-    };
+export function resolveConnection(config: AiConfig, settings: AiUserSettings, id?: string): AiConnection | undefined {
+  const connections = listConnections(config, settings);
+  for (const wanted of [id, settings.defaultService]) {
+    if (wanted === AI_SERVICE_OFF) return undefined;
+    const connection = wanted && connections.find((candidate) => candidate.id === wanted);
+    if (connection) return connection;
   }
-  if (proxy?.url && settings.service !== "own") {
-    const headers = proxy.headers;
-    return {
-      kind: "proxy",
-      baseUrl: proxy.url,
-      model: proxy.model,
-      host: hostOf(proxy.url),
-      label: proxy.label || hostOf(proxy.url),
-      privacyUrl: proxy.privacyUrl,
-      withCredentials: proxy.withCredentials,
-      getHeaders: headers ? async () => (typeof headers === "function" ? await headers() : headers) : undefined,
-    };
+  return connections[0];
+}
+
+/** Moves the settings of versions with one service to the list of services */
+export function migrateSettings(settings: AiUserSettings): AiUserSettings {
+  if (!settings.service && !settings.baseUrl && !settings.apiKey && !settings.model) return settings;
+  const { service, baseUrl, apiKey, model, ...rest } = settings;
+  const migrated: AiUserSettings = { ...rest };
+  if (baseUrl || apiKey || model) {
+    migrated.services = [...(rest.services || []), { id: "own-1", baseUrl, apiKey, model }];
   }
-  return undefined;
+  if (service === "off") migrated.defaultService = AI_SERVICE_OFF;
+  else if (service === "proxy") migrated.defaultService = "site:0";
+  else if (service === "own" && migrated.services?.length) migrated.defaultService = "own-1";
+  return migrated;
+}
+
+/** A new id for one of the user's own services */
+export function newServiceId(): string {
+  return `own-${Date.now().toString(36)}${Math.random().toString(36).substring(2, 6)}`;
 }
 
 export default class AiSettingsStore {
@@ -80,7 +129,7 @@ export default class AiSettingsStore {
   private listeners: Array<() => void> = [];
 
   constructor(private storageKey: string | undefined) {
-    this.settings = (storageKey && this.storage.get<AiUserSettings>(storageKey)) || {};
+    this.settings = migrateSettings((storageKey && this.storage.get<AiUserSettings>(storageKey)) || {});
   }
 
   public get(): AiUserSettings {
