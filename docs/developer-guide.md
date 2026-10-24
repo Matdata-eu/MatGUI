@@ -57,6 +57,7 @@ This comprehensive guide covers everything developers need to know to integrate,
     - [Security Best Practices](#security-best-practices)
   - [Endpoint Buttons Configuration](#endpoint-buttons-configuration)
   - [Endpoint Describe Configuration](#endpoint-describe-configuration)
+  - [AI Assistant Configuration](#ai-assistant-configuration)
   - [Theme Configuration](#theme-configuration)
 - [API Reference](#api-reference)
   - [Yasgui Class](#yasgui-class)
@@ -71,6 +72,7 @@ This comprehensive guide covers everything developers need to know to integrate,
       - [`getTheme(): 'light' | 'dark'`](#gettheme-light--dark)
       - [`toggleTheme(): 'light' | 'dark'`](#toggletheme-light--dark)
       - [`endpointDescribe: EndpointDescribePanel | undefined`](#endpointdescribe-endpointdescribepanel--undefined)
+      - [`aiAssistant: AiAssistant | undefined`](#aiassistant-aiassistant--undefined)
   - [Tab Class](#tab-class)
     - [Methods](#methods-1)
       - [`getName(): string`](#getname-string)
@@ -334,6 +336,7 @@ Themes are applied as `CodeMirror cm-s-<theme>` classes on the editor root, so e
 - Settings modal
 - Endpoint selector
 - Tab context menu
+- AI assistant (`src/ai/`): OpenAI-compatible client, prompts, endpoint context, check queries, the AI view of the side panel and the AI settings
 
 ---
 
@@ -717,6 +720,9 @@ interface Config {
 
   // Page opened by the help button of the top bar; false hides the button
   helpUrl?: string | false;  // default: 'https://matgui-doc.matdata.eu/docs/user-guide'
+
+  // AI assistant (see AI Assistant Configuration); { enabled: false } removes it
+  ai: Partial<AiConfig>;
 }
 ```
 
@@ -2106,6 +2112,141 @@ LIMIT 50`,
 
 Disable the panel with `endpointDescribe: { enabled: false }`. The panel can also be controlled programmatically through `yasgui.endpointDescribe` (`open()`, `close()`, `toggle()`, `collapse()`, `setPinned(pinned)`, `runQuery(queryId)`).
 
+### AI Assistant Configuration
+
+The AI assistant writes queries from questions in natural language, explains and fixes queries, and explains results (see the [user guide](user-guide.md#ai-assistant)). It talks to any **OpenAI-compatible chat completions API** (`POST <baseUrl>/chat/completions`), in one of two ways:
+
+- **Bring your own key**: users add one or more services (base URL, API key, model) in **Settings → AI**, and pick a default. Requests go straight from the browser to that service, so it must allow CORS. The Base URL field suggests popular providers (`src/ai/providers.ts`).
+- **Proxy of the embedding site**: set `ai.proxy` (one proxy, or a list, for example one per model or region). Requests go to your proxy, which holds the provider key server side and can add authentication, quotas, logging, or a fixed model and provider (for example one hosted in the EU).
+
+Without either, the assistant still works as **Copy for AI**: its actions copy a ready-made prompt to the clipboard.
+
+```typescript
+interface AiConfig {
+  // Show the AI features. false removes the AI view, buttons, commands, settings and "Copy for AI"
+  enabled: boolean; // default: true
+
+  // AI service of the embedding site, or a list of them. When set, the first one is the default for users
+  // who didn't pick another default; users switch between these and their own services in the AI view
+  proxy?: AiProxyConfig | AiProxyConfig[];
+
+  // Let users enter their own base URL and API key
+  allowOwnKey: boolean; // default: true
+
+  // Base URL and model suggested to users who bring their own key
+  defaultBaseUrl: string; // default: "https://api.openai.com/v1"
+  defaultModel?: string;
+
+  // Maximum number of result rows sent by "Explain results"
+  maxResultRows: number; // default: 50
+
+  // Let the model run small read-only check queries (SELECT/ASK, at most 20 rows) on the endpoint
+  // before answering. Users can switch this off in Settings → AI
+  allowCheckQueries: boolean; // default: true
+  maxCheckQueries: number; // per question, default: 5
+
+  // Maximum number of classes and of properties of the endpoint sent as context
+  maxSchemaTerms: number; // default: 150
+
+  // Timeout of one request to the AI service, in milliseconds
+  timeoutMs: number; // default: 90000
+}
+
+interface AiProxyConfig {
+  url: string; // OpenAI-compatible base URL, e.g. "https://example.org/ai/v1"
+  label?: string; // shown in the privacy notice, settings and AI view, e.g. "ERA AI service"
+  model?: string; // sent as "model"; leave unset when the proxy picks the model
+  headers?: Record<string, string> | (() => Record<string, string> | Promise<Record<string, string>>);
+  withCredentials?: boolean; // send cookies (fetch credentials: "include")
+  privacyUrl?: string; // linked from the privacy notice
+}
+```
+
+**Examples**
+
+```javascript
+// Only the site's own AI service, no user keys
+new Yasgui(el, {
+  ai: {
+    allowOwnKey: false,
+    proxy: {
+      url: "https://data.example.org/ai/v1",
+      label: "Example AI service",
+      privacyUrl: "https://data.example.org/privacy#ai",
+      headers: async () => ({ Authorization: `Bearer ${await getSessionToken()}` }),
+    },
+  },
+});
+
+// Users bring their own key, suggest Mistral
+new Yasgui(el, { ai: { defaultBaseUrl: "https://api.mistral.ai/v1", defaultModel: "mistral-small-latest" } });
+
+// No AI at all
+new Yasgui(el, { ai: { enabled: false } });
+```
+
+**Writing a proxy**
+
+The proxy only has to accept the OpenAI chat completions request and return the OpenAI response format. MatGUI sends `messages`, `model` (when known) and, for check queries, `tools` with one function named `run_sparql`; it expects `choices[0].message` back, with `content` and optionally `tool_calls`. Responses are not streamed. `GET <url>/models` is optional. If the provider or model has no tool support, answer with a 4xx error whose body mentions "tools": MatGUI then retries without check queries.
+
+A minimal proxy for Node 18+ (Express), forwarding to OpenAI with a server-side key:
+
+```javascript
+import express from "express";
+
+const app = express();
+app.use(express.json({ limit: "1mb" }));
+app.use((req, res, next) => {
+  res.set("Access-Control-Allow-Origin", "https://matgui.example.org");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
+
+app.post("/ai/v1/chat/completions", async (req, res) => {
+  // Authenticate the user and apply quotas here
+  const { messages, tools } = req.body;
+  const upstream = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+    body: JSON.stringify({ model: "gpt-4.1-mini", messages, tools }), // the proxy picks the model
+  });
+  res
+    .status(upstream.status)
+    .type("application/json")
+    .send(await upstream.text());
+});
+
+app.listen(8080);
+```
+
+**Privacy and security**
+
+- Nothing is sent until the user clicks an action. Before the first request to a host, the AI view lists what is sent and where, and asks for confirmation (users can skip it per host). Every answer has a "What was sent" section with the exact request.
+- The user's settings, including the API key, are stored under their own localStorage key (`<persistenceId>_ai`, namespace `yasgui-ai`). They are not part of the persisted Yasgui configuration, so configuration export and share links never contain the key. Each key is only sent to the base URL of its service: as `Authorization: Bearer`, plus `x-api-key` for Anthropic, or as `api-key` for Azure OpenAI.
+- Endpoint credentials are never part of a prompt. Check queries run in the browser through `tab.runBackgroundQuery()`, with the tab's endpoint and authentication; only their (at most 20) result rows go to the model. Updates and CONSTRUCT/DESCRIBE queries are refused, and a LIMIT of at most 20 is enforced.
+- Generated queries are never run automatically.
+- Model answers are rendered as Markdown by building DOM nodes, never as HTML, so an answer can't inject markup.
+
+**Endpoint context**
+
+For "Ask" and "Fix", the system message contains the endpoint URL, the prefixes in use, and the most used classes and properties of the endpoint with their counts (up to `maxSchemaTerms` of each). They come from `yasgui.endpointDescribe.getAutocompleteTerms()`, the same source as the class and property autocomplete (VoID, overview results, or one bounded background query). "Explain query" and "Explain results" don't send it.
+
+**Programmatic use**
+
+`yasgui.aiAssistant` is undefined when `ai.enabled` is false. Otherwise:
+
+```javascript
+const ai = yasgui.aiAssistant;
+ai.isConnected(); // false: actions copy a prompt
+ai.panel.open(); // show the AI view of the side panel
+ai.panel.focusQuestion();
+await ai.run(ai.createTask("ask", { question: "Which tunnels are longer than 5 km?" }));
+await ai.run(ai.createTask("explainQuery")); // also "fix" and "explainResults"
+const prompt = await ai.getCopyPrompt(ai.createTask("fix")); // the "Copy for AI" text
+ai.newConversation();
+```
+
 ### Theme Configuration
 
 YASGUI supports both light and dark themes with comprehensive customization options.
@@ -2357,9 +2498,18 @@ yasgui.endpointDescribe?.collapse();        // collapse it to a thin bar
 yasgui.endpointDescribe?.close();
 ```
 
+##### `aiAssistant: AiAssistant | undefined`
+
+The AI assistant (see [AI Assistant Configuration](#ai-assistant-configuration)). It is `undefined` when AI is switched off with `ai: { enabled: false }`.
+
+```javascript
+yasgui.aiAssistant?.panel.open(); // show the AI view of the side panel
+await yasgui.aiAssistant?.run(yasgui.aiAssistant.createTask("explainQuery"));
+```
+
 ##### `sidePanel: SidePanel`
 
-The left side panel of the redesigned interface. It hosts the query browser (view `"queries"`) and, when enabled, the endpoint overview (view `"endpoint"`). Its state (open, collapsed, pinned, view, width) is saved in the persistent configuration.
+The left side panel of the redesigned interface. It hosts the query browser (view `"queries"`), the AI assistant (view `"assistant"`) and, when enabled, the endpoint overview (view `"endpoint"`). Its state (open, collapsed, pinned, view, width) is saved in the persistent configuration.
 
 ```javascript
 yasgui.sidePanel.show("queries");     // open the panel on a view
@@ -3302,6 +3452,21 @@ const bar = host?.toolbar && typeof this.yasr.getPluginToolbar === "function" ? 
 - `yasr.describe(iri, { direction?, source?, newHistory? }): Promise<void>` opens the shared describe panel. It runs a CONSTRUCT query through `yasr.executeQuery` with `Accept: text/turtle` and never rejects; errors show in the panel. `newHistory: false` adds to the panel's back/forward history instead of starting a new one. `yasr.closeDescribe()` closes it, `yasr.isDescribeOpen()` reports its state, and YASR emits `"describe"` with `(yasr, iri, direction)` each time a resource is shown.
 - `yasr.getPluginToolbar()` returns `div.yasr_pluginToolbar`, a full-width bar under the YASR header. YASR empties it before every `draw()` and hides it while it is empty. A plugin that redraws itself must remove its own items first. Build controls inside it with `.yasr_toolbarButton` (toggle with `aria-pressed="true"` or `.is-active`), `.yasr_toolbarSelect` (`<label><span>Label</span><select>`), `.yasr_toolbarSearch` (`<input type="search">`), `.yasr_toolbarGroup` and `.yasr_toolbarSpacer` (a direct child of the slot). Put "View settings" last, as a `.yasr_toolbarButton` with the Lucide `sliders-horizontal` icon.
 - Hosts can set the YASR config hook `openQueryInNewTab(query)` to enable the panel's "Open as query" button. YASGUI sets it to open a new tab on the same endpoint.
+- `yasr.hostApi.assistant` is true when the host has an AI assistant (MatGUI unless `ai.enabled` is false). A plugin can then hand a question to it with `yasr.askAssistant({ title, prompt, context? })`, for example "Explain this chart" with the chart settings as `context`. MatGUI opens its AI view and handles the service, privacy notice and "Copy for AI"; the context is shown to the user under "What was sent", so keep it small. `askAssistant()` returns false when there is no assistant, so hide your AI button in that case:
+
+  ```js
+  if (this.yasr?.hostApi?.assistant) {
+    button.addEventListener("click", () =>
+      this.yasr.askAssistant({
+        title: "Explain this chart",
+        prompt: "Explain what this chart shows.",
+        context: summary,
+      }),
+    );
+  }
+  ```
+
+- Hosts provide the assistant through the YASR config key `assistant` (`{ ask, fixError?, copyErrorPrompt?, isConnected? }`). With `fixError` or `copyErrorPrompt`, the error view shows **Fix with AI** and **Copy for AI**.
 - Style with `var(--yasgui-…, fallback)`. Inside `.yasr`, the `--yasr-ui-*` shorthands (for example `--yasr-ui-brand`, `--yasr-ui-line`) already carry light and dark fallbacks.
 
 ### Plugin Best Practices

@@ -2,7 +2,8 @@ import fs from "fs/promises";
 import path from "path";
 
 const repoRoot = process.cwd();
-const targetDir = path.join(repoRoot, "build", "test", "packages", "yasgui", "src", "queryManagement");
+const srcDir = path.join(repoRoot, "build", "test", "packages", "yasgui", "src");
+const targetDirs = ["queryManagement", "ai"].map((dir) => path.join(srcDir, dir));
 
 async function exists(p) {
   try {
@@ -51,9 +52,8 @@ async function copyGrammarTable() {
 
 async function main() {
   await copyGrammarTable();
-  if (!(await exists(targetDir))) return;
-
-  const files = await walk(targetDir);
+  const files = [];
+  for (const dir of targetDirs) if (await exists(dir)) files.push(...(await walk(dir)));
   await Promise.all(
     files.map(async (f) => {
       const src = await fs.readFile(f, "utf8");

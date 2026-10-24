@@ -47,6 +47,36 @@ export interface YasrHostApi {
   readonly describe: true;
   /** `yasr.getPluginToolbar()` and the shared `.yasr_toolbar*` classes are available. */
   readonly toolbar: true;
+  /**
+   * `yasr.askAssistant()` hands a question to the AI assistant of the host. Only true when the host
+   * configured an assistant (MatGUI does when AI support is not switched off).
+   */
+  readonly assistant: boolean;
+}
+
+/** A question a plugin asks the AI assistant of the host, see [[Yasr.askAssistant]] */
+export interface AssistantRequest {
+  /** Short title shown above the answer, e.g. "Explain this chart" */
+  title: string;
+  /** The question or instruction for the model */
+  prompt: string;
+  /**
+   * Extra context the model needs, e.g. the chart settings or a query plan. It is shown to the user in
+   * "What was sent", so keep it to what the question needs.
+   */
+  context?: string;
+}
+
+/** AI assistant of the host, set by MatGUI. See [[Config.assistant]] */
+export interface AssistantHooks {
+  /** Ask the assistant to fix the query that produced this error */
+  fixError?: (error: Parser.ErrorSummary) => void;
+  /** Copy a prompt for the error to the clipboard, for users without an AI service */
+  copyErrorPrompt?: (error: Parser.ErrorSummary) => void | Promise<boolean>;
+  /** Whether answers are generated in the host (true) or the prompt is only copied (false) */
+  isConnected?: () => boolean;
+  /** Hand a plugin's question to the assistant */
+  ask?: (request: AssistantRequest) => void;
 }
 export class Yasr extends EventEmitter {
   public results?: Parser;
@@ -80,12 +110,18 @@ export class Yasr extends EventEmitter {
   public utils = { addScript: addScript, addCSS: addCss, sanitize: sanitize };
 
   /** Host capabilities for feature detection by plugins. */
-  public readonly hostApi: YasrHostApi = Object.freeze({ version: 1, describe: true, toolbar: true } as const);
+  public readonly hostApi: YasrHostApi;
   private describePanel: DescribePanel | undefined;
 
   constructor(parent: HTMLElement, conf: Partial<Config> = {}, data?: any) {
     super();
     if (!parent) throw new Error("No parent passed as argument. Dont know where to draw YASR");
+    this.hostApi = Object.freeze({
+      version: 1,
+      describe: true,
+      toolbar: true,
+      assistant: !!conf.assistant?.ask,
+    } as const);
     this.rootEl = document.createElement("div");
     this.rootEl.className = "yasr";
     parent.appendChild(this.rootEl);
@@ -316,6 +352,17 @@ export class Yasr extends EventEmitter {
    * Resolves once the triples are shown (or the request failed or was superseded).
    * Emits "describe" (yasr, iri, direction) each time a resource is shown.
    */
+  /**
+   * Hand a question to the AI assistant of the host (see `hostApi.assistant`). Returns false when no
+   * assistant is available, so a plugin can hide its AI button.
+   */
+  public askAssistant(request: AssistantRequest): boolean {
+    const ask = this.config.assistant?.ask;
+    if (!ask) return false;
+    ask(request);
+    return true;
+  }
+
   public describe(iri: string, options?: DescribeOptions): Promise<void> {
     if (!this.describePanel) this.describePanel = new DescribePanel(this);
     return this.describePanel.describe(iri, options);
@@ -882,6 +929,12 @@ export interface Config {
    * the describe panel can offer "Open as query"; the button is hidden when unset.
    */
   openQueryInNewTab?: (query: string) => void;
+
+  /**
+   * Optional AI assistant of the host. MatGUI sets it unless AI support is switched off: the error view then
+   * offers "Fix with AI" / "Copy for AI", and plugins can use [[Yasr.askAssistant]].
+   */
+  assistant?: AssistantHooks;
 }
 
 export function registerPlugin(name: string, plugin: typeof Plugin, enable = true) {

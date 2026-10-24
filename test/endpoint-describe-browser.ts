@@ -3,7 +3,7 @@ import * as http from "http";
 import * as chai from "chai";
 import * as puppeteer from "puppeteer";
 import { it, describe, before, beforeEach, after, afterEach } from "mocha";
-import { setup, destroy, closePage, getPage } from "./utils.js";
+import { setup, destroy, closePage, getPage, clickWhenVisible } from "./utils.js";
 
 const expect = chai.expect;
 
@@ -216,7 +216,7 @@ describe("Endpoint describe panel", function () {
 
   it("doesn't query an endpoint for which autocompletion is switched off", async function () {
     await openPanel();
-    await page.click(".yasgui-describe__autocomplete input");
+    await clickWhenVisible(page, ".yasgui-describe__autocomplete input");
     await autocompleteAtEnd("SELECT * WHERE { ?s a ");
     await new Promise((resolve) => setTimeout(resolve, 500));
     expect(await page.$(".CodeMirror-hints li")).to.equal(null);

@@ -1,0 +1,531 @@
+// "AI" view of the side panel (see AiPanel.ts) and the AI section of the settings (AiSettingsForm.ts)
+.yasgui-sidePanel__view[data-view="assistant"] {
+  position: relative;
+  min-height: 320px;
+}
+
+// Positioned, so a long conversation scrolls inside the panel instead of making the page taller
+.yasgui-ai {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--yasgui-font-family, system-ui, sans-serif);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--yasgui-ink-body, #3a4552);
+
+  button {
+    font: inherit;
+  }
+
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px 4px;
+    color: var(--yasgui-ink-muted, #56606c);
+    font-size: 12px;
+  }
+
+  &__dot {
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--yasgui-line-strong, #808893);
+
+    &.connected {
+      background: var(--yasgui-success, #067647);
+    }
+  }
+
+  &__statusText {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__serviceSelect {
+    max-width: 100%;
+    padding: 2px 4px;
+    border: 1px solid transparent;
+    border-radius: var(--yasgui-radius-sm, 6px);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--yasgui-line, #dfe5ec);
+    }
+
+    option {
+      background: var(--yasgui-surface-raised, #fff);
+      color: var(--yasgui-ink, #1c2633);
+    }
+  }
+
+  &__iconButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--yasgui-radius-sm, 6px);
+    background: transparent;
+    color: var(--yasgui-ink-muted, #56606c);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--yasgui-surface-sunken, #edf1f6);
+      color: var(--yasgui-ink, #1c2633);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 12px 10px;
+    border-bottom: 1px solid var(--yasgui-line-soft, #edf0f4);
+  }
+
+  &__action,
+  &__secondary,
+  &__codeButton {
+    padding: 4px 10px;
+    border: 1px solid var(--yasgui-line, #dfe5ec);
+    border-radius: var(--yasgui-radius-button, 8px);
+    background: var(--yasgui-surface-raised, #fff);
+    color: var(--yasgui-ink-body, #3a4552);
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      border-color: var(--yasgui-line-strong, #808893);
+      color: var(--yasgui-ink, #1c2633);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+
+  &__primary,
+  &__send {
+    padding: 4px 12px;
+    border: 1px solid var(--yasgui-brand-fill, #0563bb);
+    border-radius: var(--yasgui-radius-button, 8px);
+    background: var(--yasgui-brand-fill, #0563bb);
+    color: var(--yasgui-on-brand, #fff);
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: var(--yasgui-brand-fill-strong, #044a8c);
+      border-color: var(--yasgui-brand-fill-strong, #044a8c);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+  }
+
+  button:focus-visible,
+  textarea:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--yasgui-focus, #044a8c);
+    outline-offset: 1px;
+  }
+
+  &__link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--yasgui-brand, #0563bb);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  &__log {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &__intro {
+    color: var(--yasgui-ink-muted, #56606c);
+
+    p {
+      margin: 0 0 8px;
+    }
+  }
+
+  &__note,
+  &__muted {
+    color: var(--yasgui-ink-subtle, #6a7380);
+    font-size: 12px;
+    margin: 6px 0 0;
+  }
+
+  &__notice {
+    padding: 8px 10px;
+    border-radius: var(--yasgui-radius-sm, 6px);
+    background: var(--yasgui-surface-sunken, #edf1f6);
+  }
+
+  &__question {
+    align-self: flex-end;
+    max-width: 90%;
+    padding: 6px 10px;
+    border-radius: var(--yasgui-radius-md, 10px);
+    background: var(--yasgui-brand-soft, #e3eefa);
+    color: var(--yasgui-ink, #1c2633);
+  }
+
+  &__questionTitle {
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  &__questionText {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  &__consent,
+  &__answer {
+    padding: 10px 12px;
+    border: 1px solid var(--yasgui-line, #dfe5ec);
+    border-radius: var(--yasgui-radius-md, 10px);
+    background: var(--yasgui-surface-raised, #fff);
+
+    p {
+      margin: 0 0 8px;
+    }
+  }
+
+  &__consent.answered {
+    padding: 4px 10px;
+    border-style: dashed;
+    font-size: 12px;
+    color: var(--yasgui-ink-subtle, #6a7380);
+
+    .yasgui-ai__consentTitle {
+      margin: 0;
+      font-weight: normal;
+      color: inherit;
+    }
+  }
+
+  &__consentTitle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: var(--yasgui-ink, #1c2633);
+    margin-bottom: 6px;
+  }
+
+  &__includes {
+    margin: 0 0 8px;
+    padding-left: 18px;
+  }
+
+  &__privacyLink {
+    display: inline-block;
+    margin-bottom: 8px;
+    color: var(--yasgui-brand, #0563bb);
+  }
+
+  &__remember {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 4px 0 8px;
+    font-size: 12px;
+  }
+
+  &__buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  &__progress {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--yasgui-ink-muted, #56606c);
+
+    svg {
+      animation: yasgui-ai-spin 1s linear infinite;
+    }
+  }
+
+  &__stop {
+    margin-left: auto;
+    padding: 2px 8px;
+    font-size: 12px;
+  }
+
+  &__check {
+    margin: 6px 0;
+    font-size: 12px;
+    color: var(--yasgui-ink-muted, #56606c);
+
+    summary {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    &.failed summary {
+      color: var(--yasgui-danger, #b42318);
+    }
+  }
+
+  &__checkResult,
+  &__code,
+  &__sentText {
+    margin: 6px 0 0;
+    padding: 8px;
+    max-height: 260px;
+    overflow: auto;
+    border-radius: var(--yasgui-radius-sm, 6px);
+    background: var(--yasgui-surface-sunken, #edf1f6);
+    color: var(--yasgui-ink, #1c2633);
+    font-family: var(--yasgui-font-mono, monospace);
+    font-size: 11.5px;
+    line-height: 1.45;
+    white-space: pre;
+  }
+
+  &__sentText {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  &__body {
+    word-break: break-word;
+
+    h4 {
+      margin: 10px 0 4px;
+      font-size: 13px;
+      color: var(--yasgui-ink, #1c2633);
+    }
+
+    ul,
+    ol {
+      margin: 0 0 8px;
+      padding-left: 20px;
+    }
+
+    code {
+      padding: 0 3px;
+      border-radius: 4px;
+      background: var(--yasgui-surface-sunken, #edf1f6);
+      font-family: var(--yasgui-font-mono, monospace);
+      font-size: 12px;
+    }
+
+    pre code {
+      padding: 0;
+      background: none;
+    }
+  }
+
+  &__codeBlock {
+    margin: 6px 0 10px;
+  }
+
+  &__codeActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+
+    .yasgui-ai__codeButton {
+      padding: 2px 8px;
+      font-size: 12px;
+    }
+
+    .yasgui-ai__primary {
+      padding: 2px 8px;
+      font-size: 12px;
+    }
+  }
+
+  &__errorText {
+    color: var(--yasgui-danger, #b42318);
+  }
+
+  &__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+    margin-top: 8px;
+    font-size: 12px;
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  &__meta {
+    flex-basis: 100%;
+    color: var(--yasgui-ink-subtle, #6a7380);
+  }
+
+  &__sent {
+    flex: 1;
+    min-width: 0;
+
+    summary {
+      cursor: pointer;
+      color: var(--yasgui-brand, #0563bb);
+    }
+  }
+
+  &__copied .yasgui-ai__sent {
+    margin-bottom: 8px;
+  }
+
+  &__composer {
+    padding: 8px 12px 12px;
+    border-top: 1px solid var(--yasgui-line-soft, #edf0f4);
+  }
+
+  &__input {
+    box-sizing: border-box;
+    width: 100%;
+    resize: vertical;
+    min-height: 56px;
+    padding: 8px;
+    border: 1px solid var(--yasgui-input-border, #808893);
+    border-radius: var(--yasgui-radius-sm, 6px);
+    background: var(--yasgui-surface-raised, #fff);
+    color: var(--yasgui-ink, #1c2633);
+    font: inherit;
+  }
+
+  &__composerFooter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  &__hint {
+    flex: 1;
+    color: var(--yasgui-ink-subtle, #6a7380);
+    font-size: 11.5px;
+  }
+}
+
+@keyframes yasgui-ai-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yasgui-ai__progress svg {
+    animation: none;
+  }
+}
+
+// Settings. The colour is set here because the form's labels and choices have no class of the settings modal.
+.yasgui-aiSettings {
+  color: var(--yasgui-text-primary, #000);
+
+  &__choices {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__choice {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    cursor: pointer;
+
+    input {
+      margin-top: 3px;
+    }
+
+    strong {
+      display: block;
+      font-weight: 600;
+    }
+  }
+
+  &__choiceText {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__choiceActions {
+    display: flex;
+    gap: 6px;
+  }
+
+  &__add {
+    margin-top: 10px;
+  }
+
+  &__choiceHelp {
+    display: block;
+    font-size: 12px;
+    opacity: 0.8;
+  }
+
+  &__own[hidden] {
+    display: none;
+  }
+
+  &__field {
+    margin: 10px 0;
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+  }
+
+  &__input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--yasgui-input-border, #808893);
+    border-radius: var(--yasgui-radius-sm, 6px);
+    background: var(--yasgui-surface-raised, #fff);
+    color: var(--yasgui-ink, #1c2633);
+    font: inherit;
+  }
+
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+  }
+
+  &__testResult.ok {
+    color: var(--yasgui-success, #067647);
+  }
+}

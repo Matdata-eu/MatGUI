@@ -3,6 +3,7 @@
  */
 import { Plugin } from "../";
 import Yasr from "../../";
+import type Parser from "../../parsers";
 import { addClass } from "@matdata/yasgui-utils";
 import "./index.scss";
 
@@ -213,6 +214,38 @@ export default class Error implements Plugin<never> {
         return null;
     }
   }
+  /** "Fix with AI" (or "Copy for AI" when the host has no AI service) when the host offers an assistant */
+  private getAssistantActions(error: Parser.ErrorSummary): HTMLElement | undefined {
+    const assistant = this.yasr.config.assistant;
+    if (!assistant || (!assistant.fixError && !assistant.copyErrorPrompt)) return undefined;
+    const actions = document.createElement("div");
+    actions.className = "yasr_errorAiActions";
+    const connected = assistant.isConnected ? assistant.isConnected() : !!assistant.fixError;
+    if (connected && assistant.fixError) {
+      const fix = document.createElement("button");
+      fix.type = "button";
+      fix.className = "yasr_errorAiButton yasr_errorAiFix";
+      fix.textContent = "Fix with AI";
+      fix.title = "Ask the AI assistant why this query fails and how to fix it";
+      fix.addEventListener("click", () => assistant.fixError!(error));
+      actions.appendChild(fix);
+    }
+    if (assistant.copyErrorPrompt) {
+      const copy = document.createElement("button");
+      copy.type = "button";
+      copy.className = "yasr_errorAiButton yasr_errorAiCopy";
+      copy.textContent = "Copy for AI";
+      copy.title = "Copy the query and this error as a prompt, to paste in an AI chat of your choice";
+      copy.addEventListener("click", async () => {
+        const copied = await assistant.copyErrorPrompt!(error);
+        if (copied !== true) return;
+        copy.textContent = "Copied";
+        setTimeout(() => (copy.textContent = "Copy for AI"), 2000);
+      });
+      actions.appendChild(copy);
+    }
+    return actions.childElementCount ? actions : undefined;
+  }
   async draw() {
     const el = document.createElement("div");
     el.className = "errorResult";
@@ -223,6 +256,11 @@ export default class Error implements Plugin<never> {
     const header = document.createElement("div");
     header.className = "errorHeader";
     el.appendChild(header);
+    const assistantActions = this.getAssistantActions(error);
+    // Added after the header content, see the end of draw()
+    const addAssistantActions = () => {
+      if (assistantActions) header.appendChild(assistantActions);
+    };
 
     // Try whether a custom rendering of the error exists
     const newMessage = await this.yasr.renderError(error);
@@ -231,6 +269,7 @@ export default class Error implements Plugin<never> {
       customMessage.className = "redOutline";
       customMessage.appendChild(newMessage);
       el.appendChild(customMessage);
+      addAssistantActions();
       return;
     }
 
@@ -289,6 +328,7 @@ export default class Error implements Plugin<never> {
         el.appendChild(errTextEl);
       }
     }
+    addAssistantActions();
   }
   getIcon() {
     return document.createElement("");
