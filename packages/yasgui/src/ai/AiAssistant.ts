@@ -7,7 +7,7 @@ import type { Yasgui } from "../";
 import type Tab from "../Tab";
 import { Parser } from "@matdata/yasr";
 import type { AssistantRequest } from "@matdata/yasr";
-import AiSettingsStore, { resolveConnection } from "./aiSettings";
+import AiSettingsStore, { listConnections, resolveConnection } from "./aiSettings";
 import { AiRequestError, chatCompletion, ChatMessage, ChatTool } from "./openaiClient";
 import { AiTask, buildCopyPrompt, buildPrompt, needsSchema, QueryError } from "./prompts";
 import { buildSchemaContext, SchemaTerm } from "./schemaContext";
@@ -66,6 +66,8 @@ export default class AiAssistant {
   private history: ChatMessage[] = [];
   private toolsUnsupported = new Set<string>();
   private controller: AbortController | undefined;
+  /** Service picked in the AI view for this session; the default of the settings when unset */
+  private activeServiceId: string | undefined;
 
   constructor(private yasgui: Yasgui) {
     this.config = { ...defaultAiConfig, ...(yasgui.config.ai || {}) };
@@ -76,7 +78,18 @@ export default class AiAssistant {
 
   /** The AI service requests go to, or undefined when only "Copy for AI" is available */
   public getConnection(): AiConnection | undefined {
-    return resolveConnection(this.config, this.settings.get());
+    return resolveConnection(this.config, this.settings.get(), this.activeServiceId);
+  }
+
+  /** All services the user can pick in the AI view */
+  public getConnections(): AiConnection[] {
+    return listConnections(this.config, this.settings.get());
+  }
+
+  /** Use another service for the next questions, until the page is reloaded ("off" copies prompts instead) */
+  public selectService(id: string | undefined) {
+    this.activeServiceId = id;
+    this.panel.refresh();
   }
 
   public isConnected(): boolean {

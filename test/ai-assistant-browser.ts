@@ -121,10 +121,8 @@ describe("AI assistant", function () {
   async function useOwnService() {
     await page.evaluate((baseUrl) => {
       (window as any).yasgui.aiAssistant.settings.update({
-        service: "own",
-        baseUrl,
-        apiKey: "sk-secret-test-key",
-        model: "test-model",
+        services: [{ id: "test", baseUrl, apiKey: "sk-secret-test-key", model: "test-model" }],
+        defaultService: "test",
       });
     }, AI_BASE);
   }
