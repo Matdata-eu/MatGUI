@@ -52,7 +52,12 @@ export function joinUrl(baseUrl: string, path: string): string {
 
 async function buildHeaders(connection: AiConnection): Promise<{ [name: string]: string }> {
   const headers: { [name: string]: string } = { "Content-Type": "application/json" };
-  if (connection.apiKey) headers["Authorization"] = `Bearer ${connection.apiKey}`;
+  if (connection.apiKey && /\.(openai\.azure\.com|services\.ai\.azure\.com)$/.test(connection.host)) {
+    // Azure OpenAI reads API keys from `api-key`; a bearer token there must be a Microsoft Entra token
+    headers["api-key"] = connection.apiKey;
+  } else if (connection.apiKey) {
+    headers["Authorization"] = `Bearer ${connection.apiKey}`;
+  }
   if (connection.host === "api.anthropic.com") {
     // Anthropic only accepts browser requests that opt in with this header, and its own endpoints (such as
     // `models`) read the key from `x-api-key`
