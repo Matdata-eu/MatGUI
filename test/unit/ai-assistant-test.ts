@@ -211,7 +211,7 @@ SELECT ?copy ?add WHERE { ?copy ex:Create ?add ; ex:label "DELETE me" }`;
       expect(connection?.baseUrl).to.equal("https://api.anthropic.com/v1");
     });
 
-    it("adds the headers Anthropic needs for requests from a browser", async () => {
+    it("adds the headers Anthropic and Azure need for requests from a browser", async () => {
       const originalFetch = globalThis.fetch;
       const calls: Array<{ url: string; headers: { [name: string]: string } }> = [];
       globalThis.fetch = (async (url: string, init: RequestInit) => {
@@ -235,6 +235,9 @@ SELECT ?copy ?add WHERE { ?copy ex:Create ?add ; ex:label "DELETE me" }`;
         await listModels({ ...base, baseUrl: "https://api.openai.com/v1", host: "api.openai.com" });
         expect(calls[1].headers).to.not.have.property("anthropic-dangerous-direct-browser-access");
         expect(calls[1].headers).to.not.have.property("x-api-key");
+        await listModels({ ...base, baseUrl: "https://r.openai.azure.com/openai/v1", host: "r.openai.azure.com" });
+        expect(calls[2].headers).to.include({ "api-key": "sk-ant" });
+        expect(calls[2].headers).to.not.have.property("Authorization");
       } finally {
         globalThis.fetch = originalFetch;
       }
