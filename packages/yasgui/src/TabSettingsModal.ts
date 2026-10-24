@@ -384,7 +384,7 @@ export default class TabSettingsModal {
     contentArea.appendChild(editorContent);
     if (assistant) {
       const aiContent = document.createElement("div");
-      addClass(aiContent, "modalTabContent");
+      addClass(aiContent, "modalTabContent", "yasgui-aiSettings");
       aiContent.id = "ai-content";
       this.aiSettingsForm = new AiSettingsForm(assistant);
       this.aiSettingsForm.draw(aiContent);

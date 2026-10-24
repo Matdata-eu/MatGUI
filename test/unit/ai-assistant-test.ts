@@ -4,8 +4,8 @@ import { describe, it } from "mocha";
 import { prepareCheckQuery, formatBindings, formatTerm } from "../../packages/yasgui/src/ai/checkQuery.js";
 import { buildSchemaContext, compactIri } from "../../packages/yasgui/src/ai/schemaContext.js";
 import { buildCopyPrompt, buildPrompt, extractQueries } from "../../packages/yasgui/src/ai/prompts.js";
-import { resolveConnection } from "../../packages/yasgui/src/ai/aiSettings.js";
-import { describeErrorBody, joinUrl } from "../../packages/yasgui/src/ai/openaiClient.js";
+import { normalizeBaseUrl, resolveConnection } from "../../packages/yasgui/src/ai/aiSettings.js";
+import { describeErrorBody, joinUrl, listModels } from "../../packages/yasgui/src/ai/openaiClient.js";
 import { defaultAiConfig } from "../../packages/yasgui/src/ai/types.js";
 
 const expect = chai.expect;
@@ -197,6 +197,47 @@ SELECT ?copy ?add WHERE { ?copy ex:Create ?add ; ex:label "DELETE me" }`;
       const config = { ...defaultAiConfig, allowOwnKey: false, proxy };
       expect(resolveConnection(config, { service: "own", apiKey: "k" })).to.equal(undefined);
       expect(resolveConnection({ ...config, enabled: false }, {})).to.equal(undefined);
+    });
+
+    it("drops an endpoint path pasted with the base URL", () => {
+      expect(normalizeBaseUrl(" https://api.anthropic.com/v1/messages ")).to.equal("https://api.anthropic.com/v1");
+      expect(normalizeBaseUrl("https://api.openai.com/v1/chat/completions/")).to.equal("https://api.openai.com/v1");
+      expect(normalizeBaseUrl("https://openrouter.ai/api/v1")).to.equal("https://openrouter.ai/api/v1");
+      const connection = resolveConnection(defaultAiConfig, {
+        service: "own",
+        apiKey: "k",
+        baseUrl: "https://api.anthropic.com/v1/messages",
+      });
+      expect(connection?.baseUrl).to.equal("https://api.anthropic.com/v1");
+    });
+
+    it("adds the headers Anthropic needs for requests from a browser", async () => {
+      const originalFetch = globalThis.fetch;
+      const calls: Array<{ url: string; headers: { [name: string]: string } }> = [];
+      globalThis.fetch = (async (url: string, init: RequestInit) => {
+        calls.push({ url, headers: init.headers as { [name: string]: string } });
+        return new Response(JSON.stringify({ data: [{ id: "claude-b" }, { id: "claude-a" }] }), { status: 200 });
+      }) as typeof fetch;
+      try {
+        const base = { kind: "own" as const, apiKey: "sk-ant", label: "" };
+        const models = await listModels({
+          ...base,
+          baseUrl: "https://api.anthropic.com/v1",
+          host: "api.anthropic.com",
+        });
+        expect(models).to.deep.equal(["claude-a", "claude-b"]);
+        expect(calls[0].url).to.equal("https://api.anthropic.com/v1/models");
+        expect(calls[0].headers).to.include({
+          "anthropic-dangerous-direct-browser-access": "true",
+          "x-api-key": "sk-ant",
+          Authorization: "Bearer sk-ant",
+        });
+        await listModels({ ...base, baseUrl: "https://api.openai.com/v1", host: "api.openai.com" });
+        expect(calls[1].headers).to.not.have.property("anthropic-dangerous-direct-browser-access");
+        expect(calls[1].headers).to.not.have.property("x-api-key");
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
     });
 
     it("explains error answers of the service", () => {
