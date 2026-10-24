@@ -35,8 +35,17 @@
   }
 }
 
+// The modal is appended to the page body, outside .yasgui, so it sets the Yasgui font itself
 .tabSettingsModal {
+  font-family: var(--yasgui-font-family, system-ui, sans-serif);
+  font-size: var(--yasgui-font-size, 13px);
   background: var(--yasgui-bg-primary, white);
+
+  // Low specificity, so monospace fields such as .prefixTextarea keep their font
+  :where(input, select, textarea, button) {
+    font-family: inherit;
+  }
+
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   max-width: 1000px;
