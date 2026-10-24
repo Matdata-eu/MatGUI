@@ -11,6 +11,7 @@ import Yasqe from "@matdata/yasqe";
 import { setup, destroy, closePage, getPage, makeScreenshot, inspectLive, wait } from "./utils.js";
 import "./endpoint-describe-browser.js";
 import "./iri-hover-browser.js";
+import "./ai-assistant-browser.js";
 
 declare var window: Window & {
   Yasqe: typeof Yasqe;

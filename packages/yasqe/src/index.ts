@@ -118,6 +118,8 @@ export class Yasqe extends EditorFacade {
   public autocompleters: { [name: string]: Autocompleter.Completer | undefined } = {};
   private prevQueryValid = false;
   public queryValid = true;
+  /** The first syntax error of the query, set by [[checkSyntax]] (undefined when the query is valid) */
+  public syntaxError: { line: number; message: string } | undefined;
   public lastQueryDuration: number | undefined;
   private req: Request | undefined;
   private abortController: AbortController | undefined;
@@ -1889,6 +1891,7 @@ export class Yasqe extends EditorFacade {
   }
   public checkSyntax() {
     this.queryValid = true;
+    this.syntaxError = undefined;
 
     this.clearGutter("gutterErrorBar");
     this.clearSyntaxErrorHighlight();
@@ -1954,6 +1957,14 @@ export class Yasqe extends EditorFacade {
         }
 
         this.setGutterMarker(l, "gutterErrorBar", errorEl);
+        this.syntaxError = {
+          line: l + 1,
+          message:
+            state.errorMsg ||
+            (state.possibleCurrent && state.possibleCurrent.length > 0
+              ? "This line is invalid. Expected: " + state.possibleCurrent.join(", ")
+              : "Syntax error"),
+        };
 
         // Also change run button to show error state
         if (this.queryBtn) {
