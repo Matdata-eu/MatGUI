@@ -22,7 +22,7 @@ function HomepageHeader() {
           </Link>
           <Link
             className="button button--primary button--lg"
-            to="https://yasgui.matdata.eu/"
+            to="https://matgui.matdata.eu/"
             style={{ marginLeft: "1rem" }}
           >
             Try Live Demo 🚀
