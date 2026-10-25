@@ -2517,8 +2517,8 @@ export interface Config extends Omit<EditorOptions, "extraKeys"> {
       ) => Promise<Autocompleter.EndpointTerm[] | undefined> | Autocompleter.EndpointTerm[] | undefined)
     | undefined;
   /**
-   * Linked Open Vocabularies terms suggested by the class and property autocompleters. Undefined (default) uses the
-   * list bundled with Yasqe (refreshed with `npm run util:fetchLov`); null leaves out LOV suggestions.
+   * Linked Open Vocabularies terms suggested by the class, property and function autocompleters. Undefined (default)
+   * uses the list bundled with Yasqe (refreshed with `npm run util:fetchLov`); null leaves out LOV suggestions.
    */
   lovTerms: Autocompleter.LovTerms | null | undefined;
   showSnippetsBar: boolean; // Show the snippets bar

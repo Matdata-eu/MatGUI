@@ -365,6 +365,7 @@ export const fetchFromLov = (
 const ENDPOINT_SUGGESTIONS_LIMIT = 50;
 export const ENDPOINT_SECTION = { name: "Used in this endpoint", rank: 0 };
 export const LOV_SECTION = { name: "Linked Open Vocabularies", rank: 1 };
+export const FUNCTION_SECTION = { name: "Functions", rank: 2 };
 
 function localName(iri: string): string {
   return iri.substring(Math.max(iri.lastIndexOf("#"), iri.lastIndexOf("/")) + 1);
@@ -458,9 +459,16 @@ export const fetchIriSuggestions = async (
 };
 
 import { bundledLovTerms, searchLov } from "./lov";
-export type { LovTerms } from "./lov";
+export type { LovTerms, LovTermType } from "./lov";
 import variableCompleter from "./variables";
 import prefixCompleter from "./prefixes";
 import propertyCompleter from "./properties";
 import classCompleter from "./classes";
-export var completers: CompleterConfig[] = [variableCompleter, prefixCompleter, propertyCompleter, classCompleter];
+import functionCompleter from "./functions";
+export var completers: CompleterConfig[] = [
+  variableCompleter,
+  prefixCompleter,
+  propertyCompleter,
+  classCompleter,
+  functionCompleter,
+];

@@ -10,12 +10,16 @@
  *
  * When a successful fetch occurs, the committed fallback file is also updated so
  * future offline builds stay reasonably fresh.
+ *
+ * The prefixes of the always included vocabularies of fetchLovData.js (ERA, railML, SPARQL Anything...) are
+ * added to the prefix.cc data, replacing prefix.cc's namespace for the same prefix, so they are always available.
  */
 
 import https from "https";
 import http from "http";
 import fs from "fs";
 import path from "path";
+import { ALWAYS_INCLUDED } from "./fetchLovData.js";
 
 const PREFIXES_URL_HTTPS = "https://prefix.cc/popular/all.file.json";
 const PREFIXES_URL_HTTP = "http://prefix.cc/popular/all.file.json";
@@ -41,6 +45,15 @@ function fetchUrl(url, options = {}) {
     req.on("error", reject);
     req.setTimeout(15000, () => req.destroy(new Error("Request timed out")));
   });
+}
+
+/** The prefix data with the prefixes of the always included vocabularies, serialized */
+function withAlwaysIncluded(prefixes, alwaysIncluded = ALWAYS_INCLUDED) {
+  const result = { ...prefixes };
+  for (const { prefix, namespace } of alwaysIncluded) {
+    if (prefix) result[prefix] = namespace;
+  }
+  return JSON.stringify(result, null, 2) + "\n";
 }
 
 async function main() {
@@ -71,7 +84,7 @@ async function main() {
   // Validate the fetched JSON
   if (data) {
     try {
-      JSON.parse(data);
+      data = withAlwaysIncluded(JSON.parse(data));
     } catch (e) {
       console.warn("Fetched data is not valid JSON, ignoring and using committed fallback.");
       data = null;
@@ -85,7 +98,7 @@ async function main() {
   } else {
     // Use the committed fallback
     if (fs.existsSync(FALLBACK_FILE)) {
-      data = fs.readFileSync(FALLBACK_FILE, "utf-8");
+      data = withAlwaysIncluded(JSON.parse(fs.readFileSync(FALLBACK_FILE, "utf-8")));
       console.log(`Using committed fallback: ${FALLBACK_FILE}`);
     } else {
       console.error("No fallback file found and all fetches failed. Cannot provide prefix data.");

@@ -3603,5 +3603,7 @@
   "wsem": "https://w3id.org/websemantic/ns#",
   "hcm": "https://w3id.org/hcmo/ontology/hcm#",
   "martialis": "https://w3id.org/martialis/ontology#",
-  "aug": "https://w3id.org/augmanitai/lexicon/"
+  "aug": "https://w3id.org/augmanitai/lexicon/",
+  "railml": "http://ontology.railml.org/railml3#",
+  "fxe": "http://sparql.xyz/facade-x/engine/"
 }
