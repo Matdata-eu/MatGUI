@@ -6,13 +6,14 @@ import type { AutocompletionToken, EndpointTerm } from "./";
 import lovTermsJson from "../lov-terms.json";
 
 /**
- * The bundled LOV terms: namespaces, most used first, as [namespace, prefix, classes, properties],
- * where classes and properties are space separated local names.
+ * The bundled LOV terms: namespaces, most used first, as [namespace, prefix, classes, properties, functions?],
+ * where classes, properties and functions are space separated local names. Functions are only listed for the
+ * always included vocabularies that define them, such as SPARQL Anything (fx:entity...).
  */
 export interface LovTerms {
   source?: string;
   generated?: string;
-  namespaces: Array<[string, string, string, string]>;
+  namespaces: Array<[string, string, string, string] | [string, string, string, string, string]>;
 }
 
 export const bundledLovTerms = lovTermsJson as LovTerms;
@@ -24,15 +25,16 @@ interface IndexedTerm extends EndpointTerm {
   lowerIri: string;
   lowerPrefixed?: string;
 }
-type Index = { [type in "class" | "property"]: IndexedTerm[] };
+export type LovTermType = "class" | "property" | "function";
+type Index = { [type in LovTermType]: IndexedTerm[] };
 
 const indexes = new WeakMap<LovTerms, Index>();
 
 function getIndex(terms: LovTerms): Index {
   let index = indexes.get(terms);
   if (index) return index;
-  index = { class: [], property: [] };
-  for (const [namespace, prefix, classes, properties] of terms.namespaces || []) {
+  index = { class: [], property: [], function: [] };
+  for (const [namespace, prefix, classes, properties, functions] of terms.namespaces || []) {
     const add = (list: IndexedTerm[], locals: string) => {
       if (!locals) return;
       for (const local of locals.split(" ")) {
@@ -49,6 +51,7 @@ function getIndex(terms: LovTerms): Index {
     };
     add(index.class, classes);
     add(index.property, properties);
+    if (functions) add(index.function, functions);
   }
   indexes.set(terms, index);
   return index;
@@ -60,7 +63,7 @@ function getIndex(terms: LovTerms): Index {
  */
 export function searchLov(
   terms: LovTerms,
-  type: "class" | "property",
+  type: LovTermType,
   token: AutocompletionToken,
   limit = LOV_SUGGESTIONS_LIMIT,
 ): EndpointTerm[] {

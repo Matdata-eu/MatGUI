@@ -716,6 +716,8 @@ When typing a prefix declaration, Matgui queries [prefix.cc](https://prefix.cc) 
 PREFIX foaf: <  # Auto-suggests http://xmlns.com/foaf/0.1/
 ```
 
+MatGUI ships the prefix.cc list, so this works offline too. A few prefixes are always in it, with these namespaces, whatever prefix.cc says: `era:` (ERA ontology), `railml:` (railML 3), `rtm:` (RailTopoModel) and the three [SPARQL Anything](https://sparql-anything.cc) namespaces `xyz:` (`http://sparql.xyz/facade-x/data/`), `fx:` (`http://sparql.xyz/facade-x/ns/`) and `fxe:` (`http://sparql.xyz/facade-x/engine/`). Typing one of them in a query, such as `fxe:location`, adds its `PREFIX` declaration.
+
 ### Endpoint Quick Switch
 
 Quick switch endpoints let you change the SPARQL endpoint of a tab with a single click. They are listed in the **Quick switch** group at the top of the endpoint dropdown (see [Endpoint Picker](#endpoint-picker)).
@@ -864,7 +866,30 @@ Ctrl+clicking on `http://dbpedia.org/resource/European_Union` automatically quer
 Press `Ctrl+Space` after `a` (or `rdf:type`) to get class suggestions, or in the position of a property to get property suggestions. MatGUI suggests:
 
 1. **Used in this endpoint**: the classes and properties the endpoint of the tab actually uses, most used first, with the number of instances (classes) or triples (properties) next to them. This also covers vocabularies that are not registered anywhere, such as railML 3, the ERA ontology or your own ontologies.
-2. **Linked Open Vocabularies**: matching classes and properties of the most used vocabularies in [LOV](https://lov.linkeddata.es/dataset/lov/). MatGUI ships this list, so no request is made to LOV while you type. Terms that the endpoint already suggested are not repeated, and a term is inserted as a prefixed name with its `PREFIX` when LOV knows the vocabulary's preferred prefix. The ERA ontology (`era:`), railML 3 (`railml:`) and RailTopoModel (`rtm:`) are always included, even though they are not in LOV.
+2. **Linked Open Vocabularies**: matching classes and properties of the most used vocabularies in [LOV](https://lov.linkeddata.es/dataset/lov/). MatGUI ships this list, so no request is made to LOV while you type. Terms that the endpoint already suggested are not repeated, and a term is inserted as a prefixed name with its `PREFIX` when LOV knows the vocabulary's preferred prefix. The ERA ontology (`era:`), railML 3 (`railml:`), RailTopoModel (`rtm:`) and the SPARQL Anything vocabularies (`fx:`, `fxe:`, see below) are always included, even though they are not in LOV.
+
+**SPARQL Anything**
+
+The [SPARQL Anything](https://sparql-anything.cc) terms are always suggested, so you can write its queries without looking up the documentation:
+
+- `fx:` (`http://sparql.xyz/facade-x/ns/`): the `fx:anySlot` magic property and the `fx:Root` class as properties and classes, and the functions, such as `fx:entity`, `fx:literal`, `fx:String.substring` or `fx:LevenshteinDistance`, wherever an expression can start (in `BIND`, `FILTER`, a `SELECT` expression...). A function also matches on its local name, so `substr` finds `fx:String.substring`.
+- `fxe:` (`http://sparql.xyz/facade-x/engine/`): the options of a SPARQL Anything `SERVICE` clause, such as `fxe:location`, `fxe:media-type`, `fxe:csv.headers` or `fxe:json.path`.
+- `xyz:` (`http://sparql.xyz/facade-x/data/`): the namespace of the generated data. Its terms come from your data (`xyz:name`), so only the prefix is known, unless the endpoint uses them.
+
+```sparql
+PREFIX xyz: <http://sparql.xyz/facade-x/data/>
+PREFIX fx: <http://sparql.xyz/facade-x/ns/>
+PREFIX fxe: <http://sparql.xyz/facade-x/engine/>
+
+SELECT ?name WHERE {
+  SERVICE <x-sparql-anything:> {
+    fxe:properties fxe:location "https://sparql-anything.cc/example1.json" .
+    ?show xyz:name ?name ; xyz:stars ?star .
+    ?star fx:anySlot "Courteney Cox" .
+  }
+  BIND(fx:entity("https://example.org/show/", fx:String.toLowerCase(?name)) AS ?iri)
+}
+```
 
 Without typing anything, the endpoint's most used terms are listed. While you type, a suggestion matches on its full IRI, its prefixed name (`era:Op`) or, when you type a plain word (`Operat`), on any part of its local name.
 

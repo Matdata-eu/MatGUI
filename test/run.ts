@@ -898,6 +898,77 @@ PREFIX geo: <http://www.opengis.net/ont/geosparql#> select
     });
   });
 
+  describe("SPARQL Anything autocompletion", function () {
+    // Uses the bundled terms, in which the SPARQL Anything vocabularies are always included
+    beforeEach(async function () {
+      await page.evaluate(() => {
+        window.yasqe.disableCompleter("class-local");
+        window.yasqe.disableCompleter("property-local");
+        window.yasqe.config.endpointTerms = undefined;
+        window.yasqe.config.lovTerms = undefined;
+        return Promise.all([
+          window.yasqe.enableCompleter("class"),
+          window.yasqe.enableCompleter("property"),
+          window.yasqe.enableCompleter("function"),
+        ]);
+      });
+    });
+    async function complete(query: string) {
+      await page.evaluate((query) => {
+        window.yasqe.setValue(query);
+        window.yasqe.focus();
+        window.yasqe.getDoc().setCursor({ line: 0, ch: query.length });
+      }, query);
+      await issueAutocompletionKeyCombination();
+      await waitForAutocompletionPopup();
+      return page.evaluate(() =>
+        Array.from(document.querySelectorAll(".CodeMirror-hints li")).map((li) => li.textContent || ""),
+      );
+    }
+
+    it("Should suggest the fx functions in an expression and declare the prefix", async function () {
+      const options = await complete("select * where { BIND(fx:ent");
+      expect(options[0]).to.contain("fx:entity");
+      await page.keyboard.press("Enter");
+      expect(await page.evaluate(() => window.yasqe.getValue())).to.equal(
+        "PREFIX fx: <http://sparql.xyz/facade-x/ns/>\nselect * where { BIND(fx:entity",
+      );
+    });
+
+    it("Should suggest the fx functions by local name", async function () {
+      const options = await complete("select * where { FILTER(substr");
+      expect(options.some((option) => option.indexOf("fx:String.substring") >= 0)).to.equal(true);
+    });
+
+    it("Should suggest the fx:anySlot magic property", async function () {
+      const options = await complete("select * where { ?x fx:any");
+      expect(options[0]).to.contain("fx:anySlot");
+    });
+
+    it("Should suggest the fxe options", async function () {
+      const options = await complete(
+        "select * where { SERVICE <x-sparql-anything:> { fxe:properties fxe:location 'a.csv' ; fxe:csv.hea",
+      );
+      expect(options[0]).to.contain("fxe:csv.headers");
+      expect(options.some((option) => option.indexOf("fxe:csv.headers-row") >= 0)).to.equal(true);
+    });
+
+    it("Should not suggest functions as properties", async function () {
+      await page.evaluate(() => {
+        const query = "select * where { ?x fx:entit";
+        window.yasqe.setValue(query);
+        window.yasqe.focus();
+        window.yasqe.getDoc().setCursor({ line: 0, ch: query.length });
+      });
+      await issueAutocompletionKeyCombination();
+      await wait(300);
+      const options = await page.evaluate(() =>
+        Array.from(document.querySelectorAll(".CodeMirror-hints li")).map((li) => li.textContent || ""),
+      );
+      expect(options.some((option) => option.indexOf("fx:entity") >= 0)).to.equal(false);
+    });
+  });
+
   describe("CONSTRUCT Variable Validation", function () {
     it("Should show warning for undefined variables in CONSTRUCT", async function () {
       await page.evaluate(() => {

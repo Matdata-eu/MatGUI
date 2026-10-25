@@ -29,8 +29,11 @@ const MAX_BYTES = 600_000;
 
 /**
  * Namespaces that are always bundled, first, regardless of their popularity and of the size budget.
- * `prefix` overrides the prefix from LOV. `sources` are RDF files (Turtle, N-Triples...) of the vocabulary whose
+ * `prefix` overrides the prefix from LOV; fetchPrefixData.js also adds it to the bundled prefixes, so it is always
+ * suggested and declared when used. `sources` are RDF files (Turtle, N-Triples...) of the vocabulary whose
  * classes and properties in the namespace are added to those of the dump, e.g. when LOV lacks the vocabulary.
+ * `terms` lists local names of classes, properties and functions, for vocabularies without RDF files.
+ * A namespace without any terms is left out of the bundle, but its prefix is still bundled.
  */
 export const ALWAYS_INCLUDED = [
   {
@@ -52,6 +55,150 @@ export const ALWAYS_INCLUDED = [
     namespace: "http://ontology.railml.org/railtopomodel#",
     prefix: "rtm",
     sources: ["https://ontology.railml.org/ontology.ttl"],
+  },
+  // SPARQL Anything (https://sparql-anything.cc), which publishes no RDF files for its vocabularies, so the terms are
+  // listed here, from https://github.com/SPARQL-Anything/sparql.anything/tree/HEAD/docs and the Façade-X specs.
+  {
+    // Façade-X: the terms of the generated data, the magic properties and the functions
+    namespace: "http://sparql.xyz/facade-x/ns/",
+    prefix: "fx",
+    terms: {
+      classes: ["Root"],
+      properties: ["anySlot", "slot-key", "cachedGraph", "cachedGraphCreation", "sparqlAlgebra"],
+      functions: [
+        "cardinal",
+        "isContainerMembershipProperty",
+        "before",
+        "after",
+        "previous",
+        "next",
+        "forward",
+        "backward",
+        "String.startsWith",
+        "String.endsWith",
+        "String.indexOf",
+        "String.lastIndexOf",
+        "String.substring",
+        "String.toLowerCase",
+        "String.toUpperCase",
+        "String.trim",
+        "String.replace",
+        "String.stripLeading",
+        "String.stripTrailing",
+        "String.removeTags",
+        "WordUtils.capitalize",
+        "WordUtils.capitalizeFully",
+        "WordUtils.initials",
+        "WordUtils.swapCase",
+        "WordUtils.uncapitalize",
+        "LevenshteinDistance",
+        "CosineDistance",
+        "JaccardDistance",
+        "JaroWinklerDistance",
+        "LongestCommonSubsequenceDistance",
+        "HammingDistance",
+        "QGramDistance",
+        "DigestUtils.md2Hex",
+        "DigestUtils.md5Hex",
+        "DigestUtils.sha1Hex",
+        "DigestUtils.sha256Hex",
+        "DigestUtils.sha384Hex",
+        "DigestUtils.sha512Hex",
+        "URLEncoder.encode",
+        "URLDecoder.decode",
+        "serial",
+        "entity",
+        "literal",
+        "bnode",
+      ],
+    },
+  },
+  {
+    // Façade-X Engine: the options of a SPARQL Anything SERVICE clause (fxe:properties fxe:location "...")
+    namespace: "http://sparql.xyz/facade-x/engine/",
+    prefix: "fxe",
+    terms: {
+      classes: ["Configuration", "Option"],
+      properties: [
+        "properties",
+        "location",
+        "content",
+        "command",
+        "read-from-std-in",
+        "query",
+        "from-archive",
+        "archive-format",
+        "archive.matches",
+        "root",
+        "media-type",
+        "namespace",
+        "blank-nodes",
+        "trim-strings",
+        "null-string",
+        "triplifier",
+        "charset",
+        "metadata",
+        "audit",
+        "ondisk",
+        "ondisk.reuse",
+        "strategy",
+        "slice",
+        "slice.size",
+        "use-rdfs-member",
+        "annotate-triples-with-slot-keys",
+        "generate-predicate-labels",
+        "http.client.useSystemProperties",
+        "http.method",
+        "http.payload",
+        "http.protocol",
+        "http.auth.user",
+        "http.auth.password",
+        "http.redirect",
+        "http.sleep",
+        "s3.endpoint",
+        "s3.bucket-name",
+        "s3.key",
+        "s3.access-key",
+        "s3.secret-key",
+        "s3.region",
+        "bin.encoding",
+        "csv.delimiter",
+        "csv.format",
+        "csv.headers",
+        "csv.headers-row",
+        "csv.headers.sanitize",
+        "csv.ignore-columns-with-no-header",
+        "csv.null-string",
+        "csv.quote-char",
+        "html.browser",
+        "html.browser.screenshot",
+        "html.browser.timeout",
+        "html.browser.wait",
+        "html.metadata",
+        "html.parser",
+        "html.selector",
+        "json.include-null-values",
+        "json.literalize",
+        "json.path",
+        "slides.extract-sections",
+        "spreadsheet.composite-values",
+        "spreadsheet.evaluate-formulas",
+        "spreadsheet.headers",
+        "spreadsheet.headers-row",
+        "spreadsheet.ignore-columns-with-no-header",
+        "txt.group",
+        "txt.regex",
+        "txt.split",
+        "xml.lang-tags",
+        "xml.path",
+        "yaml.allow-duplicate-keys",
+      ],
+    },
+  },
+  {
+    // Façade-X data: the default namespace of the generated data, whose terms come from the source (xyz:name...)
+    namespace: "http://sparql.xyz/facade-x/data/",
+    prefix: "xyz",
   },
 ];
 
@@ -167,26 +314,29 @@ export async function collectTerms(quads) {
 }
 
 /**
- * Adds the terms of the always included namespaces to the namespaces of the dump: the configured prefix, and
- * the classes and properties of extraTerms (namespaces collected from their sources).
+ * Adds the terms of the always included namespaces to the namespaces of the dump: the configured prefix, the
+ * configured terms, and the classes and properties of extraTerms (namespaces collected from their sources).
  */
 export function addAlwaysIncluded(namespaces, alwaysIncluded = ALWAYS_INCLUDED, extraTerms = []) {
   const result = namespaces.map((ns) => ({ ...ns }));
-  for (const { namespace, prefix } of alwaysIncluded) {
+  const merge = (current = [], added = []) => Array.from(new Set([...current, ...added])).sort();
+  for (const { namespace, prefix, terms } of alwaysIncluded) {
     let ns = result.find((ns) => ns.namespace === namespace);
     if (!ns) result.push((ns = { namespace, classes: [], properties: [], usedBy: 0 }));
     if (prefix) ns.prefix = prefix;
-    for (const extra of extraTerms.filter((extra) => extra.namespace === namespace)) {
-      ns.classes = Array.from(new Set([...ns.classes, ...extra.classes])).sort();
-      ns.properties = Array.from(new Set([...ns.properties, ...extra.properties])).sort();
+    for (const extra of [...(terms ? [terms] : []), ...extraTerms.filter((extra) => extra.namespace === namespace)]) {
+      ns.classes = merge(ns.classes, extra.classes);
+      ns.properties = merge(ns.properties, extra.properties);
+      if (extra.functions?.length) ns.functions = merge(ns.functions, extra.functions);
     }
   }
-  return result.filter((ns) => ns.classes.length || ns.properties.length);
+  return result.filter((ns) => ns.classes.length || ns.properties.length || ns.functions?.length);
 }
 
 /**
  * The bundled format: the always included namespaces, then the others most used first, as
- * [namespace, prefix, classes, properties]. Namespaces are added until the serialized file would exceed maxBytes,
+ * [namespace, prefix, classes, properties] or, for namespaces with functions, [namespace, prefix, classes,
+ * properties, functions]. Namespaces are added until the serialized file would exceed maxBytes,
  * except the always included ones, which are added regardless.
  */
 export function toBundle(namespaces, maxBytes = MAX_BYTES, source = DUMP_URL, alwaysIncluded = ALWAYS_INCLUDED) {
@@ -199,6 +349,7 @@ export function toBundle(namespaces, maxBytes = MAX_BYTES, source = DUMP_URL, al
   ];
   for (const ns of ordered) {
     const entry = [ns.namespace, ns.prefix || "", ns.classes.join(" "), ns.properties.join(" ")];
+    if (ns.functions?.length) entry.push(ns.functions.join(" "));
     const entrySize = JSON.stringify(entry).length + 1;
     if (size + entrySize > maxBytes && always.indexOf(ns.namespace) < 0) continue;
     bundle.namespaces.push(entry);
@@ -268,8 +419,7 @@ async function main() {
   if (stats.skipped) console.log(`Skipped ${stats.skipped} invalid lines`);
   const bundle = toBundle(addAlwaysIncluded(namespaces, ALWAYS_INCLUDED, await collectExtraTerms()));
   const terms = bundle.namespaces.reduce(
-    (count, [, , classes, properties]) =>
-      count + (classes ? classes.split(" ").length : 0) + (properties ? properties.split(" ").length : 0),
+    (count, [, , ...lists]) => count + lists.reduce((sum, list) => sum + (list ? list.split(" ").length : 0), 0),
     0,
   );
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(bundle) + "\n");
