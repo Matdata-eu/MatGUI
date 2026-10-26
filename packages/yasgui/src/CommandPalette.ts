@@ -286,6 +286,8 @@ export default class CommandPalette {
         run: () => yasgui.endpointDescribe?.toggle(),
       });
     }
+    const current = tab();
+    if (yasgui.sparqlAnything && current) commands.push(...yasgui.sparqlAnything.getPaletteCommands(current));
     const assistant = yasgui.aiAssistant;
     if (assistant) {
       const connected = assistant.isConnected();

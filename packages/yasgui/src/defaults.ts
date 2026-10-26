@@ -45,6 +45,7 @@ export default function initialize(): Config<CatalogueItem> {
       autocomplete: true,
     },
     ai: { ...defaultAiConfig },
+    sparqlAnything: true,
     endpointButtons: undefined,
     endpointCatalogueOptions: {
       getData: () => {

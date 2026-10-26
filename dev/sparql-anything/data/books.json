@@ -1,0 +1,25 @@
+{
+  "library": "Matdata reading room",
+  "books": [
+    {
+      "title": "Dune",
+      "year": 1965,
+      "isbn": "978-0441013593",
+      "author": { "name": "Frank Herbert", "born": 1920 },
+      "tags": ["science fiction", "desert"]
+    },
+    {
+      "title": "The Left Hand of Darkness",
+      "year": 1969,
+      "author": { "name": "Ursula K. Le Guin", "born": 1929 },
+      "tags": ["science fiction"]
+    },
+    {
+      "title": "Neuromancer",
+      "year": 1984,
+      "isbn": "978-0441569595",
+      "author": { "name": "William Gibson" },
+      "tags": ["cyberpunk"]
+    }
+  ]
+}

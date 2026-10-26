@@ -28,7 +28,7 @@ export interface SidePanelState {
   open: boolean;
   collapsed: boolean;
   pinned: boolean;
-  view: "queries" | "endpoint" | "assistant";
+  view: "queries" | "endpoint" | "source" | "assistant";
   width: number;
 }
 function getDefaults(): PersistedJson {

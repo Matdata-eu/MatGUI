@@ -183,6 +183,12 @@
       }
     }
 
+    // Views that don't apply to the current query (see SidePanel.setViewVisible)
+    &__tab[hidden],
+    &__railButton[hidden] {
+      display: none;
+    }
+
     &__railButton {
       width: 36px;
       height: 36px;

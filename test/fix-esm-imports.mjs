@@ -3,7 +3,7 @@ import path from "path";
 
 const repoRoot = process.cwd();
 const srcDir = path.join(repoRoot, "build", "test", "packages", "yasgui", "src");
-const targetDirs = ["queryManagement", "ai"].map((dir) => path.join(srcDir, dir));
+const targetDirs = ["queryManagement", "ai", "sparqlAnything"].map((dir) => path.join(srcDir, dir));
 
 async function exists(p) {
   try {

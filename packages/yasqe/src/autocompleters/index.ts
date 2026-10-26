@@ -42,6 +42,14 @@ export interface EndpointTerm {
   prefix?: string;
   namespace?: string;
 }
+/**
+ * Terms suggested for the place in the query, under their own heading (e.g. the columns of a SPARQL Anything
+ * source). Provided through the `contextTerms` config option.
+ */
+export interface ContextTerms {
+  section: string;
+  terms: EndpointTerm[];
+}
 export interface AutocompletionToken extends Token {
   autocompletionString?: string;
   tokenPrefix?: string;
@@ -424,28 +432,51 @@ export function endpointTermToSuggestion(
 }
 
 /**
- * Class and property suggestions: the terms used in the current endpoint (see the `endpointTerms` config option),
- * followed by the matching terms of Linked Open Vocabularies (bundled, see the `lovTerms` config option).
+ * Class and property suggestions: the terms for the place in the query (see the `contextTerms` config option),
+ * the terms used in the current endpoint (see the `endpointTerms` config option), and the matching terms of
+ * Linked Open Vocabularies (bundled, see the `lovTerms` config option).
  */
 export const fetchIriSuggestions = async (
   yasqe: Yasqe,
   type: "class" | "property",
   token?: AutocompletionToken,
 ): Promise<Suggestion[]> => {
-  let endpointTerms: EndpointTerm[] = [];
-  if (yasqe.config.endpointTerms) {
-    try {
-      endpointTerms = (await yasqe.config.endpointTerms(yasqe, type)) || [];
-    } catch (e) {
-      console.warn("Could not get endpoint terms for autocompletion", e);
-    }
-  }
+  // Both may wait for a query: fetch them side by side
+  const [endpointTerms, contextTerms] = await Promise.all([
+    (async (): Promise<EndpointTerm[]> => {
+      try {
+        return (yasqe.config.endpointTerms && (await yasqe.config.endpointTerms(yasqe, type))) || [];
+      } catch (e) {
+        console.warn("Could not get endpoint terms for autocompletion", e);
+        return [];
+      }
+    })(),
+    (async (): Promise<ContextTerms[]> => {
+      try {
+        return (yasqe.config.contextTerms && (await yasqe.config.contextTerms(yasqe, type))) || [];
+      } catch (e) {
+        console.warn("Could not get context terms for autocompletion", e);
+        return [];
+      }
+    })(),
+  ]);
   if (!token) return [];
-  const matched = matchEndpointTerms(endpointTerms, token);
-  const known = new Set(matched.map((term) => term.iri));
+  const known = new Set<string>();
+  const fromContext: RichSuggestion[] = [];
+  contextTerms.forEach((group, index) => {
+    const section = { name: group.section, rank: -contextTerms.length + index };
+    for (const term of matchEndpointTerms(group.terms, token)) {
+      if (known.has(term.iri)) continue;
+      known.add(term.iri);
+      fromContext.push(endpointTermToSuggestion(yasqe, token, term, section));
+    }
+  });
+  const matched = matchEndpointTerms(endpointTerms, token).filter((term) => !known.has(term.iri));
+  for (const term of matched) known.add(term.iri);
   const lovTerms = yasqe.config.lovTerms === undefined ? bundledLovTerms : yasqe.config.lovTerms;
   const fromLov = lovTerms ? searchLov(lovTerms, type, token) : [];
   const suggestions = [
+    ...fromContext,
     ...matched.map((term) => endpointTermToSuggestion(yasqe, token, term)),
     ...fromLov
       .filter((term) => !known.has(term.iri))

@@ -1,0 +1,6 @@
+id,name,email,employer,city,birth_date,active
+P-0001,Laura Grey,laura@example.com,Acme NV,Ghent,1987-03-12,true
+P-0002,Craig Johnson,craig@example.com,Infrabel,Brussels,1979-11-02,false
+P-0003,Ana Lopez,ana@example.com,Acme NV,Antwerp,1992-06-21,true
+P-0004,Tom De Smet,,Matdata,Leuven,1985-01-30,true
+P-0005,Mia Peeters,mia@example.com,Infrabel,Ghent,1990-09-14,true

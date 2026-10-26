@@ -23,6 +23,7 @@ import "@matdata/yasgui-table-plugin/dist/yasgui-table-plugin.min.css";
 import { ThemeManager, Theme } from "./ThemeManager";
 import QueryBrowser from "./queryManagement/QueryBrowser";
 import EndpointDescribePanel, { EndpointDescribeConfig } from "./endpointDescribe/EndpointDescribePanel";
+import SparqlAnythingSupport from "./sparqlAnything/SparqlAnythingSupport";
 import SidePanel from "./sidePanel/SidePanel";
 import CommandPalette from "./CommandPalette";
 import AiAssistant from "./ai/AiAssistant";
@@ -152,6 +153,12 @@ export interface Config<EndpointObject extends CatalogueItem = CatalogueItem> {
    * `ai: { enabled: false }` to remove it, including "Copy for AI".
    */
   ai: Partial<AiConfig>;
+  /**
+   * Help with SPARQL Anything queries (default: true): a chip on each `SERVICE <x-sparql-anything:...>` block
+   * loads the structure of its source from the endpoint, for autocompletion, a "Source" view in the side panel
+   * with a preview and a query builder. Inactive for queries without such a block.
+   */
+  sparqlAnything?: boolean;
 }
 export type PartialConfig = {
   [P in keyof Config]?: Config[P] extends object ? Partial<Config[P]> : Config[P];
@@ -207,6 +214,8 @@ export class Yasgui extends EventEmitter {
   public commandPalette: CommandPalette | undefined;
   /** AI assistant (the "AI" view of the side panel), unless `ai.enabled` is false */
   public aiAssistant: AiAssistant | undefined;
+  /** SPARQL Anything support (the "Source" view of the side panel), unless `sparqlAnything` is false */
+  public sparqlAnything: SparqlAnythingSupport | undefined;
   public mainEl: HTMLDivElement;
   private recentTabIds: string[] = [];
   private navigationSnapshot: string[] | null = null;
@@ -260,6 +269,8 @@ export class Yasgui extends EventEmitter {
     this.queryBrowser.attachToSidePanel(this.sidePanel, this.sidePanel.addView("queries", "Queries", "fileText"));
     // Created before the tabs, so their results views get the assistant hooks
     if (this.config.ai?.enabled !== false) this.aiAssistant = new AiAssistant(this);
+    // Also created before the tabs: their editors ask it for chips and autocompletion terms
+    if (this.config.sparqlAnything !== false) this.sparqlAnything = new SparqlAnythingSupport(this);
     this.on("tabClose", (_yasgui, tab) => {
       this.removeTabFromRecentHistory(tab.getId());
     });
@@ -574,6 +585,7 @@ export class Yasgui extends EventEmitter {
   public destroy() {
     this.removeAllListeners();
     this.endpointDescribe?.destroy();
+    this.sparqlAnything?.destroy();
     this.aiAssistant?.destroy();
     this.commandPalette?.destroy();
     this.sidePanel.destroy();

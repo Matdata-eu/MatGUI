@@ -23,6 +23,8 @@ interface ViewEntry {
   tabButton: HTMLButtonElement;
   railButton: HTMLButtonElement;
   container: HTMLDivElement;
+  /** Hidden views are left out of the tabs and the rail (see `setViewVisible`) */
+  hidden?: boolean;
 }
 
 /**
@@ -170,7 +172,7 @@ export default class SidePanel {
     tabButton.addEventListener("click", () => this.show(view));
     tabButton.addEventListener("keydown", (event) => {
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-      const all = Array.from(this.views.values());
+      const all = this.visibleViews();
       const index = all.findIndex((entry) => entry.view === view);
       const next = all[(index + (event.key === "ArrowRight" ? 1 : all.length - 1)) % all.length];
       this.show(next.view);
@@ -209,6 +211,30 @@ export default class SidePanel {
     return this.views.has(view);
   }
 
+  /**
+   * Show or hide a view, e.g. a view that only applies to some queries. A hidden view keeps its content; when it
+   * was the current view, the panel shows the first visible view instead (and returns to it once visible again).
+   */
+  public setViewVisible(view: SidePanelView, visible: boolean) {
+    const entry = this.views.get(view);
+    if (!entry || entry.hidden === !visible) return;
+    entry.hidden = !visible;
+    entry.tabButton.hidden = !visible;
+    entry.railButton.hidden = !visible;
+    this.apply(false);
+  }
+
+  private visibleViews(): ViewEntry[] {
+    return Array.from(this.views.values()).filter((entry) => !entry.hidden);
+  }
+
+  /** The view on screen: the current view, or the first visible one when it is hidden */
+  private effectiveView(): SidePanelView {
+    const entry = this.views.get(this.state.view);
+    if (entry && !entry.hidden) return this.state.view;
+    return this.visibleViews()[0]?.view ?? this.state.view;
+  }
+
   public onChange(listener: (state: SidePanelState) => void) {
     this.listeners.push(listener);
   }
@@ -226,11 +252,11 @@ export default class SidePanel {
     return this.state.pinned;
   }
   public getView(): SidePanelView {
-    return this.state.view;
+    return this.effectiveView();
   }
   /** True when the given view is the visible content of an expanded panel */
   public isViewVisible(view: SidePanelView): boolean {
-    return this.state.open && !this.state.collapsed && this.state.view === view;
+    return this.state.open && !this.state.collapsed && this.effectiveView() === view;
   }
 
   /**
@@ -238,6 +264,7 @@ export default class SidePanel {
    */
   public show(view?: SidePanelView) {
     if (view && this.views.has(view)) this.state.view = view;
+    else if (!view) this.state.view = this.effectiveView();
     if (
       !this.state.open &&
       document.activeElement instanceof HTMLElement &&
@@ -311,13 +338,13 @@ export default class SidePanel {
 
   private apply(persist = true) {
     const { open, collapsed, pinned } = this.state;
-    const firstView = this.views.keys().next();
-    const view = this.views.has(this.state.view) || firstView.done ? this.state.view : firstView.value;
+    const view = this.effectiveView();
+    const visibleCount = this.visibleViews().length;
     this.rootEl.classList.toggle("open", open);
     this.rootEl.classList.toggle("collapsed", open && collapsed);
     this.rootEl.classList.toggle("pinned", pinned);
-    this.rootEl.classList.toggle("hasTabs", this.views.size > 1);
-    this.rootEl.classList.toggle("hasViews", this.views.size > 0);
+    this.rootEl.classList.toggle("hasTabs", visibleCount > 1);
+    this.rootEl.classList.toggle("hasViews", visibleCount > 0);
     this.rootEl.style.setProperty("--yasgui-side-panel-width", `${this.clampWidth(this.state.width)}px`);
     this.rootEl.setAttribute("aria-hidden", String(!open));
     this.pinButton.setAttribute("aria-pressed", String(pinned));
