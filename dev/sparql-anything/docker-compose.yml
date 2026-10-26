@@ -1,0 +1,37 @@
+# Test environment for the SPARQL Anything support of MatGUI (Source view, chips, autocompletion).
+#
+#   docker compose up -d                      # SPARQL Anything + a file server only reachable by it
+#   docker compose --profile matgui up -d     # also a MatGUI built from this checkout, on http://localhost:8080
+#
+# Endpoint: http://localhost:3000/sparql.anything (CORS enabled). See README.md for example queries.
+name: matgui-sparql-anything
+
+services:
+  sparql-anything:
+    image: facadex/sparql-anything:v1.3.0
+    ports:
+      - "3000:3000"
+    volumes:
+      # Files the server reads from disk: location=/data/people.csv
+      - ./data:/data:ro
+    restart: unless-stopped
+
+  # Serves the same files over HTTP inside the compose network only (http://files/people.csv), like a file that
+  # only the endpoint can reach: the browser can't fetch it, so MatGUI has to ask the endpoint.
+  files:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./data:/usr/share/nginx/html:ro
+    restart: unless-stopped
+
+  matgui:
+    profiles: ["matgui"]
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile
+    environment:
+      MATGUI_DEFAULT_ENDPOINT: http://localhost:3000/sparql.anything
+    ports:
+      - "8080:8080"
+    depends_on:
+      - sparql-anything

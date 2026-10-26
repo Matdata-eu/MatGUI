@@ -135,6 +135,8 @@ SELECT * WHERE {
     checkConstructVariables: true,
     endpointTerms: undefined,
     lovTerms: undefined,
+    contextTerms: undefined,
+    sparqlAnythingChip: undefined,
     iriHover: undefined,
     iriHoverDelay: 500,
     snippets: [

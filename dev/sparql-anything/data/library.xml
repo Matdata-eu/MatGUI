@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<library name="Matdata reading room">
+  <book id="b1" lang="en">
+    <title>Dune</title>
+    <author born="1920">Frank Herbert</author>
+    <year>1965</year>
+  </book>
+  <book id="b2" lang="en">
+    <title>The Left Hand of Darkness</title>
+    <author born="1929">Ursula K. Le Guin</author>
+    <year>1969</year>
+  </book>
+  <magazine id="m1">
+    <title>Railway Gazette</title>
+    <issue>2026-10</issue>
+  </magazine>
+</library>

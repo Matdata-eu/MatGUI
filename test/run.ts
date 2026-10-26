@@ -12,6 +12,7 @@ import { setup, destroy, closePage, getPage, makeScreenshot, inspectLive, wait }
 import "./endpoint-describe-browser.js";
 import "./iri-hover-browser.js";
 import "./ai-assistant-browser.js";
+import "./sparql-anything-browser.js";
 
 declare var window: Window & {
   Yasqe: typeof Yasqe;

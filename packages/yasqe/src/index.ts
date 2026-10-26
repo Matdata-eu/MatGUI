@@ -23,6 +23,11 @@ import type { HintFn, HintList } from "./editor/autocompletion";
 import { isCompletionActive, openCompletion, hideCompletion } from "./editor/autocompletion";
 import { iriHover, IriAtPosition, IriHoverFn } from "./editor/iriHover";
 export type { IriAtPosition, IriHoverFn } from "./editor/iriHover";
+import { sparqlAnythingChips, refreshSparqlAnythingChips, SparqlAnythingChipFn } from "./editor/sparqlAnythingChips";
+export type { SparqlAnythingChipFn } from "./editor/sparqlAnythingChips";
+import * as SparqlAnything from "./sparqlAnything";
+import { findSparqlAnythingSources, sparqlAnythingSourceAt, SparqlAnythingSource } from "./sparqlAnything";
+export type { SparqlAnythingSource, SparqlAnythingOptionTriple, SparqlAnythingFormat } from "./sparqlAnything";
 import { YasqeAjaxConfig } from "./sparql";
 import { spfmt } from "@matdata/sparql-formatter";
 import * as L from "leaflet";
@@ -189,6 +194,7 @@ export class Yasqe extends EditorFacade {
     }
     this.config.autocompleters.forEach((c) => this.enableCompleter(c).then(() => {}, console.warn));
     this.addExtension(iriHover(this, this.config.iriHoverDelay));
+    this.addExtension(sparqlAnythingChips(this));
     if (this.config.consumeShareLink) {
       this.config.consumeShareLink(this);
       //and: add a hash listener!
@@ -2212,6 +2218,30 @@ export class Yasqe extends EditorFacade {
   public getPrefixesFromQuery(): Prefixes {
     return getPrefixesFromQuery(this);
   }
+  private sparqlAnythingCache: { query: string; sources: SparqlAnythingSource[] } | undefined;
+  /**
+   * The `SERVICE <x-sparql-anything:...>` blocks of the query, with their options (see `sparqlAnything.ts`).
+   */
+  public getSparqlAnythingSources(): SparqlAnythingSource[] {
+    const query = this.getValue();
+    if (this.sparqlAnythingCache?.query !== query) {
+      this.sparqlAnythingCache = { query, sources: findSparqlAnythingSources(query) };
+    }
+    return this.sparqlAnythingCache.sources;
+  }
+  /**
+   * The SPARQL Anything block holding the position (default: the cursor), if any.
+   */
+  public getSparqlAnythingSourceAt(pos: Position = this.getDoc().getCursor()): SparqlAnythingSource | undefined {
+    const offset = this.getDoc().indexFromPos(pos);
+    return sparqlAnythingSourceAt(this.getSparqlAnythingSources(), offset);
+  }
+  /**
+   * Redraws the chips of the SPARQL Anything blocks (see the `sparqlAnythingChip` config option).
+   */
+  public refreshSparqlAnythingChips() {
+    this.view.dispatch({ effects: refreshSparqlAnythingChips.of(null) });
+  }
   /**
    * The IRI or prefixed name at a position, with prefixed names expanded using the prefixes of the query.
    * Returns undefined when there is no IRI there (e.g. a variable, literal or blank node).
@@ -2363,6 +2393,8 @@ export class Yasqe extends EditorFacade {
    * Statics
    */
   static Sparql = Sparql;
+  /** Finds the SPARQL Anything SERVICE blocks of a query and their options */
+  static SparqlAnything = SparqlAnything;
   /**
    * Tokenizes the given text using the SPARQL tokenizer, calling `callback` for every token with its
    * text and its style (`null` for whitespace/unstyled tokens). The `mode` argument is ignored and only
@@ -2400,7 +2432,7 @@ export class Yasqe extends EditorFacade {
 
 export type { TokenizerState, Position, Token } from "./editor/tokenizerRunner";
 export type { Hint, HintList, HintFn } from "./editor/autocompletion";
-export type { EndpointTerm, Suggestion, RichSuggestion, LovTerms } from "./autocompleters";
+export type { EndpointTerm, ContextTerms, Suggestion, RichSuggestion, LovTerms } from "./autocompleters";
 export type { EditorOptions } from "./editor/facade";
 export type { ExtraKeys } from "./editor/keymap";
 
@@ -2521,6 +2553,22 @@ export interface Config extends Omit<EditorOptions, "extraKeys"> {
    * list bundled with Yasqe (refreshed with `npm run util:fetchLov`); null leaves out LOV suggestions.
    */
   lovTerms: Autocompleter.LovTerms | null | undefined;
+  /**
+   * Terms that depend on the place in the query, suggested by the class and property autocompleters before the
+   * endpoint terms, each group under its own heading. Yasgui uses this for the columns, keys and elements of a
+   * SPARQL Anything source.
+   */
+  contextTerms:
+    | ((
+        yasqe: Yasqe,
+        type: "class" | "property",
+      ) => Promise<Autocompleter.ContextTerms[] | undefined> | Autocompleter.ContextTerms[] | undefined)
+    | undefined;
+  /**
+   * Content of the chip shown after the opening brace of each `SERVICE <x-sparql-anything:...> {` block
+   * (undefined: no chips). Yasgui uses this to load and inspect the structure of the source.
+   */
+  sparqlAnythingChip: SparqlAnythingChipFn | undefined;
   showSnippetsBar: boolean; // Show the snippets bar
   /**
    * Content of the tooltip shown when hovering an IRI or prefixed name (undefined: no tooltip). Yasgui uses

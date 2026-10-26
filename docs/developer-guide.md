@@ -723,6 +723,11 @@ interface Config {
 
   // AI assistant (see AI Assistant Configuration); { enabled: false } removes it
   ai: Partial<AiConfig>;
+  /**
+   * SPARQL Anything support (default: true): a chip on each `SERVICE <x-sparql-anything:...>` block loads the
+   * structure of its source from the endpoint, for autocompletion and the "Source" view of the side panel.
+   */
+  sparqlAnything?: boolean;
 }
 ```
 
@@ -893,6 +898,11 @@ interface YasqeConfig {
   // show its label, description and type). Return nothing to show no tooltip.
   iriHover: ((yasqe: Yasqe, iri: IriAtPosition) => HTMLElement | null | undefined) | undefined;
   iriHoverDelay: number;         // default: 500 (ms)
+  // Terms for the place in the query, suggested before the endpoint terms, each group under its own heading
+  // (Yasgui: the columns, keys and elements of a SPARQL Anything source)
+  contextTerms: ((yasqe: Yasqe, type: "class" | "property") => Promise<ContextTerms[] | undefined> | ContextTerms[] | undefined) | undefined;
+  // Chip after the opening brace of each SERVICE <x-sparql-anything:...> block (undefined: no chips)
+  sparqlAnythingChip: ((yasqe: Yasqe, source: SparqlAnythingSource) => HTMLElement | null | undefined) | undefined;
 }
 ```
 

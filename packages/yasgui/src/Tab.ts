@@ -814,6 +814,8 @@ export class Tab extends EventEmitter {
     this.updateRunButton();
   }
 
+  private handleSparqlAnythingChange = () => this.yasgui.sparqlAnything?.editorActivity(this, true);
+  private handleSparqlAnythingCursor = () => this.yasgui.sparqlAnything?.editorActivity(this, false);
   private updateRunButton = () => {
     const button = this.runButton;
     if (!button) return;
@@ -1062,6 +1064,8 @@ export class Tab extends EventEmitter {
 
       // Emit after endpoint is tracked
       this.emit("endpointChange", this, endpoint);
+      // Loaded SPARQL Anything structures belong to an endpoint
+      this.yasgui.sparqlAnything?.changed();
     }
     if (this.endpointSelect instanceof EndpointSelect) {
       this.endpointSelect.setEndpoint(endpoint, endpointHistory);
@@ -1403,6 +1407,15 @@ export class Tab extends EventEmitter {
       endpointTerms:
         this.yasgui.config.yasqe?.endpointTerms ??
         ((_yasqe, type) => this.yasgui.endpointDescribe?.getAutocompleteTerms(this, type)),
+      // Columns, keys and elements of the SPARQL Anything sources of the query
+      contextTerms:
+        this.yasgui.config.yasqe?.contextTerms ??
+        ((_yasqe, type) => this.yasgui.sparqlAnything?.getContextTerms(this, type)),
+      sparqlAnythingChip:
+        this.yasgui.config.yasqe?.sparqlAnythingChip ??
+        (this.yasgui.config.sparqlAnything === false
+          ? undefined
+          : (_yasqe, source) => this.yasgui.sparqlAnything?.renderChip(this, source)),
       iriHover:
         this.yasgui.config.yasqe.iriHover ??
         (this.yasgui.config.iriHover === false
@@ -1508,6 +1521,8 @@ export class Tab extends EventEmitter {
     this.yasqe.on("queryAbort", this.updateRunButton);
     this.yasqe.on("changes", this.updateRunButton);
     this.updateRunButton();
+    this.yasqe.on("changes", this.handleSparqlAnythingChange);
+    this.yasqe.on("cursorActivity", this.handleSparqlAnythingCursor);
 
     // Add Ctrl+Click handler for URIs
     this.attachYasqeMouseHandler();

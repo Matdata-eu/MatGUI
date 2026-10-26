@@ -48,6 +48,7 @@
   - [IRI Hover Info](#iri-hover-info)
   - [Endpoint Overview](#endpoint-overview)
   - [AI Assistant](#ai-assistant)
+  - [SPARQL Anything Sources](#sparql-anything-sources)
   - [Query Tabs](#query-tabs)
   - [Settings Modal](#settings-modal)
   - [SPARQL Endpoints Management](#sparql-endpoints-management)
@@ -419,10 +420,11 @@ You can also find a snippet with the [search](#search) (`Ctrl+K`). The snippets 
 
 ### Side Panel
 
-The side panel on the left has three views, selected with **Queries**, **Endpoint** and **AI** at its top:
+The side panel on the left has up to four views, selected with **Queries**, **Endpoint**, **Source** and **AI** at its top:
 
 - **Queries**: the query browser for your workspaces. Pick a workspace, search, open a saved query in a new tab, or save the current tab with **Save current tab**
 - **Endpoint**: the endpoint overview of the current endpoint (see [Endpoint Overview](#endpoint-overview))
+- **Source**: the structure, a preview and a query builder for the file of a SPARQL Anything `SERVICE` block (see [SPARQL Anything Sources](#sparql-anything-sources)). This view is only listed while the query of the tab has such a block
 - **AI**: the AI assistant, which writes, explains and fixes queries (see [AI Assistant](#ai-assistant)). The **AI** button in the editor toolbar opens it too. A site can switch it off, and then this view is not shown
 
 While the panel is closed, a narrow bar of icons stays at the left edge: **Open side panel**, then one button per view. Click a view to open the panel on it. You can also press `Ctrl+B` (`⌘B` on a Mac) to show or hide the panel, `F8` to toggle the Endpoint view, or use **Show saved queries** and **Explore endpoint** in the [search](#search).
@@ -1026,6 +1028,40 @@ To switch them off, untick **Let the assistant run check queries on the endpoint
 **Where the endpoint context comes from**
 
 The class and property names come from the same place as the [autocomplete](#class-and-property-autocomplete): the endpoint's VoID description, the [Endpoint Overview](#endpoint-overview) results, or one limited background query. When you switched autocomplete off for an endpoint, the assistant gets only your prefixes for it. Telling the assistant which vocabulary to use ("use the ERA ontology") also helps.
+
+### SPARQL Anything Sources
+
+[SPARQL Anything](https://sparql-anything.cc) queries CSV, JSON, XML and other files as if they were RDF, with a `SERVICE <x-sparql-anything:...>` block. The column names, keys and element names of the file become properties and types in the `xyz:` namespace (`http://sparql.xyz/facade-x/data/`), for example `xyz:email` for an `email` column. MatGUI can find these for you, so you don't have to open the file to know what to write.
+
+```sparql
+PREFIX fx: <http://sparql.xyz/facade-x/ns/>
+PREFIX xyz: <http://sparql.xyz/facade-x/data/>
+SELECT * WHERE {
+  SERVICE <x-sparql-anything:location=https://example.org/people.csv,csv.headers=true> {
+    ?root a fx:root ; fx:anySlot ?row .
+    ?row xyz:email ?email .
+  }
+}
+```
+
+**Loading the structure**
+
+As soon as you close the block with `}`, a chip appears after its opening brace, with the file name and **Load structure**. Clicking it sends one query to the endpoint of the tab, with your SERVICE IRI and `fx:properties` options unchanged. The endpoint reads the file, so this also works for files that only the endpoint can reach (a path on the server, a URL behind a firewall, or a URL that needs authentication). Nothing is sent before you click: SPARQL Anything reads the whole file to answer, which can take a while for big files. While it runs the chip offers **Cancel**; when it fails it shows **Retry**, with the endpoint's error when you hover it.
+
+When the structure is loaded, the chip shows the number of properties and **Inspect**, and:
+
+- **Autocompletion** suggests the properties of the file (`Ctrl+Space` after `xyz:` or in a property position) first, under **From people.csv**, with how often they occur. After `a`, the XML element types are suggested. Picking one adds `PREFIX xyz:` when it is missing. Inside a SERVICE block only that block's source is used; elsewhere in the query, all loaded sources.
+- The **Source** view of the side panel (**Inspect** on the chip, or **Inspect people.csv** in the [search](#search)) shows the source of the block the cursor is in. With several blocks, a picker at the top switches between them.
+
+The structure is remembered per endpoint and set of options for a day; the reload button in the Source view loads it again. A block whose location is a variable (`fx:location ?file`) can't be inspected before the query runs, and its chip says so.
+
+**The Source view**
+
+- **Structure**: the tree of the file as SPARQL Anything sees it: the document (`fx:root`), its rows, array items or elements, and their properties, each with a count and an example value. Click a property or element to insert it at the cursor.
+- **Preview**: the first 100 triples of the converted file, in Turtle, fetched with a `CONSTRUCT ... LIMIT 100` query. **Open as query** puts that query in a new tab.
+- **Build query**: tick the values you need. MatGUI writes the patterns from the root to each value: `fx:anySlot` for rows and array items, `a xyz:<element>` for XML elements, and `OPTIONAL` for values you mark as optional (the first value you tick is required, later ones optional; click the label to switch). **Replace block** puts the patterns in the SERVICE block (keeping its `fx:properties` options; `Ctrl+Z` undoes it), **Insert at cursor** inserts them, and **New tab** opens a complete SELECT query.
+
+CSV, JSON and XML sources are shown best; other formats SPARQL Anything supports work too, with a more generic tree. A site can switch all of this off with `sparqlAnything: false`. To try it, the repository has a Docker Compose setup with a SPARQL Anything server and sample files in `dev/sparql-anything`.
 
 ### Query Tabs
 
