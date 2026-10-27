@@ -171,12 +171,12 @@ describe("SPARQL Anything", function () {
     // The actions are above the tree and wait for a selection
     expect(
       await page.$eval(".yasgui-sa__section", (section) => {
-        const actions = section.querySelector(".yasgui-sa__actions")!;
+        const actions = section.querySelector(".yasgui-sa__buildbar")!;
         const tree = section.querySelector(".yasgui-sa__tree")!;
         return !!(actions.compareDocumentPosition(tree) & Node.DOCUMENT_POSITION_FOLLOWING);
       }),
     ).to.equal(true);
-    expect(await page.$eval(".yasgui-sa__actions .primary", (b) => (b as HTMLButtonElement).disabled)).to.equal(true);
+    expect(await page.$eval(".yasgui-sa__buildbar .primary", (b) => (b as HTMLButtonElement).disabled)).to.equal(true);
 
     // The view redraws often, so click the current checkbox rather than a handle to it
     await page.evaluate(() => document.querySelector<HTMLInputElement>(".yasgui-sa__all input")?.click());
@@ -185,8 +185,8 @@ describe("SPARQL Anything", function () {
     );
     expect(checked.length).to.be.greaterThan(1);
     expect(checked.every(Boolean)).to.equal(true);
-    expect(await page.$eval(".yasgui-sa__all", (el) => el.textContent)).to.equal(
-      `${checked.length} of ${checked.length}`,
+    expect(await page.$eval(".yasgui-sa__allCount", (el) => el.textContent)).to.equal(
+      `${checked.length}/${checked.length}`,
     );
     const code = await page.$eval(".yasgui-sa__code", (el) => el.textContent || "");
     expect(code).to.contain("xyz:email");
@@ -249,8 +249,8 @@ describe("SPARQL Anything", function () {
       );
       row?.querySelector<HTMLInputElement>(".yasgui-sa__check")?.click();
     });
-    await page.waitForSelector(".yasgui-sa__actions .primary", { visible: true });
-    await page.click(".yasgui-sa__actions .primary");
+    await page.waitForSelector(".yasgui-sa__buildbar .primary", { visible: true });
+    await page.click(".yasgui-sa__buildbar .primary");
     const value = await page.evaluate(() => (window as any).yasgui.getTab().getYasqe().getValue());
     expect(value).to.contain("?root fx:anySlot ?row .");
     expect(value).to.contain("?row xyz:email ?email .");

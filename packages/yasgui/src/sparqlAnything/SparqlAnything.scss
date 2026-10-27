@@ -488,37 +488,92 @@
     color: var(--yasgui-ink-muted, #56606c);
   }
 
-  &__actions {
+  // The query builder's bar: selection on the left, actions on the right; stays at the top of the scrolling body
+  &__buildbar {
+    position: sticky;
+    z-index: 1;
+    top: -8px;
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
     gap: 6px;
-    margin-top: 10px;
-
-    // The query builder's actions stay at the top of the scrolling body
-    &.top {
-      position: sticky;
-      z-index: 1;
-      top: -8px;
-      align-items: center;
-      margin: -8px -6px 8px;
-      padding: 8px 6px;
-      border-bottom: 1px solid var(--yasgui-line, #dfe5ec);
-      background: var(--yasgui-surface-raised, #fff);
-    }
+    margin: -8px -6px 6px;
+    padding: 6px 4px 6px 10px;
+    border-bottom: 1px solid var(--yasgui-line, #dfe5ec);
+    background: var(--yasgui-surface-raised, #fff);
   }
 
-  // Below the action buttons, on its own line
   &__all {
     display: flex;
-    flex-basis: 100%;
-    order: 1;
     align-items: center;
     gap: 6px;
-    padding: 2px 0 0 4px;
     color: var(--yasgui-ink-body, #3a4552);
     font-size: 12px;
     cursor: pointer;
     user-select: none;
+  }
+
+  &__allCount {
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--yasgui-surface-sunken, #f2f5f8);
+    color: var(--yasgui-ink-subtle, #6a7380);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    line-height: 18px;
+  }
+
+  &__buildActions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+  }
+
+  &__buildButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+    border: 0;
+    border-radius: var(--yasgui-radius-sm, 6px);
+    background: transparent;
+    color: var(--yasgui-ink-muted, #56606c);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+
+    .yasgui-btnLabel {
+      font-size: 12px;
+    }
+
+    &:hover {
+      background: var(--yasgui-surface-sunken, #f2f5f8);
+      color: var(--yasgui-ink, #1c2633);
+    }
+
+    &.primary {
+      margin-right: 2px;
+      padding: 0 9px 0 7px;
+      background: var(--yasgui-brand-fill, #0563bb);
+      color: var(--yasgui-on-brand, #fff);
+
+      &:hover {
+        background: var(--yasgui-brand-fill-strong, #044a8c);
+      }
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+      pointer-events: none;
+    }
   }
 
   &__footer {
