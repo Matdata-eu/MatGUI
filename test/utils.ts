@@ -1,11 +1,44 @@
-import * as NodeStatic from "node-static";
 import fs from "fs-extra";
 import puppeteer, { Browser, Page } from "puppeteer";
 import * as http from "http";
+import * as path from "path";
 import * as Mocha from "mocha";
 import _ from "lodash"; // eslint-disable-line
 const TEST_ON_DEV_BUILD = !!process.env["TEST_ON_DEV_BUILD"];
 const PORT = TEST_ON_DEV_BUILD ? 4000 : 40001;
+const MIME_TYPES: { [ext: string]: string } = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".map": "application/json; charset=utf-8",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".ico": "image/x-icon",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+  ".ttf": "font/ttf",
+};
+// Minimal static file server for the puppeteer tests (replaces the unmaintained node-static)
+function serveStatic(root: string, request: http.IncomingMessage, response: http.ServerResponse) {
+  const urlPath = decodeURIComponent(new URL(request.url || "/", "http://localhost").pathname);
+  let filePath = path.resolve(root, "." + urlPath);
+  if (filePath !== root && !filePath.startsWith(root + path.sep)) {
+    response.writeHead(403).end();
+    return;
+  }
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) filePath = path.join(filePath, "index.html");
+  if (!fs.existsSync(filePath)) {
+    response.writeHead(404).end();
+    return;
+  }
+  response.writeHead(200, {
+    "Content-Type": MIME_TYPES[path.extname(filePath).toLowerCase()] || "application/octet-stream",
+  });
+  fs.createReadStream(filePath).pipe(response);
+}
+
 export async function setupServer(buildDir: string): Promise<http.Server | undefined> {
   // to serve the logo for the tests
   const dir = `${buildDir}/`;
@@ -15,15 +48,11 @@ export async function setupServer(buildDir: string): Promise<http.Server | undef
   await fs.copy("./dev/yasgui.png", `${dir}/yasgui.png`);
 
   if (TEST_ON_DEV_BUILD) return Promise.resolve(undefined);
-  let staticFileServer = new NodeStatic.Server(buildDir);
+  const root = path.resolve(buildDir);
   return new Promise<http.Server>((resolve, reject) => {
     var server = http
       .createServer(function (request, response) {
-        request
-          .addListener("end", function () {
-            staticFileServer.serve(request, response);
-          })
-          .resume();
+        serveStatic(root, request, response);
       })
       .listen(PORT, "localhost", () => {
         resolve(server);
