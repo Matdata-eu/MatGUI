@@ -498,8 +498,8 @@ export default class SourceView {
     const pickedValues: PickedValue[] = picks.map((p) => ({ node: nodesByKey.get(p.key)!, optional: p.optional }));
     const built = pickedValues.length ? buildPatterns(pickedValues, source, queryPrefixes) : undefined;
 
-    // The actions stay on top, so they're in reach without scrolling past a long tree
-    const toolbar = el("div", "yasgui-sa__actions top");
+    // One bar on top with the selection and the actions, so they're in reach without scrolling past a long tree
+    const toolbar = el("div", "yasgui-sa__buildbar");
     const allLabel = el("label", "yasgui-sa__all");
     const all = el("input", "yasgui-sa__check");
     all.type = "checkbox";
@@ -515,15 +515,20 @@ export default class SourceView {
       }
       setPicks(next);
     });
-    allLabel.title = "Select all values, or clear the selection";
-    allLabel.append(all, el("span", undefined, picks.length ? `${picks.length} of ${values.length}` : "All values"));
+    allLabel.title = picks.length ? "Clear the selection" : "Select all values";
+    allLabel.append(
+      all,
+      el("span", undefined, "All"),
+      el("span", "yasgui-sa__allCount", `${picks.length}/${values.length}`),
+    );
     toolbar.append(allLabel);
 
-    const replace = button(
-      "Replace block",
-      "yasgui-sa__button primary",
-      "Replace the content of the SERVICE block (Ctrl+Z undoes it)",
-    );
+    const replace = iconButton("braces", "Replace block", {
+      className: "yasgui-sa__buildButton primary",
+      showLabel: true,
+      title: "Replace the content of the SERVICE block (Ctrl+Z undoes it)",
+      size: 14,
+    });
     replace.addEventListener("click", () => {
       if (!yasqe || !built) return;
       const current = yasqe.getSparqlAnythingSources().find((s) => s.key === source.key);
@@ -550,19 +555,29 @@ export default class SourceView {
       yasqe.addPrefixes(used);
       yasqe.focus();
     });
-    const insert = button("Insert at cursor", "yasgui-sa__button", "Insert the patterns at the cursor");
+    const insert = iconButton("textCursor", "Insert at cursor", {
+      className: "yasgui-sa__buildButton",
+      title: "Insert the patterns at the cursor",
+      size: 15,
+    });
     insert.addEventListener("click", () => {
       if (!yasqe || !built) return;
       yasqe.replaceSelection(built.lines.join("\n"));
       yasqe.addPrefixes(built.prefixes);
       yasqe.focus();
     });
-    const newTab = button("New tab", "yasgui-sa__button", "Open a SELECT query for these values in a new tab");
+    const newTab = iconButton("externalLink", "New tab", {
+      className: "yasgui-sa__buildButton",
+      title: "Open a SELECT query for these values in a new tab",
+      size: 15,
+    });
     newTab.addEventListener("click", () => {
       if (built) this.openInNewTab(tab, buildQuery(pickedValues, source, queryPrefixes));
     });
     for (const action of [replace, insert, newTab]) action.disabled = !built;
-    toolbar.append(replace, insert, newTab);
+    const actions = el("div", "yasgui-sa__buildActions");
+    actions.append(replace, insert, newTab);
+    toolbar.append(actions);
     wrapper.append(toolbar);
     wrapper.append(el("p", "yasgui-sa__hint", "Tick the values you need. Rows and array items become fx:anySlot."));
 
