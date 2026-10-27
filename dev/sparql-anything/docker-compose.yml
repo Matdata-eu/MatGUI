@@ -24,14 +24,14 @@ services:
       - ./data:/usr/share/nginx/html:ro
     restart: unless-stopped
 
-  matgui:
-    profiles: ["matgui"]
-    build:
-      context: ../..
-      dockerfile: docker/Dockerfile
-    environment:
-      MATGUI_DEFAULT_ENDPOINT: http://localhost:3000/sparql.anything
-    ports:
-      - "8080:8080"
-    depends_on:
-      - sparql-anything
+  # matgui:
+  #   profiles: ["matgui"]
+  #   build:
+  #     context: ../..
+  #     dockerfile: docker/Dockerfile
+  #   environment:
+  #     MATGUI_DEFAULT_ENDPOINT: http://localhost:3000/sparql.anything
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     - sparql-anything
