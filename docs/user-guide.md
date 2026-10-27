@@ -1071,7 +1071,7 @@ SELECT * WHERE {
 
 **Loading the structure**
 
-As soon as you close the block with `}`, a chip appears after its opening brace, with the file name and **Load structure**. Clicking it sends one query to the endpoint of the tab, with your SERVICE IRI and `fx:properties` options unchanged. The endpoint reads the file, so this also works for files that only the endpoint can reach (a path on the server, a URL behind a firewall, or a URL that needs authentication). Nothing is sent before you click: SPARQL Anything reads the whole file to answer, which can take a while for big files. While it runs the chip offers **Cancel**; when it fails it shows **Retry**, with the endpoint's error when you hover it.
+As soon as you close the block with `}`, a chip appears after its opening brace, with the file name and **Load structure**. Clicking it opens the **Source** view of the side panel and sends one query to the endpoint of the tab, with your SERVICE IRI and `fx:properties` options unchanged. The endpoint reads the file, so this also works for files that only the endpoint can reach (a path on the server, a URL behind a firewall, or a URL that needs authentication). Nothing is sent before you click: SPARQL Anything reads the whole file to answer, which can take a while for big files. While it runs the chip offers **Cancel**; when it fails it shows **Retry**, with the endpoint's error when you hover it.
 
 When the structure is loaded, the chip shows the number of properties and **Inspect**, and:
 
@@ -1084,7 +1084,7 @@ The structure is remembered per endpoint and set of options for a day; the reloa
 
 - **Structure**: the tree of the file as SPARQL Anything sees it: the document (`fx:root`), its rows, array items or elements, and their properties, each with a count and an example value. Click a property or element to insert it at the cursor.
 - **Preview**: the first 100 triples of the converted file, in Turtle, fetched with a `CONSTRUCT ... LIMIT 100` query. **Open as query** puts that query in a new tab.
-- **Build query**: tick the values you need. MatGUI writes the patterns from the root to each value: `fx:anySlot` for rows and array items, `a xyz:<element>` for XML elements, and `OPTIONAL` for values you mark as optional (the first value you tick is required, later ones optional; click the label to switch). **Replace block** puts the patterns in the SERVICE block (keeping its `fx:properties` options; `Ctrl+Z` undoes it), **Insert at cursor** inserts them, and **New tab** opens a complete SELECT query.
+- **Build query**: tick the values you need, or **All values** at the top to tick them all (click it again to clear the selection). MatGUI writes the patterns from the root to each value: `fx:anySlot` for rows and array items, `a xyz:<element>` for XML elements, and `OPTIONAL` for values you mark as optional (the first value you tick is required, later ones optional; click the label to switch). The buttons stay at the top of the view: **Replace block** puts the patterns in the SERVICE block (keeping its `fx:properties` options; `Ctrl+Z` undoes it), **Insert at cursor** inserts them, and **New tab** opens a complete SELECT query.
 
 CSV, JSON and XML sources are shown best; other formats SPARQL Anything supports work too, with a more generic tree. A site can switch all of this off with `sparqlAnything: false`. To try it, the repository has a Docker Compose setup with a SPARQL Anything server and sample files in `dev/sparql-anything`.
 

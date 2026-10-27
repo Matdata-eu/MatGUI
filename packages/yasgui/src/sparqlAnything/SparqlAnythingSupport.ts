@@ -230,7 +230,10 @@ export default class SparqlAnythingSupport {
         label: `${state?.status === "done" ? "Reload" : "Load"} structure of ${source.label}`,
         icon: "fileSearch",
         keywords: "sparql anything source columns keys autocomplete facade-x",
-        run: () => void this.load(tab, source),
+        run: () => {
+          this.view.show(source);
+          void this.load(tab, source);
+        },
       });
       items.push({
         section: "commands",
@@ -292,6 +295,8 @@ export default class SparqlAnythingSupport {
       add(muted("·"));
       add(
         action("Load structure", "Send a query to the endpoint to read the structure of this source", () => {
+          // Open the Source view, so the progress and the result show up next to the editor
+          inspect();
           void this.load(tab, source);
         }),
       );
@@ -306,7 +311,17 @@ export default class SparqlAnythingSupport {
       add(iconElement("alert", 13));
       add(name);
       add(muted("· could not load"));
-      add(action("Retry", state.error || "", () => void this.load(tab, source), "danger"));
+      add(
+        action(
+          "Retry",
+          state.error || "",
+          () => {
+            inspect();
+            void this.load(tab, source);
+          },
+          "danger",
+        ),
+      );
       chip.title = state.error || "";
     } else {
       chip.classList.add("loaded");
