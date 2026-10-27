@@ -326,6 +326,12 @@
       border-color: var(--yasgui-line-strong, #808893);
     }
 
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+      pointer-events: none;
+    }
+
     &.primary {
       border-color: var(--yasgui-brand-fill, #0563bb);
       background: var(--yasgui-brand-fill, #0563bb);
@@ -487,6 +493,32 @@
     flex-wrap: wrap;
     gap: 6px;
     margin-top: 10px;
+
+    // The query builder's actions stay at the top of the scrolling body
+    &.top {
+      position: sticky;
+      z-index: 1;
+      top: -8px;
+      align-items: center;
+      margin: -8px -6px 8px;
+      padding: 8px 6px;
+      border-bottom: 1px solid var(--yasgui-line, #dfe5ec);
+      background: var(--yasgui-surface-raised, #fff);
+    }
+  }
+
+  // Below the action buttons, on its own line
+  &__all {
+    display: flex;
+    flex-basis: 100%;
+    order: 1;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0 0 4px;
+    color: var(--yasgui-ink-body, #3a4552);
+    font-size: 12px;
+    cursor: pointer;
+    user-select: none;
   }
 
   &__footer {

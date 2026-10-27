@@ -150,6 +150,54 @@ describe("SPARQL Anything", function () {
     );
   });
 
+  it("opens the Source view when loading the structure", async function () {
+    await page.evaluate(() => (window as any).yasgui.sidePanel.close());
+    await loadStructure();
+    const panel = await page.evaluate(() => {
+      const sidePanel = (window as any).yasgui.sidePanel;
+      return { open: sidePanel.isOpen(), view: sidePanel.getView() };
+    });
+    expect(panel).to.deep.equal({ open: true, view: "source" });
+  });
+
+  it("selects all values in the query builder", async function () {
+    await loadStructure();
+    await page.evaluate(() =>
+      Array.from(document.querySelectorAll<HTMLElement>(".yasgui-sa__tab"))
+        .find((b) => b.textContent === "Build query")
+        ?.click(),
+    );
+    await page.waitForSelector(".yasgui-sa__all input", { visible: true });
+    // The actions are above the tree and wait for a selection
+    expect(
+      await page.$eval(".yasgui-sa__section", (section) => {
+        const actions = section.querySelector(".yasgui-sa__actions")!;
+        const tree = section.querySelector(".yasgui-sa__tree")!;
+        return !!(actions.compareDocumentPosition(tree) & Node.DOCUMENT_POSITION_FOLLOWING);
+      }),
+    ).to.equal(true);
+    expect(await page.$eval(".yasgui-sa__actions .primary", (b) => (b as HTMLButtonElement).disabled)).to.equal(true);
+
+    // The view redraws often, so click the current checkbox rather than a handle to it
+    await page.evaluate(() => document.querySelector<HTMLInputElement>(".yasgui-sa__all input")?.click());
+    const checked = await page.$$eval(".yasgui-sa__node .yasgui-sa__check", (boxes) =>
+      boxes.map((b) => (b as HTMLInputElement).checked),
+    );
+    expect(checked.length).to.be.greaterThan(1);
+    expect(checked.every(Boolean)).to.equal(true);
+    expect(await page.$eval(".yasgui-sa__all", (el) => el.textContent)).to.equal(
+      `${checked.length} of ${checked.length}`,
+    );
+    const code = await page.$eval(".yasgui-sa__code", (el) => el.textContent || "");
+    expect(code).to.contain("xyz:email");
+    expect(code).to.contain("xyz:name");
+
+    // Unticking clears the selection
+    // The view redraws often, so click the current checkbox rather than a handle to it
+    await page.evaluate(() => document.querySelector<HTMLInputElement>(".yasgui-sa__all input")?.click());
+    expect(await page.$$eval(".yasgui-sa__node .yasgui-sa__check:checked", (boxes) => boxes.length)).to.equal(0);
+  });
+
   it("suggests the columns in autocompletion", async function () {
     await loadStructure();
     await page.evaluate(() => {

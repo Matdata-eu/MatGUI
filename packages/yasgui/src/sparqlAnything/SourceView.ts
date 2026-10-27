@@ -490,8 +490,83 @@ export default class SourceView {
       this.render();
     };
 
+    // Every value of the source, in tree order, for "All values"
+    const values: string[] = [];
+    walk(tree, (node) => {
+      if (node.kind === "literal") values.push(stableKey(node));
+    });
+    const pickedValues: PickedValue[] = picks.map((p) => ({ node: nodesByKey.get(p.key)!, optional: p.optional }));
+    const built = pickedValues.length ? buildPatterns(pickedValues, source, queryPrefixes) : undefined;
+
+    // The actions stay on top, so they're in reach without scrolling past a long tree
+    const toolbar = el("div", "yasgui-sa__actions top");
+    const allLabel = el("label", "yasgui-sa__all");
+    const all = el("input", "yasgui-sa__check");
+    all.type = "checkbox";
+    all.checked = values.length > 0 && picks.length === values.length;
+    all.indeterminate = picks.length > 0 && picks.length < values.length;
+    all.disabled = !values.length;
+    all.addEventListener("change", () => {
+      if (!all.checked) return setPicks([]);
+      // Keep what's picked; like ticking one by one, the first value is required and later ones optional
+      const next = [...picks];
+      for (const key of values) {
+        if (!next.some((p) => p.key === key)) next.push({ key, optional: next.some((p) => !p.optional) });
+      }
+      setPicks(next);
+    });
+    allLabel.title = "Select all values, or clear the selection";
+    allLabel.append(all, el("span", undefined, picks.length ? `${picks.length} of ${values.length}` : "All values"));
+    toolbar.append(allLabel);
+
+    const replace = button(
+      "Replace block",
+      "yasgui-sa__button primary",
+      "Replace the content of the SERVICE block (Ctrl+Z undoes it)",
+    );
+    replace.addEventListener("click", () => {
+      if (!yasqe || !built) return;
+      const current = yasqe.getSparqlAnythingSources().find((s) => s.key === source.key);
+      if (!current || current.closeBrace === undefined) return;
+      const doc = yasqe.getDoc();
+      const lineStart = doc.posFromIndex(current.from);
+      const indent = (doc.getLine(lineStart.line).match(/^\s*/) || [""])[0];
+      const fxPrefix = Object.keys(prefixes).find((p) => prefixes[p] === FX)!;
+      const used = { ...built.prefixes };
+      const body: string[] = [];
+      if (current.optionTriples.length) {
+        used[fxPrefix] = FX;
+        body.push(
+          `${fxPrefix}:properties ` +
+            current.optionTriples
+              .map((t) => `${fxPrefix}:${t.name} ${t.raw}`)
+              .join(` ;\n${indent}  ${" ".repeat(fxPrefix.length + 12)}`) +
+            " .",
+        );
+      }
+      body.push(...built.lines);
+      const text = "\n" + body.map((line) => `${indent}  ${line}`).join("\n") + `\n${indent}`;
+      doc.replaceRange(text, doc.posFromIndex(current.openBrace + 1), doc.posFromIndex(current.closeBrace));
+      yasqe.addPrefixes(used);
+      yasqe.focus();
+    });
+    const insert = button("Insert at cursor", "yasgui-sa__button", "Insert the patterns at the cursor");
+    insert.addEventListener("click", () => {
+      if (!yasqe || !built) return;
+      yasqe.replaceSelection(built.lines.join("\n"));
+      yasqe.addPrefixes(built.prefixes);
+      yasqe.focus();
+    });
+    const newTab = button("New tab", "yasgui-sa__button", "Open a SELECT query for these values in a new tab");
+    newTab.addEventListener("click", () => {
+      if (built) this.openInNewTab(tab, buildQuery(pickedValues, source, queryPrefixes));
+    });
+    for (const action of [replace, insert, newTab]) action.disabled = !built;
+    toolbar.append(replace, insert, newTab);
+    wrapper.append(toolbar);
+    wrapper.append(el("p", "yasgui-sa__hint", "Tick the values you need. Rows and array items become fx:anySlot."));
+
     wrapper.append(
-      el("p", "yasgui-sa__hint", "Tick the values you need. Rows and array items become fx:anySlot."),
       this.drawTree(
         tree,
         prefixes,
@@ -534,56 +609,11 @@ export default class SourceView {
       ),
     );
 
-    if (!picks.length) return wrapper;
-    const picked: PickedValue[] = picks.map((p) => ({ node: nodesByKey.get(p.key)!, optional: p.optional }));
-    const built = buildPatterns(picked, source, queryPrefixes);
-    const pre = el("pre", "yasgui-sa__code");
-    pre.textContent = built.lines.join("\n");
-    wrapper.append(pre);
-
-    const actions = el("div", "yasgui-sa__actions");
-    const replace = button(
-      "Replace block",
-      "yasgui-sa__button primary",
-      "Replace the content of the SERVICE block (Ctrl+Z undoes it)",
-    );
-    replace.addEventListener("click", () => {
-      if (!yasqe) return;
-      const current = yasqe.getSparqlAnythingSources().find((s) => s.key === source.key);
-      if (!current || current.closeBrace === undefined) return;
-      const doc = yasqe.getDoc();
-      const lineStart = doc.posFromIndex(current.from);
-      const indent = (doc.getLine(lineStart.line).match(/^\s*/) || [""])[0];
-      const fxPrefix = Object.keys(prefixes).find((p) => prefixes[p] === FX)!;
-      const used = { ...built.prefixes };
-      const body: string[] = [];
-      if (current.optionTriples.length) {
-        used[fxPrefix] = FX;
-        body.push(
-          `${fxPrefix}:properties ` +
-            current.optionTriples
-              .map((t) => `${fxPrefix}:${t.name} ${t.raw}`)
-              .join(` ;\n${indent}  ${" ".repeat(fxPrefix.length + 12)}`) +
-            " .",
-        );
-      }
-      body.push(...built.lines);
-      const text = "\n" + body.map((line) => `${indent}  ${line}`).join("\n") + `\n${indent}`;
-      doc.replaceRange(text, doc.posFromIndex(current.openBrace + 1), doc.posFromIndex(current.closeBrace));
-      yasqe.addPrefixes(used);
-      yasqe.focus();
-    });
-    const insert = button("Insert at cursor", "yasgui-sa__button", "Insert the patterns at the cursor");
-    insert.addEventListener("click", () => {
-      if (!yasqe) return;
-      yasqe.replaceSelection(built.lines.join("\n"));
-      yasqe.addPrefixes(built.prefixes);
-      yasqe.focus();
-    });
-    const newTab = button("New tab", "yasgui-sa__button", "Open a SELECT query for these values in a new tab");
-    newTab.addEventListener("click", () => this.openInNewTab(tab, buildQuery(picked, source, queryPrefixes)));
-    actions.append(replace, insert, newTab);
-    wrapper.append(actions);
+    if (built) {
+      const pre = el("pre", "yasgui-sa__code");
+      pre.textContent = built.lines.join("\n");
+      wrapper.append(pre);
+    }
     return wrapper;
   }
 
