@@ -27,7 +27,7 @@
     "directory": "packages/utils"
   },
   "dependencies": {
-    "dompurify": "^3.2.4",
+    "dompurify": "^3.4.17",
     "store": "^2.0.12"
   },
   "devDependencies": {
