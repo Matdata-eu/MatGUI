@@ -26,6 +26,7 @@ import EndpointDescribePanel, { EndpointDescribeConfig } from "./endpointDescrib
 import SparqlAnythingSupport from "./sparqlAnything/SparqlAnythingSupport";
 import SidePanel from "./sidePanel/SidePanel";
 import CommandPalette from "./CommandPalette";
+import HelpMenu from "./HelpMenu";
 import AiAssistant from "./ai/AiAssistant";
 import type { AiConfig } from "./ai/types";
 import "./index.scss";
@@ -130,7 +131,8 @@ export interface Config<EndpointObject extends CatalogueItem = CatalogueItem> {
    */
   showSnippetsBar?: boolean;
   /**
-   * Link opened by the help button in the top bar. Set to false to hide the button.
+   * Documentation link in the menu of the help button in the top bar. Set to false to leave it out (the button
+   * hides when its menu has no other entries, such as the quick start tour or what's new).
    */
   helpUrl?: string | false;
   /**
@@ -212,6 +214,8 @@ export class Yasgui extends EventEmitter {
   public sidePanel: SidePanel;
   /** Ctrl+K search for saved queries, commands and settings (unless `showCommandPalette` is false) */
   public commandPalette: CommandPalette | undefined;
+  /** Menu of the help button in the top bar; add entries with `helpMenu.addItem()` */
+  public helpMenu: HelpMenu;
   /** AI assistant (the "AI" view of the side panel), unless `ai.enabled` is false */
   public aiAssistant: AiAssistant | undefined;
   /** SPARQL Anything support (the "Source" view of the side panel), unless `sparqlAnything` is false */
@@ -249,6 +253,7 @@ export class Yasgui extends EventEmitter {
       this.config.orientation = persistedOrientation;
     }
 
+    this.helpMenu = new HelpMenu(this);
     this.tabElements = new TabElements(this);
     this.tabPanelsEl = document.createElement("div");
     addClass(this.tabPanelsEl, "yasgui-tabPanels");
@@ -600,6 +605,7 @@ export class Yasgui extends EventEmitter {
     this.sparqlAnything?.destroy();
     this.aiAssistant?.destroy();
     this.commandPalette?.destroy();
+    this.helpMenu.destroy();
     this.sidePanel.destroy();
     this.tabElements.destroy();
     for (const tabId in this._tabs) {
