@@ -37,6 +37,7 @@ export default function initialize(): Config<CatalogueItem> {
     iriHover: true,
     iriHoverLovFallback: true,
     helpUrl: "https://matgui-doc.matdata.eu/docs/user-guide",
+    showWhatsNew: true,
     endpointDescribe: {
       enabled: true,
       timeoutMs: 60000,

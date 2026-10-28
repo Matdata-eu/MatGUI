@@ -718,8 +718,13 @@ interface Config {
   // Look up IRIs the endpoint doesn't describe in LOV (lov.linkeddata.es)
   iriHoverLovFallback?: boolean;  // default: true
 
-  // Page opened by the help button of the top bar; false hides the button
+  // Documentation link in the menu of the help button of the top bar; false leaves it out.
+  // The help button hides when its menu has no entries left
   helpUrl?: string | false;  // default: 'https://matgui-doc.matdata.eu/docs/user-guide'
+
+  // "What's new" in the help menu: the changes per version, with a dot on the help button
+  // until the user has seen the latest release. Also in the Ctrl+K search
+  showWhatsNew?: boolean;  // default: true
 
   // AI assistant (see AI Assistant Configuration); { enabled: false } removes it
   ai: Partial<AiConfig>;
@@ -2541,6 +2546,24 @@ The older entry points keep working and now drive the side panel:
 | `runQuery`, `runCategory`, `syncEndpoint` | unchanged                                        |
 
 A pinned describe panel saved by an earlier version is restored as the pinned Endpoint view.
+
+#### Help menu and What's new
+
+The help button of the top bar opens `yasgui.helpMenu`. Add your own entries, for example a link to your site's documentation; entries are sorted on `order` (built-in: quick start 10, What's new 20, Documentation 90, default 100). With a single entry the button runs it directly, and without entries it is hidden.
+
+```javascript
+yasgui.helpMenu.addItem({
+  id: "contact",                 // an existing id is replaced
+  label: "Contact support",
+  icon: "externalLink",          // optional, a MatGUI icon name
+  order: 95,
+  onClick: () => window.open("https://example.org/support", "_blank"),
+});
+yasgui.helpMenu.setBadge("contact", true);  // dot on the entry and the help button
+yasgui.helpMenu.removeItem("contact");
+```
+
+`yasgui.whatsNew` (unless `showWhatsNew: false`) has `open()`, `close()`, `hasUnseen()` and `getLatestVersion()`. The release entries live in `packages/yasgui/src/whatsNew/releases.ts`, newest first; add the next version there when preparing a release. The newest version a user has opened is stored as `whatsNewSeen` in the persisted config.
 
 ### Tab Class
 

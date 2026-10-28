@@ -25,6 +25,7 @@ export interface PersistedJson {
   sidePanel?: SidePanelState; // Left side panel (Queries / Endpoint / AI)
   requestSettings?: RequestSettings; // Request settings of Settings → General, shared by all tabs
   editorSettings?: EditorSettings; // Formatter and checks of Settings → General and Editor, shared by all tabs
+  whatsNewSeen?: string; // Newest version the user has seen in What's new
 }
 /** Settings of the query editor that apply to every tab */
 export interface EditorSettings {
@@ -67,6 +68,8 @@ export default class PersistentConfig {
   private storageId: string | undefined;
   private yasgui: Yasgui;
   private storage: YStorage;
+  /** Whether a configuration was stored before this page load (false on a first visit) */
+  private hadStoredConfig = false;
   constructor(yasgui: Yasgui) {
     this.yasgui = yasgui;
     this.storageId = this.yasgui.getStorageId(this.yasgui.config.persistenceLabelConfig);
@@ -139,7 +142,9 @@ export default class PersistentConfig {
     );
   }
   private fromStorage(): PersistedJson {
-    this.persistedJson = this.storage.get<PersistedJson>(this.storageId) || getDefaults();
+    const stored = this.storage.get<PersistedJson>(this.storageId);
+    this.hadStoredConfig = !!stored;
+    this.persistedJson = stored || getDefaults();
     /**
      * Modify some settings for backwards compatability
      */
@@ -152,6 +157,18 @@ export default class PersistentConfig {
   private handleLocalStorageQuotaFull(_e: any) {
     console.warn("Localstorage quota exceeded. Clearing all Matgui configurations");
     PersistentConfig.clear();
+  }
+
+  /** False on a first visit, before anything was stored */
+  public hasStoredConfig(): boolean {
+    return this.hadStoredConfig;
+  }
+  public getWhatsNewSeen(): string | undefined {
+    return this.persistedJson.whatsNewSeen;
+  }
+  public setWhatsNewSeen(version: string) {
+    this.persistedJson.whatsNewSeen = version;
+    this.toStorage();
   }
 
   public getTabs() {

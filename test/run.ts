@@ -13,6 +13,7 @@ import "./endpoint-describe-browser.js";
 import "./iri-hover-browser.js";
 import "./ai-assistant-browser.js";
 import "./sparql-anything-browser.js";
+import "./whats-new-browser.js";
 
 declare var window: Window & {
   Yasqe: typeof Yasqe;
