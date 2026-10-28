@@ -40,6 +40,8 @@ export class AiRequestError extends Error {
     public status?: number,
     /** True when the service seems to reject the `tools` parameter */
     public toolsUnsupported = false,
+    /** True when the request got no answer at all: the browser blocked it (CORS) or the host is unreachable */
+    public unreachable = false,
   ) {
     super(message);
     this.name = "AiRequestError";
@@ -153,18 +155,31 @@ export async function chatCompletion(connection: AiConnection, request: ChatRequ
 
 /** Model ids offered by the service, sorted; an empty list when the service doesn't list models */
 export async function listModels(connection: AiConnection, signal?: AbortSignal): Promise<string[]> {
-  const response = await fetch(joinUrl(connection.baseUrl, "models"), {
-    headers: await buildHeaders(connection),
-    signal,
-    credentials: connection.withCredentials ? "include" : "omit",
-  });
+  let response: Response;
+  try {
+    response = await fetch(joinUrl(connection.baseUrl, "models"), {
+      headers: await buildHeaders(connection),
+      signal,
+      credentials: connection.withCredentials ? "include" : "omit",
+    });
+  } catch (e: any) {
+    if (e?.name === "AbortError") throw e;
+    throw new AiRequestError(
+      `Could not reach ${connection.host}: the service doesn't let a browser read its models (CORS), or it is offline.`,
+      undefined,
+      false,
+      true,
+    );
+  }
   const text = await response.text();
   if (!response.ok) throw new AiRequestError(describeErrorBody(response.status, text), response.status);
   try {
     const json = JSON.parse(text);
     const ids: string[] = (json?.data || json?.models || [])
       .map((m: any) => (typeof m === "string" ? m : m?.id || m?.name))
-      .filter((id: unknown): id is string => typeof id === "string");
+      .filter((id: unknown): id is string => typeof id === "string")
+      // Gemini lists "models/gemini-…", and takes the id without that prefix
+      .map((id: string) => id.replace(/^models\//, ""));
     return Array.from(new Set(ids)).sort();
   } catch {
     return [];

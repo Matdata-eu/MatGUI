@@ -11,6 +11,7 @@ import {
   resolveConnection,
 } from "../../packages/yasgui/src/ai/aiSettings.js";
 import { describeErrorBody, joinUrl, listModels } from "../../packages/yasgui/src/ai/openaiClient.js";
+import { aiProviders, isChatModel, providerById, providerOf } from "../../packages/yasgui/src/ai/providers.js";
 import { defaultAiConfig } from "../../packages/yasgui/src/ai/types.js";
 
 const expect = chai.expect;
@@ -274,6 +275,37 @@ SELECT ?copy ?add WHERE { ?copy ex:Create ?add ; ex:label "DELETE me" }`;
       } finally {
         globalThis.fetch = originalFetch;
       }
+    });
+
+    it("tells a service the browser can't reach from an error answer, and drops Gemini's models/ prefix", async () => {
+      const originalFetch = globalThis.fetch;
+      const connection = { id: "a", kind: "own" as const, label: "", baseUrl: "https://x.test/v1", host: "x.test" };
+      try {
+        globalThis.fetch = (async () => {
+          throw new TypeError("Failed to fetch");
+        }) as typeof fetch;
+        const blocked = await listModels(connection).catch((e) => e);
+        expect(blocked).to.include({ name: "AiRequestError", unreachable: true });
+        globalThis.fetch = (async () => new Response("{}", { status: 401 })) as typeof fetch;
+        const refused = await listModels(connection).catch((e) => e);
+        expect(refused).to.include({ status: 401, unreachable: false });
+        globalThis.fetch = (async () =>
+          new Response(JSON.stringify({ data: [{ id: "models/gemini-2.5-flash" }] }), { status: 200 })) as typeof fetch;
+        expect(await listModels(connection)).to.deep.equal(["gemini-2.5-flash"]);
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
+
+    it("finds the provider of a base URL and hides models that can't chat", () => {
+      expect(providerOf("https://api.mistral.ai/v1")?.id).to.equal("mistral");
+      expect(providerOf("https://my-res.openai.azure.com/openai/v1")?.id).to.equal("azure");
+      expect(providerOf("https://gateway.example.org/v1")).to.equal(undefined);
+      expect(providerById("ollama")?.noKey).to.equal(true);
+      expect(new Set(aiProviders.map((provider) => provider.id)).size).to.equal(aiProviders.length);
+      expect(
+        ["gpt-5", "text-embedding-3-small", "whisper-1", "mistral-medium-latest"].filter(isChatModel),
+      ).to.deep.equal(["gpt-5", "mistral-medium-latest"]);
     });
 
     it("explains error answers of the service", () => {

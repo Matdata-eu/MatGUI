@@ -476,16 +476,7 @@ export default class QueryBrowser {
     addWorkspaceBtn.textContent = "Add workspace";
     addWorkspaceBtn.addEventListener("click", () => {
       this.close();
-      const tab = this.yasgui.getTab();
-      if (tab && (tab as any).settingsModal) {
-        const modal = (tab as any).settingsModal;
-        modal.open();
-        // Switch to workspaces tab after a short delay to ensure modal is rendered
-        setTimeout(() => {
-          const workspacesButton = modal.modalContent?.querySelector(".modalNavButton:nth-child(3)") as HTMLElement;
-          if (workspacesButton) workspacesButton.click();
-        }, 50);
-      }
+      this.yasgui.getTab()?.openSettings("workspaces");
     });
 
     const learnMoreLink = document.createElement("a");

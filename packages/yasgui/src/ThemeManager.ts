@@ -43,6 +43,18 @@ export class ThemeManager {
     });
   }
 
+  /** "light" or "dark" when the user picked one, "system" when the theme follows the operating system */
+  public getPreference(): Theme | "system" {
+    return this.getStoredTheme() || "system";
+  }
+
+  /** Forget the theme the user picked and follow the operating system again */
+  public followSystem(): void {
+    this.storage.remove(ThemeManager.STORAGE_KEY);
+    this.currentTheme = this.getSystemTheme();
+    this.applyTheme(this.currentTheme);
+  }
+
   /**
    * Toggle between light and dark themes
    */

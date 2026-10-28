@@ -25,114 +25,162 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--yasgui-overlay-bg, rgba(0, 0, 0, 0.5));
+  background: var(--yasgui-scrim, rgba(0, 0, 0, 0.5));
   z-index: 10000;
   align-items: center;
   justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
 
   &.open {
     display: flex;
   }
 }
 
-// The modal is appended to the page body, outside .yasgui, so it sets the Yasgui font itself
+// The modal is appended to the page body, outside .yasgui, so it sets the Yasgui font itself.
+// Title and close at the top and a note and Done at the foot stay in place; only the page between scrolls.
 .tabSettingsModal {
   font-family: var(--yasgui-font-family, system-ui, sans-serif);
   font-size: var(--yasgui-font-size, 13px);
-  background: var(--yasgui-bg-primary, white);
+  line-height: 1.45;
+  color: var(--yasgui-ink, #1c2633);
+  background: var(--yasgui-surface-raised, white);
 
   // Low specificity, so monospace fields such as .prefixTextarea keep their font
   :where(input, select, textarea, button) {
     font-family: inherit;
   }
 
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  max-width: 1000px;
-  width: 90%;
-  max-height: 90vh;
+  border-radius: 14px;
+  box-shadow: var(--yasgui-shadow-overlay, 0 4px 20px rgba(0, 0, 0, 0.3));
+  width: min(920px, 100%);
+  height: min(760px, calc(100vh - 48px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  outline: none;
 }
 
 .modalHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid var(--yasgui-border-color, #e0e0e0);
+  gap: 12px;
+  padding: 12px 12px 12px 22px;
+  border-bottom: 1px solid var(--yasgui-line-soft, #edf0f4);
+  flex: none;
 
   h2 {
     margin: 0;
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--yasgui-text-primary, #000);
+    font-size: 16px;
+    font-weight: 650;
+    color: var(--yasgui-ink, #1c2633);
   }
 
   .closeButton {
+    display: grid;
+    place-items: center;
     background: none;
     border: none;
-    font-size: 32px;
-    line-height: 1;
     cursor: pointer;
-    color: var(--yasgui-text-secondary, #666);
+    color: var(--yasgui-ink-subtle, #6a7380);
     padding: 0;
     width: 32px;
     height: 32px;
+    border-radius: var(--yasgui-radius-button, 8px);
 
     &:hover {
-      color: var(--yasgui-text-primary, #333);
+      color: var(--yasgui-ink, #1c2633);
+      background: var(--yasgui-surface-sunken, #edf1f6);
     }
   }
 }
 
 .modalBody {
   flex: 1;
+  min-height: 0;
   display: flex;
   overflow: hidden;
 }
 
+// Navigation: quiet, grouped, an icon per page
 .modalSidebar {
-  width: 200px;
-  min-width: 200px;
-  border-right: 1px solid var(--yasgui-border-color, #e0e0e0);
-  background: var(--yasgui-bg-secondary, #f8f9fa);
+  width: 212px;
+  min-width: 212px;
+  box-sizing: border-box;
+  padding: 10px 10px 16px;
+  border-right: 1px solid var(--yasgui-line-soft, #edf0f4);
+  background: var(--yasgui-surface, #f1f4f8);
   display: flex;
   flex-direction: column;
+  gap: 1px;
   overflow-y: auto;
+}
+
+.modalNavGroup {
+  margin: 14px 10px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--yasgui-ink-subtle, #6a7380);
+
+  &:first-child {
+    margin-top: 4px;
+  }
+}
+
+.modalNavButton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  border-radius: var(--yasgui-radius-button, 8px);
+  padding: 7px 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--yasgui-ink-muted, #56606c);
+  text-align: left;
+  white-space: nowrap;
+
+  svg {
+    flex: none;
+    color: var(--yasgui-ink-subtle, #6a7380);
+  }
+
+  &:hover {
+    color: var(--yasgui-ink, #1c2633);
+    background: var(--yasgui-surface-selected, #e6ecf3);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--yasgui-focus, #044a8c);
+    outline-offset: -2px;
+  }
+
+  &.active {
+    color: var(--yasgui-ink, #1c2633);
+    background: var(--yasgui-surface-raised, white);
+    box-shadow: var(--yasgui-shadow-raise, 0 0 0 1px #dfe5ec);
+
+    svg {
+      color: var(--yasgui-brand, #0563bb);
+    }
+  }
+}
+
+[data-theme="dark"] .modalNavButton.active {
+  background: var(--yasgui-surface-selected, #232b36);
 }
 
 .modalContentArea {
   flex: 1;
+  min-width: 0;
   overflow-y: auto;
-  padding: 20px;
-}
-
-.modalNavButton {
-  background: none;
-  border: none;
-  padding: 12px 20px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  color: var(--yasgui-text-secondary, #666);
-  text-align: left;
-  border-left: 3px solid transparent;
-  transition: all 0.2s;
-  white-space: nowrap;
-
-  &:hover {
-    background: var(--yasgui-bg-primary, white);
-    color: var(--yasgui-accent-color, #337ab7);
-  }
-
-  &.active {
-    color: var(--yasgui-accent-color, #337ab7);
-    background: var(--yasgui-bg-primary, white);
-    border-left-color: var(--yasgui-accent-color, #337ab7);
-    font-weight: 600;
-  }
+  overscroll-behavior: contain;
+  padding: 6px 26px 26px;
 }
 
 .modalTabContent {
@@ -143,8 +191,183 @@
   }
 }
 
+// A group of settings: a small heading, an optional line under it, and a list of rows
+.settingsGroup {
+  margin-top: 22px;
+
+  &:first-child {
+    margin-top: 14px;
+  }
+}
+
+.settingsGroupTitle {
+  margin: 0 0 2px;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--yasgui-ink-subtle, #6a7380);
+}
+
+.settingsGroupLede {
+  margin: 2px 0 8px;
+  max-width: 600px;
+  font-size: 12.5px;
+  color: var(--yasgui-ink-subtle, #6a7380);
+}
+
+.settingsList > * + * {
+  border-top: 1px solid var(--yasgui-line-soft, #edf0f4);
+}
+
+.settingsRow {
+  padding: 9px 0;
+}
+
+.settingsRowMain {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 34px;
+}
+
+.settingsRowText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.settingsRowTitle {
+  font-weight: 600;
+  color: var(--yasgui-ink, #1c2633);
+}
+
+.settingsRowDescription {
+  font-size: 12.5px;
+  color: var(--yasgui-ink-subtle, #6a7380);
+  overflow-wrap: anywhere;
+}
+
+.settingsRowControls {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .settingsSelect {
+    width: auto;
+    min-width: 170px;
+  }
+}
+
+.settingsRowEditor {
+  margin-top: 10px;
+}
+
+.settingsRowEditor[hidden] {
+  display: none;
+}
+
+// An on/off switch: a checkbox drawn as a track with a knob
+.settingsSwitch {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  width: 34px;
+  height: 20px;
+
+  input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 1;
+  }
+
+  .settingsSwitchTrack {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    background: var(--yasgui-line-grip, #c9d2dc);
+    transition: background 0.15s;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+      transition: transform 0.15s;
+    }
+  }
+
+  input:checked + .settingsSwitchTrack {
+    background: var(--yasgui-brand-fill, #0563bb);
+
+    &::after {
+      transform: translateX(14px);
+    }
+  }
+
+  input:focus-visible + .settingsSwitchTrack {
+    outline: 2px solid var(--yasgui-focus, #044a8c);
+    outline-offset: 2px;
+  }
+}
+
+// Two or three choices side by side
+.settingsSegmented {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 9px;
+  border: 1px solid var(--yasgui-line, #dfe5ec);
+  background: var(--yasgui-surface-sunken, #edf1f6);
+
+  button {
+    border: 0;
+    background: none;
+    border-radius: 7px;
+    padding: 4px 11px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--yasgui-ink-muted, #56606c);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--yasgui-ink, #1c2633);
+    }
+
+    &.active {
+      color: var(--yasgui-ink, #1c2633);
+      background: var(--yasgui-surface-raised, white);
+      box-shadow: var(--yasgui-shadow-raise, 0 0 0 1px #dfe5ec);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--yasgui-focus, #044a8c);
+    }
+  }
+}
+
+[data-theme="dark"] .settingsSegmented button.active {
+  background: var(--yasgui-surface-selected, #232b36);
+}
+
 .settingsSection {
   margin-bottom: 20px;
+
+  &:first-child {
+    margin-top: 14px;
+  }
 
   h3 {
     margin: 0 0 12px 0;
@@ -154,19 +377,21 @@
   }
 }
 
+// Headings of the pages that are not built from rows (endpoints, workspaces, import / export, …)
 .settingsLabel {
-  font-weight: 600;
-  margin-bottom: 8px;
-  font-size: 14px;
   display: block;
-  color: var(--yasgui-text-primary, #000);
+  margin-bottom: 4px;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--yasgui-ink-subtle, #6a7380);
 }
 
 .settingsHelp {
-  font-size: 12px;
-  color: var(--yasgui-text-secondary, #666);
+  font-size: 12.5px;
+  color: var(--yasgui-ink-subtle, #6a7380);
   margin-bottom: 10px;
-  font-style: italic;
 }
 
 .settingsLink {
@@ -285,18 +510,22 @@
 
 .settingsSelect {
   width: 100%;
-  padding: 8px;
-  border: 1px solid var(--yasgui-input-border, #ccc);
-  border-radius: 4px;
-  font-size: 14px;
-  background-color: var(--yasgui-bg-secondary, white);
-  color: var(--yasgui-text-primary, #000);
+  padding: 6px 28px 6px 10px;
+  border: 1px solid var(--yasgui-line, #dfe5ec);
+  border-radius: var(--yasgui-radius-button, 8px);
+  font-size: 13.5px;
+  background-color: var(--yasgui-surface-raised, white);
+  color: var(--yasgui-ink, #1c2633);
 
   &:focus {
     outline: none;
-    border-color: var(--yasgui-input-focus, #337ab7);
-    box-shadow: 0 0 0 2px rgba(51, 122, 183, 0.1);
+    border-color: var(--yasgui-brand, #0563bb);
+    box-shadow: 0 0 0 3px var(--yasgui-brand-soft, #e3eefa);
   }
+}
+
+[data-theme="dark"] .settingsSelect {
+  background-color: var(--yasgui-surface-sunken, #1c222b);
 }
 
 .keyValueContainer {
@@ -313,66 +542,73 @@
 
   .keyInput,
   .valueInput {
-    padding: 8px;
-    border: 1px solid var(--yasgui-input-border, #ccc);
-    border-radius: 4px;
-    font-size: 14px;
-    background-color: var(--yasgui-bg-secondary, white);
-    color: var(--yasgui-text-primary, #000);
+    padding: 6px 10px;
+    border: 1px solid var(--yasgui-line, #dfe5ec);
+    border-radius: var(--yasgui-radius-button, 8px);
+    font-size: 13px;
+    font-family: var(--yasgui-font-mono, monospace);
+    background-color: var(--yasgui-surface-raised, white);
+    color: var(--yasgui-ink, #1c2633);
 
     &:focus {
       outline: none;
-      border-color: var(--yasgui-input-focus, #337ab7);
-      box-shadow: 0 0 0 2px rgba(51, 122, 183, 0.1);
+      border-color: var(--yasgui-brand, #0563bb);
+      box-shadow: 0 0 0 3px var(--yasgui-brand-soft, #e3eefa);
     }
 
     &::placeholder {
-      color: var(--yasgui-text-secondary, #999);
+      font-family: var(--yasgui-font-family, sans-serif);
+      color: var(--yasgui-ink-subtle, #6a7380);
     }
   }
 
   .removeButton {
-    padding: 6px 10px;
-    background-color: var(--yasgui-danger-color, #d9534f);
-    color: white;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    background: none;
+    color: var(--yasgui-ink-subtle, #6a7380);
     border: none;
-    border-radius: 4px;
+    border-radius: var(--yasgui-radius-button, 8px);
     cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s;
 
     &:hover {
-      background-color: var(--yasgui-danger-hover, #c9302c);
+      color: var(--yasgui-danger, #b42318);
+      background: var(--yasgui-surface-sunken, #edf1f6);
     }
 
-    &:focus {
-      outline: none;
-      box-shadow: 0 0 0 2px rgba(217, 83, 79, 0.3);
-    }
-
-    i {
-      pointer-events: none;
+    &:focus-visible {
+      outline: 2px solid var(--yasgui-focus, #044a8c);
     }
   }
 }
 
+[data-theme="dark"] .keyValueRow :is(.keyInput, .valueInput),
+[data-theme="dark"] .prefixTextarea {
+  background-color: var(--yasgui-surface-sunken, #1c222b);
+}
+
 .prefixTextarea {
   width: 100%;
-  padding: 10px;
-  border: 1px solid var(--yasgui-input-border, #ccc);
-  border-radius: 4px;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-  font-size: 13px;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--yasgui-line, #dfe5ec);
+  border-radius: var(--yasgui-radius-md, 10px);
+  font-family: var(--yasgui-font-mono, monospace);
+  font-size: 12.5px;
+  line-height: 1.6;
   resize: vertical;
   box-sizing: border-box;
-  min-height: 200px;
-  background-color: var(--yasgui-bg-secondary, white);
-  color: var(--yasgui-text-primary, #000);
+  min-height: 220px;
+  background-color: var(--yasgui-surface-raised, white);
+  color: var(--yasgui-ink, #1c2633);
 
   &:focus {
     outline: none;
-    border-color: var(--yasgui-input-focus, #337ab7);
-    box-shadow: 0 0 0 2px rgba(51, 122, 183, 0.1);
+    border-color: var(--yasgui-brand, #0563bb);
+    box-shadow: 0 0 0 3px var(--yasgui-brand-soft, #e3eefa);
   }
 }
 
@@ -452,39 +688,94 @@
 }
 
 .modalFooter {
-  padding: 15px 20px;
-  border-top: 1px solid var(--yasgui-border-color, #e0e0e0);
+  flex: none;
+  padding: 12px 14px 12px 22px;
+  border-top: 1px solid var(--yasgui-line-soft, #edf0f4);
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+  align-items: center;
+  gap: 16px;
+}
+
+.modalFooterNote {
+  flex: 1;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--yasgui-ink-subtle, #6a7380);
+}
+
+// "Saved", for a moment after a change was stored
+.modalSavedStatus {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  margin-right: 8px;
+  font-weight: 500;
+  color: var(--yasgui-success, #067647);
+
+  &::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  &.visible {
+    display: inline-flex;
+  }
 }
 
 .primaryButton,
 .secondaryButton,
 .dangerButton {
-  padding: 8px 20px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--yasgui-radius-button, 8px);
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  white-space: nowrap;
+  transition: background-color 0.15s;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--yasgui-focus, #044a8c);
+    outline-offset: 2px;
+  }
 }
 
 .primaryButton {
-  background: var(--yasgui-accent-color, #337ab7);
-  color: white;
+  background: var(--yasgui-brand-fill, #0563bb);
+  color: var(--yasgui-on-brand, white);
+  font-weight: 600;
 
   &:hover {
-    background: var(--yasgui-link-hover, #286090);
+    background: var(--yasgui-brand-fill-strong, #044a8c);
   }
 }
 
 .secondaryButton {
-  background: var(--yasgui-bg-tertiary, #e0e0e0);
-  color: var(--yasgui-text-primary, #333);
+  background: var(--yasgui-surface-raised, white);
+  border-color: var(--yasgui-line, #dfe5ec);
+  color: var(--yasgui-ink, #1c2633);
 
   &:hover {
-    background: var(--yasgui-bg-quaternary, #d0d0d0);
+    background: var(--yasgui-surface-sunken, #edf1f6);
+  }
+}
+
+[data-theme="dark"] .secondaryButton {
+  background: var(--yasgui-surface-sunken, #1c222b);
+
+  &:hover {
+    background: var(--yasgui-surface-selected, #232b36);
   }
 }
 
@@ -1331,5 +1622,45 @@
 .desktopOnly {
   @media (max-width: 768px) {
     display: none !important;
+  }
+}
+
+// Small screens: the settings fill the screen, the navigation becomes a row of pages above the page
+@media (max-width: 720px) {
+  .tabSettingsModalOverlay {
+    padding: 0;
+  }
+
+  .tabSettingsModal {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+
+  .modalBody {
+    flex-direction: column;
+  }
+
+  .modalSidebar {
+    width: auto;
+    min-width: 0;
+    flex-direction: row;
+    flex: none;
+    overflow-x: auto;
+    padding: 8px 10px;
+    border-right: 0;
+    border-bottom: 1px solid var(--yasgui-line-soft, #edf0f4);
+  }
+
+  .modalNavGroup {
+    display: none;
+  }
+
+  .modalContentArea {
+    padding: 4px 16px 20px;
+  }
+
+  .settingsRowMain {
+    flex-wrap: wrap;
   }
 }

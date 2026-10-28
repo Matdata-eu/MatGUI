@@ -363,7 +363,7 @@ Click **Search queries and commands** in the top bar, or press `Ctrl+K` (`⌘K` 
 - **Queries**: the saved queries of all your workspaces, with the workspace and folder they are in. Pick one to open it in a new tab, or to go to the tab that already has it open
 - **Snippets**: the code snippets of the [Insert menu](#insert-menu), found by name, group or the code they write (`filter` finds the comparison snippets). Pick one to insert it at the cursor
 - **Commands**: Run query, New tab, Insert snippet, Insert PREFIX declarations, Switch endpoint, Explore endpoint, Show saved queries, Toggle side panel, Toggle side-by-side layout, Format, Share, Save, Download, full screen editor, dark mode and the documentation. Commands with a shortcut show it at the right
-- **Settings**: every section of the settings (Request, SPARQL endpoints, Workspaces, Prefixes, Editor, Import / export, Keyboard shortcuts, About), for example type `prefixes` and pick **Settings: Prefixes**
+- **Settings**: every page of the settings (General, SPARQL endpoints, Workspaces, Prefixes, Editor, AI, Import / export, Keyboard shortcuts, About), for example type `prefixes` and pick **Settings: Prefixes**
 
 Type `>` first to search commands and settings only. Snippets and settings show up once you type something. Use `↑` and `↓` to move, `Enter` to open and `Esc` to close.
 
@@ -503,10 +503,10 @@ Dark Theme characteristics:
 You can customize the syntax highlighting theme separately for light and dark modes:
 
 1. Click the Settings button (gear icon) at the right of the top bar
-2. Navigate to the "Editor" tab
-3. Select your preferred theme for light mode from the dropdown
-4. Select your preferred theme for dark mode from the dropdown
-5. Click "Save" to apply your changes
+2. On the **General** page, under **Appearance**, pick a theme for light mode and one for dark mode in **Editor theme**
+3. The change applies at once
+
+**Theme** on the same page picks Light, Dark or System; System follows the color scheme of your computer.
 
 **Available Themes:**
 The editor is built on CodeMirror 6 and ships with the following syntax highlighting themes:
@@ -577,10 +577,10 @@ Keep your SPARQL queries clean and readable with automatic formatting.
 
 **Configuration:**
 
-- Open Settings (gear icon in the top bar) to:
-  - Select your preferred formatter
-  - Enable/disable auto-format on query execution
-  - Both settings are saved persistently
+- Open Settings (gear icon in the top bar):
+  - **Editor → Query formatter** selects the formatter
+  - **General → Format the query** switches auto-format on query execution on or off
+  - Both settings apply to every tab and are saved in your browser
 
 ### CONSTRUCT Query Validation
 
@@ -615,10 +615,10 @@ WHERE {
 
 **Configuration:**
 
-- Open Settings (gear icon in the top bar) → Editor tab
-- Toggle "Validate CONSTRUCT query variables" checkbox
+- Open Settings (gear icon in the top bar) → General
+- Switch **Check CONSTRUCT variables** on or off
 - Enabled by default
-- Setting is saved persistently
+- The setting applies to every tab and is saved in your browser
 
 **Why This Helps:**
 
@@ -704,8 +704,8 @@ MatGUI includes standard prefixes like:
 **How to Use:**
 
 1. Click **Prefixes** in the editor toolbar to insert all saved prefixes
-2. Open Settings (gear icon in the top bar) to manage your prefix collection
-3. Enable/disable auto-capture in Settings
+2. Open **Settings → Prefixes** to manage your prefix collection; changes are stored as you type
+3. Switch **Capture new prefixes from queries** on or off on the same page
 
 Prefixes are added below the comment lines a query starts with, so a leading comment such as `#defaultView:Geo` (see [Plugin Selection](#plugin-selection)) stays on top.
 
@@ -920,7 +920,7 @@ The information is fetched with a small query on the endpoint of the tab, using 
 
 Prefixed names whose prefix isn't declared in the query get no tooltip. The tooltip also reminds you that Ctrl+click and Ctrl+Shift+click open the [URI Explorer](#uri-explorer).
 
-To switch it off, untick **Show IRI information on hover** in **Settings → Editor**.
+To switch it off, turn off **IRI information on hover** in **Settings → General**.
 
 ### Endpoint Overview
 
@@ -993,12 +993,12 @@ Queries in an answer get buttons: **Use in editor** replaces your query (press `
 The assistant works with any service that offers an OpenAI-compatible API. Open **Settings → AI** (or the gear in the AI view). Under **AI services** you see:
 
 - **The AI service of the site**, when the site you use MatGUI on provides one (it may offer more than one). You need no key of your own.
-- **Your own services.** Click **Add service**, pick a provider in the **Base URL** list or enter another URL, and fill in your **API key** and the **Model**. **Name** is how the service is shown in the AI view; it defaults to the provider or host. Use **Test connection** to check the key and to list the models of the service. The key is optional: local models and some proxies need none. Add as many services as you like, and change or remove them with **Edit** and **Remove**.
+- **Your own services.** Click **Add AI service** and pick a **Provider**. MatGUI fills in its **Base URL**; you can still change it, for example for a gateway or a proxy (the field then says **Changed**, and **Reset to provider default** brings the provider's URL back). Pick **Custom** for any other OpenAI-compatible service. Paste your **API key**: the link next to it opens the page of the provider where you create one. Click **Fetch models** to check the key and list the models of the service, and pick one in **Model**; recommended models come first, with a star, and you can also type any model id. **Name** is how the service is shown in the AI view; it defaults to the provider. Click **Save service**. Local models (Ollama, LM Studio) need no key, and the key field is left out for them. Add as many services as you like, and change or remove them with **Edit** and **Remove**.
 - **No AI service**: nothing is sent anywhere. See "Without an AI service" below.
 
-Select the service the assistant uses by default and click **Save**. In the AI view, the service name at the top is a list: pick another service there to use it for your next questions, until you reload the page. "No AI service: copy a prompt" in that list makes the actions copy prompts instead.
+Select the service the assistant uses by default; it applies at once. **Make this the default service** in the form of a service does the same. In the AI view, the service name at the top is a list: pick another service there to use it for your next questions, until you reload the page. "No AI service: copy a prompt" in that list makes the actions copy prompts instead.
 
-The Base URL list includes OpenAI, Anthropic (Claude), Google Gemini, Mistral, Moonshot (Kimi), DeepSeek, xAI (Grok), OpenRouter, Groq, Together AI, Fireworks AI, Cerebras, Hugging Face, Scaleway, Azure OpenAI, Ollama and LM Studio. Some of them:
+The Provider list includes OpenAI, Anthropic (Claude), Google Gemini, Mistral, Moonshot (Kimi), DeepSeek, xAI (Grok), OpenRouter, Groq, Together AI, Fireworks AI, Cerebras, Hugging Face, Scaleway, Azure OpenAI, Ollama and LM Studio. Some of them:
 
   | Service                   | Base URL                                                   |
   | ------------------------- | ---------------------------------------------------------- |
@@ -1016,14 +1016,14 @@ The Base URL list includes OpenAI, Anthropic (Claude), Google Gemini, Mistral, M
   - **Anthropic**: MatGUI adds the header Anthropic asks of browser requests (`anthropic-dangerous-direct-browser-access`) and uses its OpenAI-compatible endpoint, with Claude model names such as `claude-sonnet-4-5`.
   - **Azure OpenAI**: the key is sent in the `api-key` header, as Azure expects. The model is the name of your deployment.
 
-  The service must accept requests from a browser (CORS). OpenAI, Anthropic, Google Gemini and OpenRouter do; when **Test connection** can't reach another service, that service probably doesn't, and the AI service of the site or a local model is the way to go. Models on your own computer need one setting:
+  The service must accept requests from a browser (CORS). OpenAI, Anthropic, Google Gemini and OpenRouter do. When **Fetch models** can't reach a service, it probably doesn't let a browser read its model list: MatGUI then offers the models it knows for that provider, and you can type another model id. If questions to the assistant fail the same way, the AI service of the site, OpenRouter or a local model is the way to go. Models on your own computer need one setting:
   - **Ollama** only accepts the MatGUI site when it is started with `OLLAMA_ORIGINS` set to that site, for example `OLLAMA_ORIGINS=https://matgui.matdata.eu ollama serve`.
   - **LM Studio**: turn on **Enable CORS** in the settings of its local server.
   - Your browser may ask whether the site may access devices on your local network. Allow it, or requests to `localhost` fail.
 
   Small local models often can't run check queries (tool calls). MatGUI then asks again without them, so the answer comes without checks on the endpoint.
 
-Your API keys are stored in this browser only (in its local storage). Each key is sent only to the base URL of its service, and it is never included in exported settings ([Configuration Import/Export](#configuration-importexport)) or share links. Anyone who uses the same browser profile can read it, so use a key with a spending limit, and click **Forget key** on a shared computer.
+Your API keys are stored in this browser only (in its local storage). Each key is sent only to the base URL of its service, and it is never included in exported settings ([Configuration Import/Export](#configuration-importexport)) or share links. Anyone who uses the same browser profile can read it, so use a key with a spending limit, and click **Forget key** (under the key, in the form of the service) on a shared computer.
 
 **Without an AI service: Copy for AI**
 
@@ -1031,7 +1031,7 @@ You don't need an API key to get help. Without an AI service, the actions of the
 
 **What is sent, and to whom**
 
-Nothing is sent until you click an action or send a question. Before the first request to a service, the AI view shows what the request includes and where it goes, and asks you to confirm. Tick **Don't ask again** to skip this for that service; **Ask me again** in **Settings → AI** brings the question back.
+Nothing is sent until you click an action or send a question. Before the first request to a service, the AI view shows what the request includes and where it goes, and asks you to confirm. Tick **Don't ask again** to skip this for that service; **Ask again** in **Settings → AI** brings the question back.
 
 | Action          | Sent to the AI service                                                                                                                       |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1124,23 +1124,17 @@ Access comprehensive configuration options through the Settings modal.
 - Or search for a section with `Ctrl+K`, for example **Settings: Prefixes**
 - **Manage endpoints** in the endpoint dropdown opens the Endpoints section directly
 
-**Settings Sections:**
+The pages are grouped in the navigation on the left: **Querying** (General, Endpoints, Prefixes, Editor), **Your data** (Workspaces, Import / export), **Assistant** (AI) and **Help** (Keyboard shortcuts, About). Each setting is a row with a short explanation and its control on the right.
 
-**Prefixes Tab:**
+Changes apply at once: there is no Save button. The footer shows **Saved** after a change, and **Done** (or `Esc`) closes the settings. Forms that need several fields together, such as an AI service or the authentication of an endpoint, have their own Save button.
 
-- Manage saved prefix declarations
-- Enable/disable auto-capture
-- Add, edit, or remove prefixes
+**General:**
 
-**Request Configuration Tab:**
+- **Appearance**: the theme (Light, Dark or System) and the editor theme for light and for dark mode
+- **Requests**: the request method (POST or GET), the results format (Accept header of SELECT and ASK queries), the graph format (Accept header of CONSTRUCT and DESCRIBE queries) and custom HTTP headers. These apply to every tab, including tabs you open later
+- **Before running a query**: format the query, check CONSTRUCT variables, and show IRI information on hover (see [IRI Hover Info](#iri-hover-info))
 
-- HTTP request method (GET/POST)
-- Accept headers
-- Custom request parameters
-- Named/default graphs configuration
-- Custom HTTP headers
-
-**Endpoints Tab:**
+**Endpoints:**
 
 - **Developer-Configured Endpoint Buttons**: Enable/disable developer-configured buttons
 - **SPARQL Endpoints**: Manage all your endpoints in one place
@@ -1148,23 +1142,19 @@ Access comprehensive configuration options through the Settings modal.
 - Add labels and add endpoints to the Quick switch group of the endpoint dropdown
 - Automatically tracks accessed endpoints
 
-**Formatting Tab:**
+**Prefixes:**
 
-- Select formatter (sparql-formatter or legacy)
-- Enable/disable auto-format on query execution
+- Manage saved prefix declarations, stored as you type
+- Capture new prefixes from the queries you run
 
-**Editor Tab:**
+**Editor:**
 
-- Select CodeMirror theme for light mode
-- Select CodeMirror theme for dark mode
-- Switch between the Default and GitHub Dark editor themes in the Settings → Editor tab
-- Includes custom "GitHub Dark" theme matching GitHub's dark default colors
-- Show IRI information on hover (see [IRI Hover Info](#iri-hover-info))
+- The query formatter (SPARQL 1.2 formatter or the legacy one), used by Format and before running a query
 
-**AI Tab:**
+**AI:**
 
-- Choose the AI service: the service of the site (when it provides one), your own API key, or none ("Copy for AI" only)
-- Base URL, API key and model of your own service, with **Test connection** and **Forget key**
+- Your AI services as cards: the service of the site (when it provides one), your own services, and "No AI service" ("Copy for AI" only). The selected card is the default
+- **Add AI service**: provider, base URL (filled in from the provider), API key with a link to get one, and a model fetched from the service
 - Let the assistant run check queries on the endpoint
 - Bring back the privacy notice for services you chose not to be asked about again
 
@@ -2697,7 +2687,7 @@ The proxy solves this by:
 
 1. **No AI service set up**: without a service, the actions copy a prompt ([Copy for AI](#ai-assistant)). Add a service in **Settings → AI**, or pick one in the list at the top of the AI view.
 2. **Key refused (401)**: check the API key in **Settings → AI**, and that it belongs to the service of the base URL.
-3. **Model not found (404)**: use **Test connection** and pick a model from the list.
+3. **Model not found (404)**: use **Fetch models** in **Settings → AI** and pick a model from the list.
 4. **Could not reach the service**: check the base URL (it usually ends in `/v1`). The service must allow requests from a browser (CORS); for Ollama, start it with `OLLAMA_ORIGINS` set to the MatGUI site.
 5. **Invented names**: keep **check queries** switched on, open the [Endpoint Overview](#endpoint-overview) and run its Classes and Properties queries so the assistant knows more of the endpoint, or name the vocabulary in your question.
 
