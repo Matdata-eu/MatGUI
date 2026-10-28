@@ -432,16 +432,8 @@ export class TabList {
       actions.appendChild(search);
     }
 
-    const helpUrl = this.yasgui.config.helpUrl;
-    if (helpUrl) {
-      const help = iconButton("help", "Help", {
-        className: "yasgui-topBarButton yasgui-helpButton",
-        title: "Open the documentation",
-        size: 16,
-      });
-      help.addEventListener("click", () => window.open(helpUrl, "_blank", "noopener,noreferrer"));
-      actions.appendChild(help);
-    }
+    // Quick start, what's new and the documentation; hidden while the menu has no items
+    actions.appendChild(this.yasgui.helpMenu.getButton());
 
     if (this.yasgui.config.showThemeToggle) {
       const theme = document.createElement("button");
