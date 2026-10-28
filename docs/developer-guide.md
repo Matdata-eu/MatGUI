@@ -701,6 +701,13 @@ interface Config {
   // Search for saved queries, commands and settings in the top bar, also opened with Ctrl+K / Cmd+K
   showCommandPalette?: boolean;  // default: true
 
+  // "How MatGUI works" quick start tour in the help menu of the top bar
+  showQuickStart?: boolean;  // default: true
+
+  // Open the quick start tour on the first visit in a browser (remembered in local storage under
+  // "matgui_quickStart_seen"). Set to false to only offer it in the help menu
+  quickStartOnFirstVisit?: boolean;  // default: true
+
   // Layout orientation: 'vertical' or 'horizontal'
   orientation?: 'vertical' | 'horizontal';  // default: 'vertical'
 

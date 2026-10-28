@@ -27,6 +27,7 @@ import SparqlAnythingSupport from "./sparqlAnything/SparqlAnythingSupport";
 import SidePanel from "./sidePanel/SidePanel";
 import CommandPalette from "./CommandPalette";
 import HelpMenu from "./HelpMenu";
+import QuickStart from "./QuickStart";
 import AiAssistant from "./ai/AiAssistant";
 import type { AiConfig } from "./ai/types";
 import "./index.scss";
@@ -119,6 +120,16 @@ export interface Config<EndpointObject extends CatalogueItem = CatalogueItem> {
    * (default: true)
    */
   showCommandPalette?: boolean;
+  /**
+   * "How MatGUI works": a short tour of five pages, in the help menu of the top bar (default: true).
+   * Set to false to leave it out.
+   */
+  showQuickStart?: boolean;
+  /**
+   * Open the quick start tour the first time someone uses MatGUI in this browser (default: true). Only applies
+   * when `showQuickStart` is on. The dismissal is remembered in local storage.
+   */
+  quickStartOnFirstVisit?: boolean;
   /**
    * Layout orientation: 'vertical' (default) or 'horizontal' (side-by-side)
    * 'vertical': YASQE on top, YASR below
@@ -216,6 +227,8 @@ export class Yasgui extends EventEmitter {
   public commandPalette: CommandPalette | undefined;
   /** Menu of the help button in the top bar; add entries with `helpMenu.addItem()` */
   public helpMenu: HelpMenu;
+  /** "How MatGUI works" tour, unless `showQuickStart` is false */
+  public quickStart: QuickStart | undefined;
   /** AI assistant (the "AI" view of the side panel), unless `ai.enabled` is false */
   public aiAssistant: AiAssistant | undefined;
   /** SPARQL Anything support (the "Source" view of the side panel), unless `sparqlAnything` is false */
@@ -254,6 +267,7 @@ export class Yasgui extends EventEmitter {
     }
 
     this.helpMenu = new HelpMenu(this);
+    if (this.config.showQuickStart) this.quickStart = new QuickStart(this);
     this.tabElements = new TabElements(this);
     this.tabPanelsEl = document.createElement("div");
     addClass(this.tabPanelsEl, "yasgui-tabPanels");
@@ -344,6 +358,14 @@ export class Yasgui extends EventEmitter {
       this.endpointDescribe = new EndpointDescribePanel(this);
     } else {
       this.sidePanel.restore();
+    }
+    if (this.quickStart && this.config.quickStartOnFirstVisit && !QuickStart.hasBeenSeen()) {
+      // After the first paint, so the tour opens over the interface it explains
+      const quickStart = this.quickStart;
+      QuickStart.markSeen();
+      window.setTimeout(() => {
+        if (this.rootEl.isConnected) quickStart.open();
+      }, 300);
     }
   }
   public hasFullscreen(fullscreen: boolean) {
@@ -605,6 +627,7 @@ export class Yasgui extends EventEmitter {
     this.sparqlAnything?.destroy();
     this.aiAssistant?.destroy();
     this.commandPalette?.destroy();
+    this.quickStart?.destroy();
     this.helpMenu.destroy();
     this.sidePanel.destroy();
     this.tabElements.destroy();
