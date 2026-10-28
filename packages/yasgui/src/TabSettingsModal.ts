@@ -9,6 +9,8 @@ import { deduplicatePrefixes } from "./prefixUtils";
 import { WorkspaceSettingsForm } from "./queryManagement/WorkspaceSettingsForm";
 import { icon, IconName } from "./icons";
 import AiSettingsForm from "./ai/AiSettingsForm";
+import type { EditorSettings, RequestSettings } from "./PersistentConfig";
+import { controlId, settingsGroup, settingsRow, settingsSegmented, settingsSelect, settingsSwitch } from "./settingsUi";
 
 const AcceptOptionsMap: { key: string; value: string }[] = [
   { key: "JSON", value: "application/sparql-results+json" },
@@ -30,6 +32,31 @@ const AcceptHeaderGraphMap: { key: string; value: string }[] = [
 // Type for key-value pairs (headers, args, etc.)
 type KeyValuePair = { name: string; value: string };
 
+// Editor themes: each is a `cm-s-<name>` class applied to the CodeMirror 6 editor root; the styles ship with yasgui
+const EDITOR_THEMES: { value: string; label: string; mode: "light" | "dark" }[] = [
+  { value: "default", label: "Default", mode: "light" },
+  { value: "eclipse", label: "Eclipse", mode: "light" },
+  { value: "idea", label: "IntelliJ IDEA", mode: "light" },
+  { value: "solarized-light", label: "Solarized Light", mode: "light" },
+  { value: "github-dark", label: "GitHub Dark", mode: "dark" },
+  { value: "monokai", label: "Monokai", mode: "dark" },
+  { value: "dracula", label: "Dracula", mode: "dark" },
+  { value: "material-darker", label: "Material Darker", mode: "dark" },
+];
+
+/** A page of the settings and its place in the navigation */
+interface SettingsPage {
+  id: string;
+  label: string;
+  icon: IconName;
+  group: string;
+  className?: string;
+  draw: (container: HTMLElement) => void;
+}
+
+/** Older names of settings pages, still accepted by open() */
+const SECTION_ALIASES: { [name: string]: string } = { request: "general" };
+
 // Default API Key header name
 const DEFAULT_API_KEY_HEADER = "X-API-Key";
 
@@ -38,9 +65,13 @@ export default class TabSettingsModal {
   private modalOverlay!: HTMLElement;
   private modalContent!: HTMLElement;
   private hamburgerContainer!: HTMLElement;
-  private prefixTextarea!: HTMLTextAreaElement;
+  private contentArea?: HTMLElement;
+  private currentPage = "general";
+  private savedStatus!: HTMLElement;
+  private savedTimer?: ReturnType<typeof setTimeout>;
+  private prefixTextarea?: HTMLTextAreaElement;
+  private prefixTimer?: ReturnType<typeof setTimeout>;
   private aiSettingsForm?: AiSettingsForm;
-  private autoCaptureCheckbox!: HTMLInputElement;
   private hamburgerMenuButton!: HTMLButtonElement;
   private hamburgerDropdown!: HTMLElement;
   private isHamburgerOpen = false;
@@ -215,6 +246,67 @@ export default class TabSettingsModal {
     this.hamburgerMenuButton.setAttribute("aria-expanded", "false");
   }
 
+  /** The pages of the settings, in the order of the navigation */
+  private pages(): SettingsPage[] {
+    const pages: SettingsPage[] = [
+      {
+        id: "general",
+        label: "General",
+        icon: "alignLeft",
+        group: "Querying",
+        draw: (c) => this.drawGeneralSettings(c),
+      },
+      {
+        id: "endpoints",
+        label: "Endpoints",
+        icon: "database",
+        group: "Querying",
+        draw: (c) => this.drawEndpointsSettings(c),
+      },
+      { id: "prefix", label: "Prefixes", icon: "tag", group: "Querying", draw: (c) => this.drawPrefixSettings(c) },
+      { id: "editor", label: "Editor", icon: "code", group: "Querying", draw: (c) => this.drawEditorSettings(c) },
+      {
+        id: "workspaces",
+        label: "Workspaces",
+        icon: "folder",
+        group: "Your data",
+        draw: (c) => this.drawWorkspacesSettings(c),
+      },
+      {
+        id: "importexport",
+        label: "Import / export",
+        icon: "fileDown",
+        group: "Your data",
+        draw: (c) => this.drawImportExportSettings(c),
+      },
+    ];
+    const assistant = this.tab.yasgui.aiAssistant;
+    if (assistant) {
+      pages.push({
+        id: "ai",
+        label: "AI",
+        icon: "sparkles",
+        group: "Assistant",
+        className: "yasgui-aiSettings",
+        draw: (c) => {
+          this.aiSettingsForm = new AiSettingsForm(assistant, () => this.saved());
+          this.aiSettingsForm.draw(c);
+        },
+      });
+    }
+    pages.push(
+      {
+        id: "shortcuts",
+        label: "Keyboard shortcuts",
+        icon: "keyboard",
+        group: "Help",
+        draw: (c) => this.drawKeyboardShortcuts(c),
+      },
+      { id: "about", label: "About", icon: "help", group: "Help", draw: (c) => this.drawAboutSettings(c) },
+    );
+    return pages;
+  }
+
   private createModal() {
     // Modal overlay
     this.modalOverlay = document.createElement("div");
@@ -238,209 +330,119 @@ export default class TabSettingsModal {
     // Modal content
     this.modalContent = document.createElement("div");
     addClass(this.modalContent, "tabSettingsModal");
+    this.modalContent.setAttribute("role", "dialog");
+    this.modalContent.setAttribute("aria-modal", "true");
+    this.modalContent.tabIndex = -1;
     this.modalContent.onclick = (e) => e.stopPropagation();
 
-    // Header
+    // Header: the title and a close button; they stay in place while the page scrolls
     const header = document.createElement("div");
     addClass(header, "modalHeader");
     const title = document.createElement("h2");
     title.textContent = "Settings";
+    title.id = controlId("title");
+    this.modalContent.setAttribute("aria-labelledby", title.id);
     header.appendChild(title);
 
     const closeBtn = document.createElement("button");
-    closeBtn.textContent = "×";
+    closeBtn.type = "button";
+    closeBtn.innerHTML = icon("x", 18);
+    closeBtn.setAttribute("aria-label", "Close settings");
+    closeBtn.title = "Close";
     addClass(closeBtn, "closeButton");
     closeBtn.onclick = () => this.close();
     header.appendChild(closeBtn);
 
     this.modalContent.appendChild(header);
 
-    // Body with sidebar navigation
+    // Body: the pages, grouped in the navigation on the left
     const body = document.createElement("div");
     addClass(body, "modalBody");
 
-    // Sidebar navigation
-    const sidebar = document.createElement("div");
+    const sidebar = document.createElement("nav");
     addClass(sidebar, "modalSidebar");
+    sidebar.setAttribute("aria-label", "Settings pages");
 
-    const requestTab = document.createElement("button");
-    requestTab.textContent = "Request";
-    addClass(requestTab, "modalNavButton", "active");
-    requestTab.onclick = () => this.switchTab("request");
-    requestTab.dataset.tab = "request";
-
-    const endpointsTab = document.createElement("button");
-    endpointsTab.textContent = "SPARQL Endpoints";
-    addClass(endpointsTab, "modalNavButton");
-    endpointsTab.onclick = () => this.switchTab("endpoints");
-    endpointsTab.dataset.tab = "endpoints";
-
-    const workspacesTab = document.createElement("button");
-    workspacesTab.textContent = "Workspaces";
-    addClass(workspacesTab, "modalNavButton");
-    workspacesTab.onclick = () => this.switchTab("workspaces");
-    workspacesTab.dataset.tab = "workspaces";
-
-    const prefixTab = document.createElement("button");
-    prefixTab.textContent = "Prefixes";
-    addClass(prefixTab, "modalNavButton");
-    prefixTab.onclick = () => this.switchTab("prefix");
-    prefixTab.dataset.tab = "prefix";
-
-    const editorTab = document.createElement("button");
-    editorTab.textContent = "Editor";
-    addClass(editorTab, "modalNavButton");
-    editorTab.onclick = () => this.switchTab("editor");
-    editorTab.dataset.tab = "editor";
-
-    const importExportTab = document.createElement("button");
-    importExportTab.textContent = "Import/Export";
-    addClass(importExportTab, "modalNavButton");
-    importExportTab.onclick = () => this.switchTab("importexport");
-    importExportTab.dataset.tab = "importexport";
-
-    const shortcutsTab = document.createElement("button");
-    shortcutsTab.textContent = "Keyboard Shortcuts";
-    addClass(shortcutsTab, "modalNavButton");
-    shortcutsTab.onclick = () => this.switchTab("shortcuts");
-    shortcutsTab.dataset.tab = "shortcuts";
-
-    const aboutTab = document.createElement("button");
-    aboutTab.textContent = "About";
-    addClass(aboutTab, "modalNavButton");
-    aboutTab.onclick = () => this.switchTab("about");
-    aboutTab.dataset.tab = "about";
-
-    sidebar.appendChild(requestTab);
-    sidebar.appendChild(endpointsTab);
-    sidebar.appendChild(workspacesTab);
-    sidebar.appendChild(prefixTab);
-    sidebar.appendChild(editorTab);
-    const assistant = this.tab.yasgui.aiAssistant;
-    if (assistant) {
-      const aiTab = document.createElement("button");
-      aiTab.textContent = "AI";
-      addClass(aiTab, "modalNavButton");
-      aiTab.onclick = () => this.switchTab("ai");
-      aiTab.dataset.tab = "ai";
-      sidebar.appendChild(aiTab);
-    }
-    sidebar.appendChild(importExportTab);
-    sidebar.appendChild(shortcutsTab);
-    sidebar.appendChild(aboutTab);
-
-    // Content area container
     const contentArea = document.createElement("div");
     addClass(contentArea, "modalContentArea");
+    this.contentArea = contentArea;
+
+    let group: string | undefined;
+    for (const page of this.pages()) {
+      if (page.group !== group) {
+        group = page.group;
+        const heading = document.createElement("div");
+        addClass(heading, "modalNavGroup");
+        heading.textContent = group;
+        sidebar.appendChild(heading);
+      }
+      const button = document.createElement("button");
+      button.type = "button";
+      addClass(button, "modalNavButton");
+      button.dataset.tab = page.id;
+      button.innerHTML = icon(page.icon, 16) + "<span></span>";
+      (button.querySelector("span") as HTMLElement).textContent = page.label;
+      button.onclick = () => this.switchTab(page.id);
+      sidebar.appendChild(button);
+
+      const content = document.createElement("div");
+      addClass(content, "modalTabContent");
+      if (page.className) addClass(content, page.className);
+      content.id = `${page.id}-content`;
+      page.draw(content);
+      contentArea.appendChild(content);
+    }
 
     body.appendChild(sidebar);
     body.appendChild(contentArea);
-
-    // Tab content containers
-    const requestContent = document.createElement("div");
-    addClass(requestContent, "modalTabContent", "active");
-    requestContent.id = "request-content";
-    this.drawRequestSettings(requestContent);
-
-    const endpointsContent = document.createElement("div");
-    addClass(endpointsContent, "modalTabContent");
-    endpointsContent.id = "endpoints-content";
-    this.drawEndpointsSettings(endpointsContent);
-
-    const workspacesContent = document.createElement("div");
-    addClass(workspacesContent, "modalTabContent");
-    workspacesContent.id = "workspaces-content";
-    this.drawWorkspacesSettings(workspacesContent);
-
-    const prefixContent = document.createElement("div");
-    addClass(prefixContent, "modalTabContent");
-    prefixContent.id = "prefix-content";
-    this.drawPrefixSettings(prefixContent);
-
-    const editorContent = document.createElement("div");
-    addClass(editorContent, "modalTabContent");
-    editorContent.id = "editor-content";
-    this.drawEditorSettings(editorContent);
-
-    const importExportContent = document.createElement("div");
-    addClass(importExportContent, "modalTabContent");
-    importExportContent.id = "importexport-content";
-    this.drawImportExportSettings(importExportContent);
-
-    const shortcutsContent = document.createElement("div");
-    addClass(shortcutsContent, "modalTabContent");
-    shortcutsContent.id = "shortcuts-content";
-    this.drawKeyboardShortcuts(shortcutsContent);
-
-    const aboutContent = document.createElement("div");
-    addClass(aboutContent, "modalTabContent");
-    aboutContent.id = "about-content";
-    this.drawAboutSettings(aboutContent);
-
-    contentArea.appendChild(requestContent);
-    contentArea.appendChild(endpointsContent);
-    contentArea.appendChild(workspacesContent);
-    contentArea.appendChild(prefixContent);
-    contentArea.appendChild(editorContent);
-    if (assistant) {
-      const aiContent = document.createElement("div");
-      addClass(aiContent, "modalTabContent", "yasgui-aiSettings");
-      aiContent.id = "ai-content";
-      this.aiSettingsForm = new AiSettingsForm(assistant);
-      this.aiSettingsForm.draw(aiContent);
-      contentArea.appendChild(aiContent);
-    }
-    contentArea.appendChild(importExportContent);
-    contentArea.appendChild(shortcutsContent);
-    contentArea.appendChild(aboutContent);
-
     this.modalContent.appendChild(body);
 
-    // Footer
+    // Footer: changes apply at once, so it only says so and closes the settings
     const footer = document.createElement("div");
     addClass(footer, "modalFooter");
 
-    const saveBtn = document.createElement("button");
-    saveBtn.textContent = "Save";
-    addClass(saveBtn, "primaryButton");
-    saveBtn.onclick = () => this.save();
+    const note = document.createElement("p");
+    addClass(note, "modalFooterNote");
+    this.savedStatus = document.createElement("span");
+    addClass(this.savedStatus, "modalSavedStatus");
+    this.savedStatus.setAttribute("aria-live", "polite");
+    note.appendChild(this.savedStatus);
+    note.appendChild(document.createTextNode("Changes apply at once. Settings stay in this browser."));
+    footer.appendChild(note);
 
-    const cancelBtn = document.createElement("button");
-    cancelBtn.textContent = "Cancel";
-    addClass(cancelBtn, "secondaryButton");
-    cancelBtn.onclick = () => this.close();
-
-    footer.appendChild(cancelBtn);
-    footer.appendChild(saveBtn);
+    const doneBtn = document.createElement("button");
+    doneBtn.type = "button";
+    doneBtn.textContent = "Done";
+    addClass(doneBtn, "primaryButton");
+    doneBtn.onclick = () => this.close();
+    footer.appendChild(doneBtn);
 
     this.modalContent.appendChild(footer);
 
     this.modalOverlay.appendChild(this.modalContent);
     document.body.appendChild(this.modalOverlay);
+    this.switchTab("general");
   }
 
   private switchTab(tabName: string) {
+    const name = SECTION_ALIASES[tabName] || tabName;
     const buttons = this.modalContent.querySelectorAll(".modalNavButton");
     const contents = this.modalContent.querySelectorAll(".modalTabContent");
+    if (!this.modalContent.querySelector(`#${name}-content`)) return;
+    this.currentPage = name;
 
     buttons.forEach((btn) => {
-      if ((btn as HTMLElement).dataset.tab === tabName) {
-        addClass(btn as HTMLElement, "active");
-      } else {
-        removeClass(btn as HTMLElement, "active");
-      }
+      const active = (btn as HTMLElement).dataset.tab === name;
+      (btn as HTMLElement).classList.toggle("active", active);
+      if (active) btn.setAttribute("aria-current", "page");
+      else btn.removeAttribute("aria-current");
     });
 
     contents.forEach((content) => {
-      if (content.id === `${tabName}-content`) {
+      if (content.id === `${name}-content`) {
         addClass(content as HTMLElement, "active");
-        // Reload editor settings if switching to editor tab and it hasn't been loaded yet
-        if (tabName === "editor" && content.innerHTML.indexOf("not yet initialized") > -1) {
-          content.innerHTML = "";
-          this.drawEditorSettings(content as HTMLElement);
-        }
         // Refresh endpoints list when switching to endpoints tab
-        if (tabName === "endpoints") {
+        if (name === "endpoints") {
           const endpointsList = content.querySelector(".endpointsTable");
           if (endpointsList) {
             this.renderEndpointsList(endpointsList as HTMLElement);
@@ -450,6 +452,19 @@ export default class TabSettingsModal {
         removeClass(content as HTMLElement, "active");
       }
     });
+    if (this.contentArea) this.contentArea.scrollTop = 0;
+  }
+
+  /** Says "Saved" in the footer for a moment, after a change was stored */
+  private saved() {
+    if (!this.savedStatus) return;
+    this.savedStatus.textContent = "Saved";
+    addClass(this.savedStatus, "visible");
+    if (this.savedTimer) clearTimeout(this.savedTimer);
+    this.savedTimer = setTimeout(() => {
+      removeClass(this.savedStatus, "visible");
+      this.savedStatus.textContent = "";
+    }, 2500);
   }
 
   private drawWorkspacesSettings(container: HTMLElement) {
@@ -469,251 +484,298 @@ export default class TabSettingsModal {
   }
 
   private drawPrefixSettings(container: HTMLElement) {
-    const section = document.createElement("div");
-    addClass(section, "settingsSection");
+    container.innerHTML = "";
+    const config = this.tab.yasgui.persistentConfig;
+    let prefixes = config.getPrefixes();
+    // Set default prefixes if none exist
+    if (!prefixes || prefixes.trim().length === 0) {
+      prefixes = `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>`;
+      config.setPrefixes(prefixes);
+    }
 
-    const label = document.createElement("label");
-    label.textContent = "Saved Prefixes";
-    addClass(label, "settingsLabel");
-
-    const help = document.createElement("div");
-    help.textContent = "Enter PREFIX declarations (one per line). These will be available for insertion into queries.";
-    addClass(help, "settingsHelp");
-
+    const group = document.createElement("section");
+    addClass(group, "settingsGroup");
+    const title = document.createElement("h3");
+    addClass(title, "settingsGroupTitle");
+    title.textContent = "Saved prefixes";
+    const lede = document.createElement("p");
+    addClass(lede, "settingsGroupLede");
+    lede.textContent =
+      "PREFIX declarations, one per line. The Prefixes button of the query bar inserts them into the query.";
     this.prefixTextarea = document.createElement("textarea");
     addClass(this.prefixTextarea, "prefixTextarea");
+    this.prefixTextarea.setAttribute("aria-label", "Saved prefixes");
+    this.prefixTextarea.spellcheck = false;
     this.prefixTextarea.placeholder =
       "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>";
     this.prefixTextarea.rows = 10;
+    this.prefixTextarea.value = prefixes;
+    this.prefixTextarea.addEventListener("input", () => {
+      if (this.prefixTimer) clearTimeout(this.prefixTimer);
+      this.prefixTimer = setTimeout(() => this.storePrefixes(), 500);
+    });
+    this.prefixTextarea.addEventListener("change", () => this.storePrefixes());
+    group.append(title, lede, this.prefixTextarea);
+    container.appendChild(group);
 
-    const checkboxContainer = document.createElement("div");
-    addClass(checkboxContainer, "checkboxContainer");
+    const list = settingsGroup(container, "Capture");
+    const id = controlId("autoCapture");
+    settingsRow(
+      list,
+      "Capture new prefixes from queries",
+      "Prefixes declared in a query you run are added to this list.",
+      [
+        settingsSwitch(id, config.getAutoCaptureEnabled(), (on) => {
+          config.setAutoCaptureEnabled(on);
+          this.saved();
+        }),
+      ],
+      id,
+    );
+  }
 
-    this.autoCaptureCheckbox = document.createElement("input");
-    this.autoCaptureCheckbox.type = "checkbox";
-    this.autoCaptureCheckbox.id = "autoCapturePrefixes";
+  /** Store the prefixes of the textarea, without duplicates */
+  private storePrefixes() {
+    if (this.prefixTimer) clearTimeout(this.prefixTimer);
+    this.prefixTimer = undefined;
+    if (!this.prefixTextarea) return;
+    const deduplicated = deduplicatePrefixes(this.prefixTextarea.value);
+    if (deduplicated === this.tab.yasgui.persistentConfig.getPrefixes()) return;
+    this.tab.yasgui.persistentConfig.setPrefixes(deduplicated);
+    this.saved();
+  }
 
-    const checkboxLabel = document.createElement("label");
-    checkboxLabel.htmlFor = "autoCapturePrefixes";
-    checkboxLabel.textContent = "Automatically capture new prefixes from query editor";
+  /** Settings → General: appearance, requests and what happens before a query runs */
+  private drawGeneralSettings(container: HTMLElement) {
+    container.innerHTML = "";
+    const yasgui = this.tab.yasgui;
+    const config = yasgui.persistentConfig;
 
-    checkboxContainer.appendChild(this.autoCaptureCheckbox);
-    checkboxContainer.appendChild(checkboxLabel);
+    // Appearance
+    const appearance = settingsGroup(container, "Appearance");
+    if (yasgui.config.showThemeToggle !== false) {
+      settingsRow(appearance, "Theme", "Follows your system unless you pick one.", [
+        settingsSegmented(
+          "Theme",
+          [
+            { value: "light", label: "Light" },
+            { value: "dark", label: "Dark" },
+            { value: "system", label: "System" },
+          ],
+          yasgui.themeManager.getPreference(),
+          (value) => {
+            if (value === "system") yasgui.themeManager.followSystem();
+            else yasgui.setTheme(value as "light" | "dark");
+            this.saved();
+          },
+        ),
+      ]);
+    }
+    const lightId = controlId("editorThemeLight");
+    const themeSelect = (mode: "light" | "dark", id: string, fallback: string) =>
+      settingsSelect(
+        id,
+        EDITOR_THEMES.filter((theme) => theme.mode === mode).map(({ value, label }) => ({ value, label })),
+        config.getCodeMirrorTheme(mode) || fallback,
+        (value) => {
+          config.setCodeMirrorTheme(mode, value);
+          yasgui.themeManager.refresh();
+          this.saved();
+        },
+        `Editor theme in ${mode} mode`,
+      );
+    settingsRow(
+      appearance,
+      "Editor theme",
+      "Syntax colours in light mode and in dark mode.",
+      [themeSelect("light", lightId, "default"), themeSelect("dark", controlId("editorThemeDark"), "github-dark")],
+      lightId,
+    );
 
-    section.appendChild(label);
-    section.appendChild(help);
-    section.appendChild(this.prefixTextarea);
-    section.appendChild(checkboxContainer);
+    // Requests, shared by all tabs
+    const requests = settingsGroup(container, "Requests", "These apply to every tab.");
+    const current = this.tab.getRequestConfig();
+    const stored = config.getRequestSettings() || {};
+    const method = stored.method || (typeof current.method === "string" ? current.method : "POST");
+    settingsRow(requests, "Request method", "POST works with every endpoint and with long queries.", [
+      settingsSegmented(
+        "Request method",
+        [
+          { value: "POST", label: "POST" },
+          { value: "GET", label: "GET" },
+        ],
+        method,
+        (value) => this.applyRequestSettings({ method: value as "GET" | "POST" }),
+      ),
+    ]);
+    const selectId = controlId("acceptSelect");
+    settingsRow(
+      requests,
+      "Results format",
+      "Accept header for SELECT and ASK queries.",
+      [
+        settingsSelect(
+          selectId,
+          AcceptOptionsMap.map(({ key, value }) => ({ value, label: key })),
+          stored.acceptHeaderSelect ||
+            (typeof current.acceptHeaderSelect === "string" ? current.acceptHeaderSelect : undefined),
+          (value) => this.applyRequestSettings({ acceptHeaderSelect: value }),
+        ),
+      ],
+      selectId,
+    );
+    const graphId = controlId("acceptGraph");
+    settingsRow(
+      requests,
+      "Graph format",
+      "Accept header for CONSTRUCT and DESCRIBE queries.",
+      [
+        settingsSelect(
+          graphId,
+          AcceptHeaderGraphMap.map(({ key, value }) => ({ value, label: key })),
+          stored.acceptHeaderGraph ||
+            (typeof current.acceptHeaderGraph === "string" ? current.acceptHeaderGraph : undefined),
+          (value) => this.applyRequestSettings({ acceptHeaderGraph: value }),
+        ),
+      ],
+      graphId,
+    );
+    const headers = stored.headers || (typeof current.headers === "object" && current.headers ? current.headers : {});
+    this.drawHeadersRow(requests, headers);
 
-    container.appendChild(section);
+    // Before running a query
+    const yasqe = this.tab.getYasqe();
+    const run = settingsGroup(container, "Before running a query");
+    const editorSettings = config.getEditorSettings();
+    if (yasqe) {
+      const formatId = controlId("autoformat");
+      settingsRow(
+        run,
+        "Format the query",
+        "With the formatter chosen under Editor.",
+        [
+          settingsSwitch(
+            formatId,
+            editorSettings.autoformatOnQuery ?? yasqe.persistentConfig?.autoformatOnQuery !== false,
+            (on) => this.applyEditorSettings({ autoformatOnQuery: on }),
+          ),
+        ],
+        formatId,
+      );
+      const constructId = controlId("constructCheck");
+      settingsRow(
+        run,
+        "Check CONSTRUCT variables",
+        "Warn about template variables that the WHERE clause never binds.",
+        [
+          settingsSwitch(
+            constructId,
+            editorSettings.checkConstructVariables ?? yasqe.config.checkConstructVariables ?? true,
+            (on) => this.applyEditorSettings({ checkConstructVariables: on }),
+          ),
+        ],
+        constructId,
+      );
+    }
+    // Not shown when the embedding page switched the feature off
+    if (yasgui.config.iriHover !== false) {
+      const hoverId = controlId("iriHover");
+      settingsRow(
+        run,
+        "IRI information on hover",
+        "Label, description and type of an IRI or prefixed name, from the endpoint.",
+        [
+          settingsSwitch(hoverId, config.getIriHoverEnabled(), (on) => {
+            config.setIriHoverEnabled(on);
+            this.saved();
+          }),
+        ],
+        hoverId,
+      );
+    }
+    if (!run.children.length) run.parentElement?.remove();
+  }
+
+  /** The custom HTTP headers: a summary in the row, and an editor that opens under it */
+  private drawHeadersRow(list: HTMLElement, headers: { [name: string]: string }) {
+    const summary = (current: { [name: string]: string }) => {
+      const names = Object.keys(current);
+      if (!names.length) return "None. Sent with every query, e.g. an API key of the endpoint.";
+      return names.length === 1 ? `${names[0]}: ${current[names[0]]}` : `${names.join(", ")}`;
+    };
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    addClass(toggle, "secondaryButton");
+    toggle.textContent = "Edit headers";
+    toggle.setAttribute("aria-expanded", "false");
+    const row = settingsRow(list, "Custom HTTP headers", summary(headers), [toggle]);
+    const description = row.querySelector(".settingsRowDescription") as HTMLElement;
+
+    const editor = document.createElement("div");
+    addClass(editor, "keyValueContainer", "settingsRowEditor");
+    editor.hidden = true;
+    const store = () => {
+      const next: { [name: string]: string } = {};
+      editor.querySelectorAll(".keyValueRow").forEach((pair) => {
+        const name = (pair.querySelector(".keyInput") as HTMLInputElement).value.trim();
+        const value = (pair.querySelector(".valueInput") as HTMLInputElement).value;
+        if (name) next[name] = value;
+      });
+      description.textContent = summary(next);
+      this.applyRequestSettings({ headers: next });
+    };
+    const pairs = Object.entries(headers).map(([name, value]) => ({ name, value }));
+    pairs.forEach((pair, index) => this.createKeyValueRow(editor, pair, index, store));
+    this.createKeyValueRow(editor, { name: "", value: "" }, pairs.length, store);
+    row.appendChild(editor);
+    toggle.onclick = () => {
+      editor.hidden = !editor.hidden;
+      toggle.textContent = editor.hidden ? "Edit headers" : "Close";
+      toggle.setAttribute("aria-expanded", String(!editor.hidden));
+      if (!editor.hidden) (editor.querySelector(".keyInput") as HTMLInputElement | null)?.focus();
+    };
+  }
+
+  /** Store request settings and apply them to every open tab; new tabs get them too */
+  private applyRequestSettings(settings: RequestSettings) {
+    this.tab.yasgui.persistentConfig.setRequestSettings(settings);
+    for (const tab of this.tab.yasgui.getTabs()) tab.setRequestConfig(settings);
+    this.saved();
+  }
+
+  /** Store editor settings and apply them to the editor of every open tab */
+  private applyEditorSettings(settings: EditorSettings) {
+    this.tab.yasgui.persistentConfig.setEditorSettings(settings);
+    for (const tab of this.tab.yasgui.getTabs()) tab.applyEditorSettings();
+    this.saved();
   }
 
   private drawEditorSettings(container: HTMLElement) {
+    container.innerHTML = "";
     const yasqe = this.tab.getYasqe();
-    if (!yasqe) {
-      const notice = document.createElement("div");
-      notice.textContent = "Query editor is not yet initialized.";
-      addClass(notice, "settingsHelp");
-      container.appendChild(notice);
-      return;
-    }
-
-    // Available editor themes. Each theme is a `cm-s-<name>` class applied to the
-    // CodeMirror 6 editor root; the styles for these ship with yasgui.
-    const themes = [
-      { value: "default", label: "Default (Light)" },
-      { value: "eclipse", label: "Eclipse (Light)" },
-      { value: "idea", label: "IntelliJ IDEA (Light)" },
-      { value: "solarized-light", label: "Solarized Light" },
-      { value: "github-dark", label: "GitHub Dark Default" },
-      { value: "monokai", label: "Monokai (Dark)" },
-      { value: "dracula", label: "Dracula (Dark)" },
-      { value: "material-darker", label: "Material Darker (Dark)" },
-    ];
-
-    // Light Mode Theme Section
-    const themeLightSection = document.createElement("div");
-    addClass(themeLightSection, "settingsSection");
-
-    const themeLightLabel = document.createElement("label");
-    themeLightLabel.textContent = "Editor Theme (Light Mode)";
-    addClass(themeLightLabel, "settingsLabel");
-
-    const themeLightHelp = document.createElement("div");
-    themeLightHelp.textContent = "Syntax highlighting theme when using light mode.";
-    addClass(themeLightHelp, "settingsHelp");
-
-    const themeLightSelect = document.createElement("select");
-    themeLightSelect.id = "codeMirrorThemeLightSelect";
-    addClass(themeLightSelect, "settingsSelect");
-
-    themes.forEach((theme) => {
-      const option = document.createElement("option");
-      option.value = theme.value;
-      option.textContent = theme.label;
-      themeLightSelect.appendChild(option);
-    });
-
-    const storedLightTheme = this.tab.yasgui.persistentConfig.getCodeMirrorTheme("light");
-    themeLightSelect.value = storedLightTheme || "default";
-
-    themeLightSection.appendChild(themeLightLabel);
-    themeLightSection.appendChild(themeLightHelp);
-    themeLightSection.appendChild(themeLightSelect);
-    container.appendChild(themeLightSection);
-
-    // Dark Mode Theme Section
-    const themeDarkSection = document.createElement("div");
-    addClass(themeDarkSection, "settingsSection");
-
-    const themeDarkLabel = document.createElement("label");
-    themeDarkLabel.textContent = "Editor Theme (Dark Mode)";
-    addClass(themeDarkLabel, "settingsLabel");
-
-    const themeDarkHelp = document.createElement("div");
-    themeDarkHelp.textContent = "Syntax highlighting theme when using dark mode.";
-    addClass(themeDarkHelp, "settingsHelp");
-
-    const themeDarkSelect = document.createElement("select");
-    themeDarkSelect.id = "codeMirrorThemeDarkSelect";
-    addClass(themeDarkSelect, "settingsSelect");
-
-    themes.forEach((theme) => {
-      const option = document.createElement("option");
-      option.value = theme.value;
-      option.textContent = theme.label;
-      themeDarkSelect.appendChild(option);
-    });
-
-    const storedDarkTheme = this.tab.yasgui.persistentConfig.getCodeMirrorTheme("dark");
-    themeDarkSelect.value = storedDarkTheme || "github-dark";
-
-    themeDarkSection.appendChild(themeDarkLabel);
-    themeDarkSection.appendChild(themeDarkHelp);
-    themeDarkSection.appendChild(themeDarkSelect);
-    container.appendChild(themeDarkSection);
-
-    // Formatter Type Section
-    const formatterSection = document.createElement("div");
-    addClass(formatterSection, "settingsSection");
-
-    const formatterLabel = document.createElement("label");
-    formatterLabel.textContent = "Query Formatter";
-    addClass(formatterLabel, "settingsLabel");
-
-    const formatterHelp = document.createElement("div");
-    formatterHelp.textContent = "Choose which formatter to use when formatting SPARQL queries (Shift+Ctrl+F).";
-    addClass(formatterHelp, "settingsHelp");
-
-    const formatterSelect = document.createElement("select");
-    formatterSelect.id = "formatterTypeSelect";
-    addClass(formatterSelect, "settingsSelect");
-
-    const sparqlFormatterOption = document.createElement("option");
-    sparqlFormatterOption.value = "sparql-formatter";
-    sparqlFormatterOption.textContent = "SPARQL 1.2 Formatter";
-    formatterSelect.appendChild(sparqlFormatterOption);
-
-    const legacyOption = document.createElement("option");
-    legacyOption.value = "legacy";
-    legacyOption.textContent = "Legacy Formatter (built-in)";
-    formatterSelect.appendChild(legacyOption);
-
-    const currentFormatter = yasqe.persistentConfig?.formatterType || "sparql-formatter";
-    formatterSelect.value = currentFormatter;
-
-    formatterSection.appendChild(formatterLabel);
-    formatterSection.appendChild(formatterHelp);
-    formatterSection.appendChild(formatterSelect);
-    container.appendChild(formatterSection);
-
-    // Auto-format on Query Section
-    const autoformatSection = document.createElement("div");
-    addClass(autoformatSection, "settingsSection");
-
-    const autoformatCheckboxContainer = document.createElement("div");
-    addClass(autoformatCheckboxContainer, "checkboxContainer");
-
-    const autoformatCheckbox = document.createElement("input");
-    autoformatCheckbox.type = "checkbox";
-    autoformatCheckbox.id = "autoformatOnQuery";
-    autoformatCheckbox.checked = yasqe.persistentConfig?.autoformatOnQuery || true;
-
-    const autoformatLabel = document.createElement("label");
-    autoformatLabel.htmlFor = "autoformatOnQuery";
-    autoformatLabel.textContent = "Auto-format query before execution";
-
-    const autoformatHelp = document.createElement("div");
-    autoformatHelp.textContent = "Automatically format the query using the selected formatter before executing it.";
-    addClass(autoformatHelp, "settingsHelp");
-    autoformatHelp.style.marginTop = "5px";
-
-    autoformatCheckboxContainer.appendChild(autoformatCheckbox);
-    autoformatCheckboxContainer.appendChild(autoformatLabel);
-
-    autoformatSection.appendChild(autoformatCheckboxContainer);
-    autoformatSection.appendChild(autoformatHelp);
-    container.appendChild(autoformatSection);
-
-    // CONSTRUCT Variable Validation Section
-    const constructValidationSection = document.createElement("div");
-    addClass(constructValidationSection, "settingsSection");
-
-    const constructValidationCheckboxContainer = document.createElement("div");
-    addClass(constructValidationCheckboxContainer, "checkboxContainer");
-
-    const constructValidationCheckbox = document.createElement("input");
-    constructValidationCheckbox.type = "checkbox";
-    constructValidationCheckbox.id = "checkConstructVariables";
-    constructValidationCheckbox.checked = yasqe.config.checkConstructVariables ?? true;
-
-    const constructValidationLabel = document.createElement("label");
-    constructValidationLabel.htmlFor = "checkConstructVariables";
-    constructValidationLabel.textContent = "Validate CONSTRUCT query variables";
-
-    const constructValidationHelp = document.createElement("div");
-    constructValidationHelp.textContent =
-      "Show warnings for variables used in CONSTRUCT template but not defined in WHERE clause.";
-    addClass(constructValidationHelp, "settingsHelp");
-    constructValidationHelp.style.marginTop = "5px";
-
-    constructValidationCheckboxContainer.appendChild(constructValidationCheckbox);
-    constructValidationCheckboxContainer.appendChild(constructValidationLabel);
-
-    constructValidationSection.appendChild(constructValidationCheckboxContainer);
-    constructValidationSection.appendChild(constructValidationHelp);
-    container.appendChild(constructValidationSection);
-
-    // IRI hover info Section (not shown when the embedding page switched the feature off)
-    if (this.tab.yasgui.config.iriHover !== false) {
-      const iriHoverSection = document.createElement("div");
-      addClass(iriHoverSection, "settingsSection");
-
-      const iriHoverCheckboxContainer = document.createElement("div");
-      addClass(iriHoverCheckboxContainer, "checkboxContainer");
-
-      const iriHoverCheckbox = document.createElement("input");
-      iriHoverCheckbox.type = "checkbox";
-      iriHoverCheckbox.id = "iriHoverEnabled";
-      iriHoverCheckbox.checked = this.tab.yasgui.persistentConfig.getIriHoverEnabled();
-
-      const iriHoverLabel = document.createElement("label");
-      iriHoverLabel.htmlFor = "iriHoverEnabled";
-      iriHoverLabel.textContent = "Show IRI information on hover";
-
-      const iriHoverHelp = document.createElement("div");
-      iriHoverHelp.textContent =
-        "When hovering an IRI or prefixed name, show its label, description and type, fetched from the endpoint.";
-      addClass(iriHoverHelp, "settingsHelp");
-      iriHoverHelp.style.marginTop = "5px";
-
-      iriHoverCheckboxContainer.appendChild(iriHoverCheckbox);
-      iriHoverCheckboxContainer.appendChild(iriHoverLabel);
-
-      iriHoverSection.appendChild(iriHoverCheckboxContainer);
-      iriHoverSection.appendChild(iriHoverHelp);
-      container.appendChild(iriHoverSection);
-    }
+    const list = settingsGroup(container, "Formatting");
+    const id = controlId("formatter");
+    const current =
+      this.tab.yasgui.persistentConfig.getEditorSettings().formatterType ||
+      yasqe?.persistentConfig?.formatterType ||
+      "sparql-formatter";
+    settingsRow(
+      list,
+      "Query formatter",
+      "Used by Format (Shift+Ctrl+F) and before running a query.",
+      [
+        settingsSelect(
+          id,
+          [
+            { value: "sparql-formatter", label: "SPARQL 1.2 formatter" },
+            { value: "legacy", label: "Legacy formatter (built-in)" },
+          ],
+          current,
+          (value) => this.applyEditorSettings({ formatterType: value as "sparql-formatter" | "legacy" }),
+        ),
+      ],
+      id,
+    );
   }
 
   private drawEndpointsSettings(container: HTMLElement) {
@@ -1495,78 +1557,29 @@ export default class TabSettingsModal {
     document.body.appendChild(authModalOverlay);
   }
 
-  private drawRequestSettings(container: HTMLElement) {
-    // This is a simplified version - you can expand based on TabPanel.ts
-    const reqConfig = this.tab.getRequestConfig();
-
-    // Request Method section
-    const methodSection = this.createSection("Request Method");
-    const methodSelect = this.createSelect(
-      ["GET", "POST"],
-      typeof reqConfig.method === "function" ? "POST" : reqConfig.method,
-    );
-    methodSelect.setAttribute("data-config", "method");
-    methodSection.appendChild(methodSelect);
-    container.appendChild(methodSection);
-
-    // Accept Header sections
-    const acceptSection = this.createSection("Accept Header (SELECT/ASK)");
-    const acceptSelect = this.createOptionsSelect(AcceptOptionsMap, <string>reqConfig.acceptHeaderSelect);
-    acceptSelect.setAttribute("data-config", "acceptHeaderSelect");
-    acceptSection.appendChild(acceptSelect);
-    container.appendChild(acceptSection);
-
-    const acceptGraphSection = this.createSection("Accept Header (CONSTRUCT/DESCRIBE)");
-    const acceptGraphSelect = this.createOptionsSelect(AcceptHeaderGraphMap, <string>reqConfig.acceptHeaderGraph);
-    acceptGraphSelect.setAttribute("data-config", "acceptHeaderGraph");
-    acceptGraphSection.appendChild(acceptGraphSelect);
-    container.appendChild(acceptGraphSection);
-
-    // Custom Headers section
-    const headersSection = this.createSection("Custom HTTP Headers");
-    const headersContainer = document.createElement("div");
-    addClass(headersContainer, "keyValueContainer");
-    headersContainer.setAttribute("data-config", "headers");
-
-    // Get existing headers
-    const existingHeaders = typeof reqConfig.headers === "function" ? {} : reqConfig.headers || {};
-    const headerPairs: KeyValuePair[] = Object.entries(existingHeaders).map(([name, value]) => ({
-      name,
-      value,
-    }));
-
-    // Draw existing headers
-    headerPairs.forEach((pair, index) => {
-      this.createKeyValueRow(headersContainer, pair, index);
-    });
-
-    // Add empty row for adding new headers
-    this.createKeyValueRow(headersContainer, { name: "", value: "" }, headerPairs.length);
-
-    headersSection.appendChild(headersContainer);
-    container.appendChild(headersSection);
-  }
-
-  private createKeyValueRow(container: HTMLElement, pair: KeyValuePair, index: number) {
+  private createKeyValueRow(container: HTMLElement, pair: KeyValuePair, index: number, onChange: () => void) {
     const row = document.createElement("div");
     addClass(row, "keyValueRow");
 
     const nameInput = document.createElement("input");
     nameInput.type = "text";
-    nameInput.placeholder = "Header Name";
+    nameInput.placeholder = "Header name";
+    nameInput.setAttribute("aria-label", "Header name");
     nameInput.value = pair.name;
     addClass(nameInput, "keyInput");
 
     const valueInput = document.createElement("input");
     valueInput.type = "text";
-    valueInput.placeholder = "Header Value";
+    valueInput.placeholder = "Value";
+    valueInput.setAttribute("aria-label", "Header value");
     valueInput.value = pair.value;
     addClass(valueInput, "valueInput");
 
     const removeButton = document.createElement("button");
     removeButton.type = "button";
-    removeButton.innerHTML = '<i class="fas fa-times"></i>';
+    removeButton.innerHTML = icon("x", 14);
     removeButton.title = "Remove header";
+    removeButton.setAttribute("aria-label", "Remove header");
     addClass(removeButton, "removeButton");
 
     // Auto-add new empty row when typing in the last row
@@ -1575,21 +1588,23 @@ export default class TabSettingsModal {
       const isLastRow = row === allRows[allRows.length - 1];
 
       if (isLastRow && (nameInput.value.trim() || valueInput.value.trim())) {
-        // Add a new empty row
-        this.createKeyValueRow(container, { name: "", value: "" }, allRows.length);
+        this.createKeyValueRow(container, { name: "", value: "" }, allRows.length, onChange);
       }
     };
 
     nameInput.addEventListener("input", onInput);
     valueInput.addEventListener("input", onInput);
+    nameInput.addEventListener("change", onChange);
+    valueInput.addEventListener("change", onChange);
 
     removeButton.onclick = () => {
       row.remove();
       // Ensure there's always at least one empty row
       const remainingRows = container.querySelectorAll(".keyValueRow");
       if (remainingRows.length === 0) {
-        this.createKeyValueRow(container, { name: "", value: "" }, 0);
+        this.createKeyValueRow(container, { name: "", value: "" }, 0, onChange);
       }
+      onChange();
     };
 
     row.appendChild(nameInput);
@@ -1598,54 +1613,23 @@ export default class TabSettingsModal {
     container.appendChild(row);
   }
 
-  private createSection(title: string): HTMLElement {
-    const section = document.createElement("div");
-    addClass(section, "settingsSection");
-    const label = document.createElement("div");
-    addClass(label, "settingsLabel");
-    label.textContent = title;
-    section.appendChild(label);
-    return section;
-  }
-
-  private createSelect(options: string[], selected?: string): HTMLSelectElement {
-    const select = document.createElement("select");
-    addClass(select, "settingsSelect");
-    options.forEach((opt) => {
-      const option = document.createElement("option");
-      option.value = opt;
-      option.textContent = opt;
-      if (opt === selected) option.selected = true;
-      select.appendChild(option);
-    });
-    return select;
-  }
-
-  private createOptionsSelect(options: { key: string; value: string }[], selected?: string): HTMLSelectElement {
-    const select = document.createElement("select");
-    addClass(select, "settingsSelect");
-    options.forEach((opt) => {
-      const option = document.createElement("option");
-      option.value = opt.value;
-      option.textContent = opt.key;
-      if (opt.value === selected) option.selected = true;
-      select.appendChild(option);
-    });
-    return select;
-  }
-
   /**
    * Open the settings modal, optionally on a section:
-   * "request", "endpoints", "workspaces", "prefix", "editor", "ai", "importexport", "shortcuts" or "about"
+   * "general" (or "request"), "endpoints", "workspaces", "prefix", "editor", "ai", "importexport", "shortcuts"
+   * or "about"
    */
   public open(section?: string) {
-    if (section) this.switchTab(section);
-    this.loadSettings();
-    // Reload editor settings in case yasqe wasn't available during init
-    const editorContent = this.modalContent.querySelector("#editor-content");
-    if (editorContent && editorContent.innerHTML === "") {
-      this.drawEditorSettings(editorContent as HTMLElement);
+    // Settings may have changed in another tab, so the pages that show them are drawn again
+    for (const [id, draw] of [
+      ["general", (c: HTMLElement) => this.drawGeneralSettings(c)],
+      ["prefix", (c: HTMLElement) => this.drawPrefixSettings(c)],
+      ["editor", (c: HTMLElement) => this.drawEditorSettings(c)],
+    ] as Array<[string, (c: HTMLElement) => void]>) {
+      const content = this.modalContent.querySelector(`#${id}-content`);
+      if (content) draw(content as HTMLElement);
     }
+    this.aiSettingsForm?.load();
+    this.switchTab(section || this.currentPage);
     // Refresh endpoints list in case new endpoints were added while modal was closed
     const endpointsContent = this.modalContent.querySelector("#endpoints-content");
     if (endpointsContent) {
@@ -1654,132 +1638,23 @@ export default class TabSettingsModal {
         this.renderEndpointsList(endpointsList as HTMLElement);
       }
     }
+    if (this.savedStatus) {
+      removeClass(this.savedStatus, "visible");
+      this.savedStatus.textContent = "";
+    }
     addClass(this.modalOverlay, "open");
     document.addEventListener("keydown", this.handleKeyDown);
+    this.modalContent.focus();
   }
 
   public close() {
+    if (!this.modalOverlay.classList.contains("open")) return;
+    // Changes apply at once; prefixes still being typed are stored now
+    this.storePrefixes();
     this.mouseDownOnOverlay = false;
     removeClass(this.modalOverlay, "open");
     document.removeEventListener("keydown", this.handleKeyDown);
-  }
-
-  private loadSettings() {
-    // Load prefix settings
-    let prefixes = this.tab.yasgui.persistentConfig.getPrefixes();
-    const autoCapture = this.tab.yasgui.persistentConfig.getAutoCaptureEnabled();
-
-    // Set default prefixes if none exist
-    if (!prefixes || prefixes.trim().length === 0) {
-      prefixes = `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>`;
-      this.tab.yasgui.persistentConfig.setPrefixes(prefixes);
-    }
-
-    this.prefixTextarea.value = prefixes;
-    this.autoCaptureCheckbox.checked = autoCapture;
-    this.aiSettingsForm?.load();
-  }
-
-  private save() {
-    // Save prefix settings
-    const prefixText = this.prefixTextarea.value;
-    const autoCapture = this.autoCaptureCheckbox.checked;
-
-    // Parse and deduplicate prefixes
-    const deduplicated = deduplicatePrefixes(prefixText);
-    this.tab.yasgui.persistentConfig.setPrefixes(deduplicated);
-    this.tab.yasgui.persistentConfig.setAutoCaptureEnabled(autoCapture);
-    this.aiSettingsForm?.save();
-
-    // Save editor settings
-    const yasqe = this.tab.getYasqe();
-    if (yasqe && yasqe.persistentConfig) {
-      const codeMirrorThemeLightSelect = document.getElementById("codeMirrorThemeLightSelect") as HTMLSelectElement;
-      const codeMirrorThemeDarkSelect = document.getElementById("codeMirrorThemeDarkSelect") as HTMLSelectElement;
-      const formatterSelect = document.getElementById("formatterTypeSelect") as HTMLSelectElement;
-      const autoformatCheckbox = document.getElementById("autoformatOnQuery") as HTMLInputElement;
-      const constructValidationCheckbox = document.getElementById("checkConstructVariables") as HTMLInputElement;
-      const iriHoverCheckbox = document.getElementById("iriHoverEnabled") as HTMLInputElement | null;
-
-      // Save CodeMirror themes for both light and dark modes
-      if (codeMirrorThemeLightSelect) {
-        const selectedTheme = codeMirrorThemeLightSelect.value;
-        this.tab.yasgui.persistentConfig.setCodeMirrorTheme("light", selectedTheme);
-      }
-
-      if (codeMirrorThemeDarkSelect) {
-        const selectedTheme = codeMirrorThemeDarkSelect.value;
-        this.tab.yasgui.persistentConfig.setCodeMirrorTheme("dark", selectedTheme);
-      }
-
-      // Apply the appropriate theme based on current mode
-      const currentMode = this.tab.yasgui.getTheme();
-      const themeToApply =
-        currentMode === "dark"
-          ? codeMirrorThemeDarkSelect?.value || "github-dark"
-          : codeMirrorThemeLightSelect?.value || "default";
-
-      // Apply theme to all CodeMirror instances
-      const cmElements = document.querySelectorAll(".CodeMirror");
-      cmElements.forEach((element) => {
-        const cm = (element as any).CodeMirror;
-        if (cm && cm.setOption) {
-          cm.setOption("theme", themeToApply);
-        }
-      });
-
-      if (formatterSelect) {
-        yasqe.persistentConfig.formatterType = formatterSelect.value as "sparql-formatter" | "legacy";
-      }
-      if (autoformatCheckbox) {
-        yasqe.persistentConfig.autoformatOnQuery = autoformatCheckbox.checked;
-      }
-      if (constructValidationCheckbox) {
-        yasqe.setCheckConstructVariables(constructValidationCheckbox.checked);
-      }
-      if (iriHoverCheckbox) {
-        this.tab.yasgui.persistentConfig.setIriHoverEnabled(iriHoverCheckbox.checked);
-      }
-      yasqe.saveQuery();
-    }
-
-    // Save request settings
-    const requestContent = this.modalContent.querySelector("#request-content");
-    if (requestContent) {
-      const selects = requestContent.querySelectorAll("select[data-config]");
-      const updates: any = {};
-      selects.forEach((select) => {
-        const config = (select as HTMLSelectElement).getAttribute("data-config");
-        if (config) {
-          updates[config] = (select as HTMLSelectElement).value;
-        }
-      });
-
-      // Save custom headers
-      const headersContainer = requestContent.querySelector(".keyValueContainer[data-config='headers']");
-      if (headersContainer) {
-        const headers: { [key: string]: string } = {};
-        const rows = headersContainer.querySelectorAll(".keyValueRow");
-        rows.forEach((row) => {
-          const nameInput = row.querySelector(".keyInput") as HTMLInputElement;
-          const valueInput = row.querySelector(".valueInput") as HTMLInputElement;
-          if (nameInput && valueInput && nameInput.value.trim()) {
-            headers[nameInput.value.trim()] = valueInput.value;
-          }
-        });
-        updates.headers = headers;
-      }
-
-      this.tab.setRequestConfig(updates);
-    }
-
-    // Note: Authentication is now handled per-endpoint in the Endpoints tab,
-    // not per-tab anymore. No need to save it here.
-
-    // Refresh endpoint buttons to show any changes
     this.tab.refreshEndpointButtons();
-
-    this.close();
   }
 
   /** Insert the saved prefixes (Settings > Prefixes) at the top of the query */

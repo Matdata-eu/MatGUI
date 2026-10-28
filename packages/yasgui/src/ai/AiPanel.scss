@@ -465,95 +465,622 @@
   }
 }
 
-// Settings. The colour is set here because the form's labels and choices have no class of the settings modal.
+// Settings → AI (AiSettingsForm.ts). The colour is set here because the page sits outside .yasgui.
 .yasgui-aiSettings {
-  color: var(--yasgui-text-primary, #000);
+  color: var(--yasgui-ink, #1c2633);
 
-  &__choices {
-    display: flex;
-    flex-direction: column;
+  &__cards {
+    display: grid;
     gap: 8px;
-  }
-
-  &__choice {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border: 1px solid var(--yasgui-border-color, #dfe5ec);
-    border-radius: var(--yasgui-radius-md, 10px);
-    background: var(--yasgui-bg-secondary, #fff);
-    cursor: pointer;
-
-    &:has(input:checked) {
-      border-color: var(--yasgui-ai-accent);
-      background: var(--yasgui-ai-accent-soft);
-    }
-
-    input {
-      margin: 0;
-    }
-
-    strong {
-      display: block;
-      font-weight: 600;
-    }
-  }
-
-  &__choiceText {
-    flex: 1;
-    min-width: 0;
-  }
-
-  &__choiceActions {
-    display: flex;
-    gap: 6px;
-  }
-
-  &__add {
     margin-top: 10px;
   }
 
-  &__choiceHelp {
-    display: block;
-    font-size: 12px;
-    color: var(--yasgui-text-secondary, #666);
+  // A service: a radio for the default, a logo, the name with badges and a line about it, and its actions
+  &__card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 14px 0 0;
+    border: 1px solid var(--yasgui-line, #dfe5ec);
+    border-radius: 12px;
+    background: var(--yasgui-surface-raised, #fff);
+
+    &.default {
+      border-color: color-mix(in srgb, var(--yasgui-ai-accent) 45%, transparent);
+      background: var(--yasgui-ai-accent-soft);
+    }
+
+    &:has(input:focus-visible) {
+      outline: 2px solid var(--yasgui-focus, #044a8c);
+      outline-offset: 2px;
+    }
   }
 
-  &__own[hidden] {
-    display: none;
+  &__cardMain {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0 11px 14px;
+    cursor: pointer;
+  }
+
+  &__radio {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--yasgui-ai-accent);
+    cursor: pointer;
+  }
+
+  &__logo {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-weight: 650;
+    font-size: 12px;
+  }
+
+  &__cardText {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  &__cardTitle {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+
+    strong {
+      font-weight: 600;
+    }
+  }
+
+  &__cardMeta {
+    font-size: 12.5px;
+    color: var(--yasgui-ink-subtle, #6a7380);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__cardActions {
+    flex: none;
+    display: flex;
+    gap: 12px;
+  }
+
+  &__linkButton {
+    border: 0;
+    background: none;
+    padding: 2px 0;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--yasgui-ink-muted, #56606c);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--yasgui-ink, #1c2633);
+      text-decoration: underline;
+    }
+
+    &.danger {
+      color: var(--yasgui-danger, #b42318);
+    }
+
+    &[hidden] {
+      display: none;
+    }
+  }
+
+  &__forget {
+    justify-self: start;
+  }
+
+  &__add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    border: 1px dashed var(--yasgui-line-grip, #c9d2dc);
+    border-radius: 12px;
+    background: none;
+    color: var(--yasgui-ink-muted, #56606c);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--yasgui-ink, #1c2633);
+      border-color: var(--yasgui-line-strong, #808893);
+    }
+  }
+
+  // The form of one service
+  &__crumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 14px 0 10px;
+    font-size: 12.5px;
+    color: var(--yasgui-ink-subtle, #6a7380);
+  }
+
+  &__back {
+    border: 0;
+    background: none;
+    padding: 0;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--yasgui-brand, #0563bb);
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__form {
+    display: grid;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1px solid color-mix(in srgb, var(--yasgui-ai-accent) 40%, transparent);
+    border-radius: 12px;
+    background: var(--yasgui-surface-raised, #fff);
+  }
+
+  &__formTitle {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    strong {
+      font-weight: 600;
+    }
+
+    span {
+      font-size: 12.5px;
+      color: var(--yasgui-ink-subtle, #6a7380);
+    }
+  }
+
+  &__pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+    }
   }
 
   &__field {
-    margin: 10px 0;
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+  }
 
-    label {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 4px;
+  &__fieldLabel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 20px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--yasgui-ink-muted, #56606c);
+
+    > :nth-child(2):not(.yasgui-pill),
+    > .yasgui-aiSettings__linkButton,
+    > .yasgui-aiSettings__keyLink {
+      margin-left: auto;
     }
+  }
+
+  &__aside {
+    font-weight: 400;
+    color: var(--yasgui-ink-subtle, #6a7380);
+  }
+
+  &__keyLink {
+    color: var(--yasgui-brand, #0563bb);
+    font-weight: 500;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__hint {
+    font-size: 12px;
+    color: var(--yasgui-ink-subtle, #6a7380);
   }
 
   &__input {
     box-sizing: border-box;
     width: 100%;
-    padding: 6px 8px;
-    border: 1px solid var(--yasgui-input-border, #808893);
-    border-radius: var(--yasgui-radius-sm, 6px);
+    min-height: 34px;
+    padding: 6px 10px;
+    border: 1px solid var(--yasgui-line, #dfe5ec);
+    border-radius: var(--yasgui-radius-button, 8px);
     background: var(--yasgui-surface-raised, #fff);
     color: var(--yasgui-ink, #1c2633);
     font: inherit;
+
+    &:focus {
+      outline: none;
+      border-color: var(--yasgui-brand, #0563bb);
+      box-shadow: 0 0 0 3px var(--yasgui-brand-soft, #e3eefa);
+    }
   }
 
-  &__row {
+  &__baseUrl,
+  &__keyBox &__input {
+    font-family: var(--yasgui-font-mono, monospace);
+    font-size: 12.5px;
+  }
+
+  &__keyBox {
+    position: relative;
+
+    .yasgui-aiSettings__input {
+      padding-right: 60px;
+    }
+  }
+
+  &__eye {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    border: 0;
+    background: none;
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--yasgui-ink-muted, #56606c);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--yasgui-surface-sunken, #edf1f6);
+    }
+  }
+
+  &__modelRow {
     display: flex;
-    flex-wrap: wrap;
+    gap: 8px;
+
+    .yasgui-combo {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  &__status {
+    display: flex;
     align-items: center;
     gap: 8px;
-    margin: 6px 0;
+    font-size: 12.5px;
+    color: var(--yasgui-ink-muted, #56606c);
+
+    &:empty {
+      display: none;
+    }
+
+    &.ok,
+    &.warn,
+    &.error {
+      &::before {
+        content: "";
+        flex: none;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+    }
+
+    &.ok {
+      color: var(--yasgui-success, #067647);
+    }
+
+    &.warn {
+      color: var(--yasgui-highlight-ink, #6e4d00);
+    }
+
+    &.error {
+      color: var(--yasgui-danger, #b42318);
+    }
   }
 
-  &__testResult.ok {
+  &__notice {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--yasgui-highlight, #f2b300) 14%, transparent);
+    font-size: 12.5px;
+    line-height: 1.5;
+
+    &[hidden] {
+      display: none;
+    }
+  }
+
+  &__formFooter {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 2px;
+  }
+
+  &__defaultSwitch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: auto;
+    font-size: 12.5px;
+    color: var(--yasgui-ink-muted, #56606c);
+    cursor: pointer;
+  }
+}
+
+[data-theme="dark"] .yasgui-aiSettings {
+  &__card:not(.default),
+  &__form {
+    background: var(--yasgui-surface-sunken, #1c222b);
+  }
+
+  &__input {
+    background: var(--yasgui-surface-raised, #141920);
+  }
+}
+
+// Badges and pills of the settings
+.yasgui-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+
+  &--default {
+    color: var(--yasgui-ai-accent);
+    background: var(--yasgui-ai-accent-soft);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--yasgui-ai-accent) 40%, transparent);
+  }
+
+  &--site {
+    color: var(--yasgui-brand, #0563bb);
+    background: var(--yasgui-brand-soft, #e3eefa);
+  }
+
+  &--region {
     color: var(--yasgui-success, #067647);
+    background: color-mix(in srgb, var(--yasgui-success, #067647) 12%, transparent);
+  }
+}
+
+.yasgui-pill {
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 17px;
+  color: var(--yasgui-ink-subtle, #6a7380);
+  background: var(--yasgui-surface-sunken, #edf1f6);
+  box-shadow: inset 0 0 0 1px var(--yasgui-line, #dfe5ec);
+
+  &--changed {
+    color: var(--yasgui-highlight-ink, #6e4d00);
+    background: color-mix(in srgb, var(--yasgui-highlight, #f2b300) 18%, transparent);
+    box-shadow: none;
+  }
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+// The dropdown with a search field (Combobox.ts)
+.yasgui-combo {
+  position: relative;
+
+  &__button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 34px;
+    padding: 5px 10px;
+    border: 1px solid var(--yasgui-line, #dfe5ec);
+    border-radius: var(--yasgui-radius-button, 8px);
+    background: var(--yasgui-surface-raised, #fff);
+    color: var(--yasgui-ink, #1c2633);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:focus-visible,
+    .open > & {
+      outline: none;
+      border-color: var(--yasgui-brand, #0563bb);
+      box-shadow: 0 0 0 3px var(--yasgui-brand-soft, #e3eefa);
+    }
+  }
+
+  &--mono &__value,
+  &--mono &__label {
+    font-family: var(--yasgui-font-mono, monospace);
+    font-size: 12.5px;
+  }
+
+  &__value {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &.placeholder {
+      color: var(--yasgui-ink-subtle, #6a7380);
+      font-family: inherit !important;
+    }
+  }
+
+  &__chevron {
+    display: flex;
+    flex: none;
+    color: var(--yasgui-ink-subtle, #6a7380);
+  }
+
+  &__logo {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 650;
+  }
+
+  &__pop {
+    position: fixed;
+    z-index: 10001;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    overflow: hidden;
+    border: 1px solid var(--yasgui-line, #dfe5ec);
+    border-radius: 10px;
+    background: var(--yasgui-surface-raised, #fff);
+    box-shadow: var(--yasgui-shadow-overlay, 0 8px 24px rgba(0, 0, 0, 0.2));
+
+    &[hidden] {
+      display: none;
+    }
+  }
+
+  &__search {
+    flex: none;
+    margin: 8px;
+    padding: 6px 10px;
+    border: 1px solid var(--yasgui-line, #dfe5ec);
+    border-radius: var(--yasgui-radius-button, 8px);
+    background: var(--yasgui-surface, #f1f4f8);
+    color: var(--yasgui-ink, #1c2633);
+    font: inherit;
+
+    &:focus {
+      outline: none;
+      border-color: var(--yasgui-brand, #0563bb);
+    }
+  }
+
+  &__list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-bottom: 6px;
+    border-top: 1px solid var(--yasgui-line-soft, #edf0f4);
+  }
+
+  &__group {
+    padding: 8px 12px 3px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--yasgui-ink-subtle, #6a7380);
+  }
+
+  &__option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    cursor: pointer;
+
+    &.highlighted {
+      background: var(--yasgui-brand-soft, #e3eefa);
+    }
+  }
+
+  &__label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  &__star {
+    color: var(--yasgui-highlight, #f2b300);
+  }
+
+  &__sub {
+    margin-left: auto;
+    flex: none;
+    font-size: 12px;
+    color: var(--yasgui-ink-subtle, #6a7380);
+  }
+
+  &__button &__sub {
+    margin-left: 0;
+  }
+
+  &__check {
+    display: flex;
+    margin-left: auto;
+    color: var(--yasgui-brand, #0563bb);
+  }
+
+  &__sub + &__check {
+    margin-left: 0;
+  }
+
+  &__empty {
+    padding: 10px 12px;
+    color: var(--yasgui-ink-subtle, #6a7380);
+  }
+
+  &__footer {
+    flex: none;
+    padding: 7px 12px;
+    font-size: 12px;
+    color: var(--yasgui-ink-subtle, #6a7380);
+    border-top: 1px solid var(--yasgui-line-soft, #edf0f4);
+
+    &[hidden] {
+      display: none;
+    }
+  }
+}
+
+[data-theme="dark"] .yasgui-combo {
+  &__button {
+    background: var(--yasgui-surface-raised, #141920);
+  }
+
+  &__pop {
+    background: #1a2028;
   }
 }

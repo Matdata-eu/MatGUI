@@ -23,6 +23,21 @@ export interface PersistedJson {
   codeMirrorThemeLight?: string; // User-selected CodeMirror theme for light mode
   codeMirrorThemeDark?: string; // User-selected CodeMirror theme for dark mode
   sidePanel?: SidePanelState; // Left side panel (Queries / Endpoint / AI)
+  requestSettings?: RequestSettings; // Request settings of Settings → General, shared by all tabs
+  editorSettings?: EditorSettings; // Formatter and checks of Settings → General and Editor, shared by all tabs
+}
+/** Settings of the query editor that apply to every tab */
+export interface EditorSettings {
+  formatterType?: "sparql-formatter" | "legacy";
+  autoformatOnQuery?: boolean;
+  checkConstructVariables?: boolean;
+}
+/** The request settings users change in Settings → General; they apply to every tab */
+export interface RequestSettings {
+  method?: "GET" | "POST";
+  acceptHeaderSelect?: string;
+  acceptHeaderGraph?: string;
+  headers?: { [name: string]: string };
 }
 export interface SidePanelState {
   open: boolean;
@@ -190,6 +205,25 @@ export default class PersistentConfig {
 
   public setShowSnippetsBar(show: boolean) {
     this.persistedJson.showSnippetsBar = show;
+    this.toStorage();
+  }
+
+  /** The request settings shared by all tabs, or undefined when the user never changed them */
+  public getRequestSettings(): RequestSettings | undefined {
+    return this.persistedJson.requestSettings;
+  }
+
+  public setRequestSettings(settings: RequestSettings) {
+    this.persistedJson.requestSettings = { ...this.persistedJson.requestSettings, ...settings };
+    this.toStorage();
+  }
+
+  public getEditorSettings(): EditorSettings {
+    return this.persistedJson.editorSettings || {};
+  }
+
+  public setEditorSettings(settings: EditorSettings) {
+    this.persistedJson.editorSettings = { ...this.persistedJson.editorSettings, ...settings };
     this.toStorage();
   }
 

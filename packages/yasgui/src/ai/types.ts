@@ -68,6 +68,8 @@ export interface AiServiceSettings {
   id: string;
   /** Name shown in the AI view, e.g. "Claude"; the host of the base URL when empty */
   name?: string;
+  /** Provider picked in the settings (see providers.ts); found from the base URL when missing */
+  providerId?: string;
   /** Empty for the `defaultBaseUrl` of the config */
   baseUrl?: string;
   /** Optional: local models and some proxies need none */

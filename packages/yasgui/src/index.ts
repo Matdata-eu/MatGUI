@@ -520,12 +520,24 @@ export class Yasgui extends EventEmitter {
    *
    * @returns tab
    */
+  /** All open tabs, in no particular order */
+  public getTabs(): Tab[] {
+    return Object.values(this._tabs);
+  }
+
   public addTab(
     setActive: boolean,
     partialTabConfig?: Partial<PersistedTabJson>,
     opts: { atIndex?: number; avoidDuplicateTabs?: boolean } = {},
   ): Tab {
-    const tabConfig = merge({}, Tab.getDefaults(this), partialTabConfig);
+    // The request settings of Settings → General apply to new tabs too; a tab config (e.g. from a share link) wins
+    const requestSettings = this.persistentConfig.getRequestSettings();
+    const tabConfig = merge(
+      {},
+      Tab.getDefaults(this),
+      requestSettings ? { requestConfig: requestSettings } : {},
+      partialTabConfig,
+    );
     if (tabConfig.id && this.getTab(tabConfig.id)) {
       throw new Error("Duplicate tab ID");
     }

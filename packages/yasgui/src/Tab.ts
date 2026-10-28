@@ -881,6 +881,21 @@ export class Tab extends EventEmitter {
     return undefined;
   }
 
+  /** Apply the editor settings shared by all tabs (Settings → General and Editor) to the query editor */
+  public applyEditorSettings() {
+    if (!this.yasqe) return;
+    const settings = this.yasgui.persistentConfig.getEditorSettings();
+    if (this.yasqe.persistentConfig) {
+      if (settings.formatterType) this.yasqe.persistentConfig.formatterType = settings.formatterType;
+      if (settings.autoformatOnQuery !== undefined) {
+        this.yasqe.persistentConfig.autoformatOnQuery = settings.autoformatOnQuery;
+      }
+    }
+    if (settings.checkConstructVariables !== undefined) {
+      this.yasqe.setCheckConstructVariables(settings.checkConstructVariables);
+    }
+  }
+
   /** Open the settings modal of this tab, optionally on a section (e.g. "endpoints") */
   public openSettings(section?: string) {
     this.settingsModal?.open(section);
@@ -1488,6 +1503,7 @@ export class Tab extends EventEmitter {
       throw new Error("Expected a wrapper element before instantiating yasqe");
     }
     this.yasqe = new Yasqe(this.yasqeWrapperEl, yasqeConf);
+    this.applyEditorSettings();
 
     // Hook up the save button to managed query save
     this.yasqe.on("saveManagedQuery", () => {

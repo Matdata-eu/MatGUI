@@ -712,7 +712,7 @@ interface Config {
   showSnippetsBar?: boolean;  // default: false
 
   // Tooltip with the label, description and type of an IRI hovered in the editor,
-  // fetched from the tab's endpoint. Users can also switch it off in Settings → Editor
+  // fetched from the tab's endpoint. Users can also switch it off in Settings → General
   iriHover?: boolean;  // default: true
 
   // Look up IRIs the endpoint doesn't describe in LOV (lov.linkeddata.es)
@@ -2574,7 +2574,7 @@ const id = tab.getId();
 
 ##### `openSettings(section?: string): void`
 
-Open the settings modal of this tab, optionally on a section (for example `"endpoints"`).
+Open the settings modal of this tab, optionally on a page: `"general"`, `"endpoints"`, `"prefix"`, `"editor"`, `"workspaces"`, `"importexport"`, `"ai"`, `"shortcuts"` or `"about"`. `"request"`, the name of an earlier page, opens `"general"`.
 
 ```javascript
 tab.openSettings("endpoints");
