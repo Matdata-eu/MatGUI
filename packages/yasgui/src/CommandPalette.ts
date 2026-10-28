@@ -386,6 +386,15 @@ export default class CommandPalette {
         },
       });
     }
+    if (yasgui.whatsNew) {
+      commands.push({
+        section: "commands",
+        label: "What's new",
+        icon: "sparkles",
+        keywords: "release notes changelog changes version update",
+        run: () => yasgui.whatsNew?.open(),
+      });
+    }
     if (yasgui.config.helpUrl) {
       const helpUrl = yasgui.config.helpUrl;
       commands.push({

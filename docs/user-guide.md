@@ -25,6 +25,7 @@
 - [The Interface](#the-interface)
   - [Top Bar](#top-bar)
   - [Search](#search)
+  - [Help Menu and What's New](#help-menu-and-whats-new)
   - [Query Card](#query-card)
   - [Endpoint Picker](#endpoint-picker)
   - [Run and Stop](#run-and-stop)
@@ -352,7 +353,7 @@ From left to right:
 - **MatGUI**: the name of the application (sites that embed MatGUI can hide it)
 - **Query tabs**: one tab per query. The active tab is raised. Tabs that hold a saved (managed) query show a small dot before their name; the dot turns amber when the query has unsaved changes. Hover a tab to show its close button (×), click **+** to add a tab
 - **Search queries and commands** (`Ctrl+K`, or `⌘K` on a Mac): see [Search](#search)
-- **Help** (?): opens the MatGUI user guide in a new browser tab
+- **Help** (?): opens the help menu with **What's new** and the **Documentation** (see [Help Menu and What's New](#help-menu-and-whats-new)). A blue dot on the button means there is a release you haven't seen yet
 - **Theme** (sun / moon): switches between the light and dark theme
 - **Settings** (gear): opens the settings of the active tab
 
@@ -362,10 +363,21 @@ Click **Search queries and commands** in the top bar, or press `Ctrl+K` (`⌘K` 
 
 - **Queries**: the saved queries of all your workspaces, with the workspace and folder they are in. Pick one to open it in a new tab, or to go to the tab that already has it open
 - **Snippets**: the code snippets of the [Insert menu](#insert-menu), found by name, group or the code they write (`filter` finds the comparison snippets). Pick one to insert it at the cursor
-- **Commands**: Run query, New tab, Insert snippet, Insert PREFIX declarations, Switch endpoint, Explore endpoint, Show saved queries, Toggle side panel, Toggle side-by-side layout, Format, Share, Save, Download, full screen editor, dark mode and the documentation. Commands with a shortcut show it at the right
+- **Commands**: Run query, New tab, Insert snippet, Insert PREFIX declarations, Switch endpoint, Explore endpoint, Show saved queries, Toggle side panel, Toggle side-by-side layout, Format, Share, Save, Download, full screen editor, dark mode, What's new and the documentation. Commands with a shortcut show it at the right
 - **Settings**: every page of the settings (General, SPARQL endpoints, Workspaces, Prefixes, Editor, AI, Import / export, Keyboard shortcuts, About), for example type `prefixes` and pick **Settings: Prefixes**
 
 Type `>` first to search commands and settings only. Snippets and settings show up once you type something. Use `↑` and `↓` to move, `Enter` to open and `Esc` to close.
+
+### Help Menu and What's New
+
+Click **Help** (?) in the top bar to open the help menu:
+
+- **What's new**: what changed in each version of MatGUI since 5.0.0, newest first. Every change is marked **New**, **Improved** or **Fixed**; use the buttons at the top to show only one kind. Releases you haven't seen yet are marked **New to you**. **Full release notes on GitHub** opens the complete notes, including the changes for developers
+- **Documentation**: opens this user guide in a new browser tab
+
+After MatGUI is updated, a blue dot on the Help button and next to **What's new** tells you there is something new. The dot goes away once you open What's new. On your first visit there is no dot. You can also open it from the [search](#search) (`Ctrl+K`, then type `what's new`). Press `Esc` to close it.
+
+Sites that embed MatGUI can leave out What's new (`showWhatsNew: false`) or the documentation link (`helpUrl: false`).
 
 ### Query Card
 
