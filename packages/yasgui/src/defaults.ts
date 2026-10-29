@@ -32,6 +32,8 @@ export default function initialize(): Config<CatalogueItem> {
     showThemeToggle: true,
     showBrand: true,
     showCommandPalette: true,
+    showQuickStart: true,
+    quickStartOnFirstVisit: true,
     orientation: "vertical",
     showSnippetsBar: false,
     iriHover: true,

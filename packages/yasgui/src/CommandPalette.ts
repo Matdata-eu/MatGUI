@@ -386,6 +386,18 @@ export default class CommandPalette {
         },
       });
     }
+    if (yasgui.quickStart) {
+      const quickStart = yasgui.quickStart;
+      commands.push({
+        section: "commands",
+        label: "How MatGUI works",
+        icon: "compass",
+        keywords: "help quick start tour introduction onboarding",
+        run: () => {
+          quickStart.open();
+        },
+      });
+    }
     if (yasgui.whatsNew) {
       commands.push({
         section: "commands",

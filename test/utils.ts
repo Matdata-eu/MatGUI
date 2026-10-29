@@ -85,8 +85,18 @@ export async function destroy(browser: Browser, server?: http.Server) {
   if (browser) await browser.close();
   if (server) server.close();
 }
-export async function getPage(browser: Browser, path: string) {
+export async function getPage(browser: Browser, path: string, options: { quickStart?: boolean } = {}) {
   const page = await browser.newPage();
+  // The quick start tour opens on the first visit and would cover the page; tests that want it pass quickStart
+  if (!options.quickStart) {
+    await page.evaluateOnNewDocument(() => {
+      try {
+        localStorage.setItem("matgui_quickStart_seen", "1");
+      } catch {
+        // ignore
+      }
+    });
+  }
   await page.goto(`http://localhost:${PORT}/${path}?noExternalServices=true`, {
     waitUntil: "networkidle2",
     timeout: 30000,

@@ -11,6 +11,7 @@ import Yasqe from "@matdata/yasqe";
 import { setup, destroy, closePage, getPage, makeScreenshot, inspectLive, wait } from "./utils.js";
 import "./endpoint-describe-browser.js";
 import "./iri-hover-browser.js";
+import "./quick-start-browser.js";
 import "./ai-assistant-browser.js";
 import "./sparql-anything-browser.js";
 import "./whats-new-browser.js";

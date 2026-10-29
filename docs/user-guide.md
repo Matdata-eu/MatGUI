@@ -14,6 +14,7 @@
   - [Common SPARQL Query Types](#common-sparql-query-types)
 - [Getting Started](#getting-started)
   - [Accessing MatGUI](#accessing-matgui)
+  - [Quick Start Tour](#quick-start-tour)
   - [Running Matgui with Docker](#running-matgui-with-docker)
   - [Your First Query](#your-first-query)
   - [Saving Your Work](#saving-your-work)
@@ -149,6 +150,20 @@ This excellent resource covers:
 ### Accessing MatGUI
 
 Matgui is available at: **[https://matgui.matdata.eu/](https://matgui.matdata.eu/)**
+
+### Quick Start Tour
+
+The first time you open MatGUI in a browser, **How MatGUI works** shows you around in five short pages, with three things to know on each:
+
+1. **Write and run a query**: pick an endpoint, write with autocomplete, run with `Ctrl+Enter`
+2. **Explore the results**: switch views, describe a resource, download the results
+3. **Keep your queries**: work in tabs, save to a workspace, share a link
+4. **Let MatGUI help**: insert snippets, look at the endpoint, ask the AI assistant (or hover an IRI, when the site has no AI assistant)
+5. **Find your way**: search everything with `Ctrl+K`, open the side panel with `Ctrl+B`, switch the theme and open the settings
+
+Click **Next** and **Back**, the dots at the bottom, or use the `←` and `→` keys to move between the pages. **Read the full user guide** opens this guide. Close the tour with **Skip**, **Start querying** on the last page, the × or `Esc`. MatGUI remembers in your browser that you saw it and doesn't open it again by itself.
+
+To see it again, click **Help** (?) in the top bar and pick **How MatGUI works**, or search for it with `Ctrl+K`. Sites that embed MatGUI can leave the tour out, or keep it in the help menu without opening it on the first visit.
 
 ### Running Matgui with Docker
 
@@ -353,7 +368,7 @@ From left to right:
 - **MatGUI**: the name of the application (sites that embed MatGUI can hide it)
 - **Query tabs**: one tab per query. The active tab is raised. Tabs that hold a saved (managed) query show a small dot before their name; the dot turns amber when the query has unsaved changes. Hover a tab to show its close button (×), click **+** to add a tab
 - **Search queries and commands** (`Ctrl+K`, or `⌘K` on a Mac): see [Search](#search)
-- **Help** (?): opens the help menu with **What's new** and the **Documentation** (see [Help Menu and What's New](#help-menu-and-whats-new)). A blue dot on the button means there is a release you haven't seen yet
+- **Help** (?): opens the help menu with **How MatGUI works** (the [quick start tour](#quick-start-tour)), **What's new** and the **Documentation** (see [Help Menu and What's New](#help-menu-and-whats-new)). A blue dot on the button means there is a release you haven't seen yet
 - **Theme** (sun / moon): switches between the light and dark theme
 - **Settings** (gear): opens the settings of the active tab
 
@@ -363,7 +378,7 @@ Click **Search queries and commands** in the top bar, or press `Ctrl+K` (`⌘K` 
 
 - **Queries**: the saved queries of all your workspaces, with the workspace and folder they are in. Pick one to open it in a new tab, or to go to the tab that already has it open
 - **Snippets**: the code snippets of the [Insert menu](#insert-menu), found by name, group or the code they write (`filter` finds the comparison snippets). Pick one to insert it at the cursor
-- **Commands**: Run query, New tab, Insert snippet, Insert PREFIX declarations, Switch endpoint, Explore endpoint, Show saved queries, Toggle side panel, Toggle side-by-side layout, Format, Share, Save, Download, full screen editor, dark mode, What's new and the documentation. Commands with a shortcut show it at the right
+- **Commands**: Run query, New tab, Insert snippet, Insert PREFIX declarations, Switch endpoint, Explore endpoint, Show saved queries, Toggle side panel, Toggle side-by-side layout, Format, Share, Save, Download, full screen editor, dark mode, How MatGUI works, What's new and the documentation. Commands with a shortcut show it at the right
 - **Settings**: every page of the settings (General, SPARQL endpoints, Workspaces, Prefixes, Editor, AI, Import / export, Keyboard shortcuts, About), for example type `prefixes` and pick **Settings: Prefixes**
 
 Type `>` first to search commands and settings only. Snippets and settings show up once you type something. Use `↑` and `↓` to move, `Enter` to open and `Esc` to close.
@@ -372,12 +387,13 @@ Type `>` first to search commands and settings only. Snippets and settings show 
 
 Click **Help** (?) in the top bar to open the help menu:
 
+- **How MatGUI works**: the [quick start tour](#quick-start-tour), five short pages that show you around
 - **What's new**: what changed in each version of MatGUI since 5.0.0, newest first. Every change is marked **New**, **Improved** or **Fixed**; use the buttons at the top to show only one kind. Releases you haven't seen yet are marked **New to you**. **Full release notes on GitHub** opens the complete notes, including the changes for developers
 - **Documentation**: opens this user guide in a new browser tab
 
 After MatGUI is updated, a blue dot on the Help button and next to **What's new** tells you there is something new. The dot goes away once you open What's new. On your first visit there is no dot. You can also open it from the [search](#search) (`Ctrl+K`, then type `what's new`). Press `Esc` to close it.
 
-Sites that embed MatGUI can leave out What's new (`showWhatsNew: false`) or the documentation link (`helpUrl: false`).
+Sites that embed MatGUI can leave out the quick start tour (`showQuickStart: false`), What's new (`showWhatsNew: false`) or the documentation link (`helpUrl: false`).
 
 ### Query Card
 
