@@ -26,8 +26,10 @@ const f = (text: string): ReleaseChange => ({ kind: "fixed", text });
 export const releases: Release[] = [
   {
     version: "6.12.0",
-    summary: "Redesigned settings, and this What's new.",
+    date: "2026-10-29",
+    summary: "Redesigned settings, a quick start tour and this What's new.",
     changes: [
+      n("How MatGUI works: a short tour of five pages for new users, also in the help menu and the Ctrl+K search"),
       n("What's new in the help menu, with a dot on the help button when there is a release you haven't seen"),
       i("Redesigned settings: grouped pages, one row per setting, and changes apply at once"),
       n("General settings page with the theme (Light, Dark or System), request settings and checks before running"),
