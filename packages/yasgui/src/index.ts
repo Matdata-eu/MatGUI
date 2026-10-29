@@ -28,6 +28,7 @@ import SidePanel from "./sidePanel/SidePanel";
 import CommandPalette from "./CommandPalette";
 import HelpMenu from "./HelpMenu";
 import QuickStart from "./QuickStart";
+import WhatsNew from "./whatsNew/WhatsNew";
 import AiAssistant from "./ai/AiAssistant";
 import type { AiConfig } from "./ai/types";
 import "./index.scss";
@@ -147,6 +148,10 @@ export interface Config<EndpointObject extends CatalogueItem = CatalogueItem> {
    */
   helpUrl?: string | false;
   /**
+   * Show "What's new" in the help menu, with a dot on the help button after an update (default: true)
+   */
+  showWhatsNew?: boolean;
+  /**
    * Show the label, description and type of an IRI when hovering it in the query editor, fetched from the
    * endpoint of the tab (default: true). Users can switch it off in the editor settings.
    */
@@ -229,6 +234,8 @@ export class Yasgui extends EventEmitter {
   public helpMenu: HelpMenu;
   /** "How MatGUI works" tour, unless `showQuickStart` is false */
   public quickStart: QuickStart | undefined;
+  /** What's new dialog (help menu and Ctrl+K search), unless `showWhatsNew` is false */
+  public whatsNew: WhatsNew | undefined;
   /** AI assistant (the "AI" view of the side panel), unless `ai.enabled` is false */
   public aiAssistant: AiAssistant | undefined;
   /** SPARQL Anything support (the "Source" view of the side panel), unless `sparqlAnything` is false */
@@ -268,6 +275,7 @@ export class Yasgui extends EventEmitter {
 
     this.helpMenu = new HelpMenu(this);
     if (this.config.showQuickStart) this.quickStart = new QuickStart(this);
+    if (this.config.showWhatsNew) this.whatsNew = new WhatsNew(this);
     this.tabElements = new TabElements(this);
     this.tabPanelsEl = document.createElement("div");
     addClass(this.tabPanelsEl, "yasgui-tabPanels");
@@ -628,6 +636,7 @@ export class Yasgui extends EventEmitter {
     this.aiAssistant?.destroy();
     this.commandPalette?.destroy();
     this.quickStart?.destroy();
+    this.whatsNew?.destroy();
     this.helpMenu.destroy();
     this.sidePanel.destroy();
     this.tabElements.destroy();

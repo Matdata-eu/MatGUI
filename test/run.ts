@@ -14,6 +14,7 @@ import "./iri-hover-browser.js";
 import "./quick-start-browser.js";
 import "./ai-assistant-browser.js";
 import "./sparql-anything-browser.js";
+import "./whats-new-browser.js";
 
 declare var window: Window & {
   Yasqe: typeof Yasqe;
@@ -84,6 +85,37 @@ describe("Yasqe", function () {
     await page.keyboard.press("Space");
     await page.keyboard.up("Control");
   }
+
+  describe("Editor buttons", function () {
+    function countButtons() {
+      return page.evaluate(() => {
+        const wrapper = window.yasqe.getWrapperElement();
+        return {
+          share: wrapper.querySelectorAll(".yasqe_share").length,
+          fullscreen: wrapper.querySelectorAll(".yasqe_fullscreenButton").length,
+          menu: Array.from(wrapper.querySelectorAll(".yasqe_hamburgerMenuItem span")).map((el) => el.textContent),
+        };
+      });
+    }
+    it("shows the share and fullscreen buttons by default", async function () {
+      const buttons = await countButtons();
+      expect(buttons.share).to.equal(1);
+      expect(buttons.fullscreen).to.equal(1);
+      expect(buttons.menu).to.include.members(["Share", "Fullscreen"]);
+    });
+    it("hides them with showShareButton and showFullscreenButton", async function () {
+      await page.evaluate(() => {
+        const el = document.createElement("div");
+        document.body.appendChild(el);
+        window.yasqe = new window.Yasqe(el, { showShareButton: false, showFullscreenButton: false });
+      });
+      const buttons = await countButtons();
+      expect(buttons.share).to.equal(0);
+      expect(buttons.fullscreen).to.equal(0);
+      expect(buttons.menu).to.not.include.members(["Share"]);
+      expect(buttons.menu).to.not.include.members(["Fullscreen"]);
+    });
+  });
 
   describe("Autoformatting", function () {
     it("With literal", async function () {

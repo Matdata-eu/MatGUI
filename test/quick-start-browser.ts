@@ -124,7 +124,7 @@ describe("Quick start tour", function () {
     });
     expect(result.tour).to.equal(false);
     expect(result.quickStart).to.equal(undefined);
-    expect(result.items).to.deep.equal(["documentation"]);
+    expect(result.items).to.not.include("quickStart");
   });
 
   it("can stay in the help menu without opening on the first visit", async function () {
@@ -145,6 +145,6 @@ describe("Quick start tour", function () {
       };
     });
     expect(result.open).to.equal(false);
-    expect(result.items).to.deep.equal(["quickStart", "documentation"]);
+    expect(result.items[0]).to.equal("quickStart");
   });
 });
