@@ -324,7 +324,7 @@ export default class QuickStart {
           },
           {
             title: "Describe a resource",
-            text: "Ctrl+click an IRI to open its properties in the describe panel, then click on to follow links.",
+            text: "Ctrl+click an IRI anywhere to open its properties in the describe panel, then click on to follow links.",
             illustration: ILLUSTRATIONS.describe,
           },
           {
