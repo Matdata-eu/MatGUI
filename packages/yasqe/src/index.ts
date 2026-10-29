@@ -385,7 +385,7 @@ export class Yasqe extends EditorFacade {
     /**
      * draw share link button (SECOND)
      */
-    if (this.config.createShareableLink) {
+    if (this.config.createShareableLink && this.config.showShareButton) {
       const shareIcon = document.createElement("i");
       addClass(shareIcon, "fas");
       addClass(shareIcon, "fa-share-nodes");
@@ -723,26 +723,28 @@ export class Yasqe extends EditorFacade {
     /**
      * Draw fullscreen btn (SIXTH)
      */
-    this.fullscreenBtn = document.createElement("button");
-    addClass(this.fullscreenBtn, "yasqe_fullscreenButton");
-    const fullscreenIcon = document.createElement("i");
-    addClass(fullscreenIcon, "fas");
-    addClass(fullscreenIcon, "fa-expand");
-    addClass(fullscreenIcon, "fullscreenIcon");
-    fullscreenIcon.setAttribute("aria-hidden", "true");
-    this.fullscreenBtn.appendChild(fullscreenIcon);
-    const fullscreenExitIcon = document.createElement("i");
-    addClass(fullscreenExitIcon, "fas");
-    addClass(fullscreenExitIcon, "fa-compress");
-    addClass(fullscreenExitIcon, "fullscreenExitIcon");
-    fullscreenExitIcon.setAttribute("aria-hidden", "true");
-    this.fullscreenBtn.appendChild(fullscreenExitIcon);
-    this.fullscreenBtn.onclick = () => {
-      this.toggleFullscreen();
-    };
-    this.fullscreenBtn.title = "Toggle fullscreen (F11)";
-    this.fullscreenBtn.setAttribute("aria-label", "Toggle fullscreen");
-    buttons.appendChild(this.fullscreenBtn);
+    if (this.config.showFullscreenButton) {
+      this.fullscreenBtn = document.createElement("button");
+      addClass(this.fullscreenBtn, "yasqe_fullscreenButton");
+      const fullscreenIcon = document.createElement("i");
+      addClass(fullscreenIcon, "fas");
+      addClass(fullscreenIcon, "fa-expand");
+      addClass(fullscreenIcon, "fullscreenIcon");
+      fullscreenIcon.setAttribute("aria-hidden", "true");
+      this.fullscreenBtn.appendChild(fullscreenIcon);
+      const fullscreenExitIcon = document.createElement("i");
+      addClass(fullscreenExitIcon, "fas");
+      addClass(fullscreenExitIcon, "fa-compress");
+      addClass(fullscreenExitIcon, "fullscreenExitIcon");
+      fullscreenExitIcon.setAttribute("aria-hidden", "true");
+      this.fullscreenBtn.appendChild(fullscreenExitIcon);
+      this.fullscreenBtn.onclick = () => {
+        this.toggleFullscreen();
+      };
+      this.fullscreenBtn.title = "Toggle fullscreen (F11)";
+      this.fullscreenBtn.setAttribute("aria-label", "Toggle fullscreen");
+      buttons.appendChild(this.fullscreenBtn);
+    }
 
     /**
      * Draw hamburger menu button and dropdown (for mobile)
@@ -765,7 +767,7 @@ export class Yasqe extends EditorFacade {
     buttons.appendChild(this.hamburgerMenu);
 
     // Add menu items
-    if (this.config.createShareableLink) {
+    if (this.shareBtn) {
       const shareItem = document.createElement("button");
       shareItem.className = "yasqe_hamburgerMenuItem";
       const shareIconMenu = document.createElement("i");
@@ -851,21 +853,23 @@ export class Yasqe extends EditorFacade {
       this.hamburgerMenu.appendChild(mapItem);
     }
 
-    const fullscreenItem = document.createElement("button");
-    fullscreenItem.className = "yasqe_hamburgerMenuItem";
-    const fullscreenIconMenu = document.createElement("i");
-    addClass(fullscreenIconMenu, "fas");
-    addClass(fullscreenIconMenu, "fa-expand");
-    fullscreenIconMenu.setAttribute("aria-hidden", "true");
-    fullscreenItem.appendChild(fullscreenIconMenu);
-    const fullscreenLabel = document.createElement("span");
-    fullscreenLabel.textContent = "Fullscreen";
-    fullscreenItem.appendChild(fullscreenLabel);
-    fullscreenItem.onclick = () => {
-      this.closeHamburgerMenu();
-      this.toggleFullscreen();
-    };
-    this.hamburgerMenu.appendChild(fullscreenItem);
+    if (this.config.showFullscreenButton) {
+      const fullscreenItem = document.createElement("button");
+      fullscreenItem.className = "yasqe_hamburgerMenuItem";
+      const fullscreenIconMenu = document.createElement("i");
+      addClass(fullscreenIconMenu, "fas");
+      addClass(fullscreenIconMenu, "fa-expand");
+      fullscreenIconMenu.setAttribute("aria-hidden", "true");
+      fullscreenItem.appendChild(fullscreenIconMenu);
+      const fullscreenLabel = document.createElement("span");
+      fullscreenLabel.textContent = "Fullscreen";
+      fullscreenItem.appendChild(fullscreenLabel);
+      fullscreenItem.onclick = () => {
+        this.closeHamburgerMenu();
+        this.toggleFullscreen();
+      };
+      this.hamburgerMenu.appendChild(fullscreenItem);
+    }
 
     // Toggle hamburger menu
     this.hamburgerBtn.onclick = (e) => {
@@ -2522,6 +2526,14 @@ export interface Config extends Omit<EditorOptions, "extraKeys"> {
    * Show the Run button in the editor. Yasgui sets this to false: it shows its own Run button in the query bar.
    */
   showQueryButton: boolean;
+  /**
+   * Show the Share button (and its item in the mobile menu). Setting `createShareableLink` to null also hides it.
+   */
+  showShareButton: boolean;
+  /**
+   * Show the Fullscreen button (and its item in the mobile menu). F11 still toggles fullscreen.
+   */
+  showFullscreenButton: boolean;
   requestConfig: RequestConfig<Yasqe> | ((yasqe: Yasqe) => RequestConfig<Yasqe>);
   pluginButtons: (() => HTMLElement[] | HTMLElement) | undefined;
   highlightSelectionMatches: boolean | { showToken?: RegExp; annotateScrollbar?: boolean };

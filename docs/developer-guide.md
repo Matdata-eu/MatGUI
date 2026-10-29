@@ -813,8 +813,13 @@ interface YasqeConfig {
                              // shows Run in its query bar; `yasqe: { showQueryButton: false }`
                              // in the Yasgui config hides that Run button too
 
-  // Show share button
-  showShareButton: boolean;  // default: false
+  // Show the Share button (and its item in the mobile menu).
+  // Setting createShareableLink to null also hides it
+  showShareButton: boolean;  // default: true
+
+  // Show the Fullscreen button (and its item in the mobile menu).
+  // F11 still toggles the fullscreen editor
+  showFullscreenButton: boolean;  // default: true
 
   // Persistent storage ID
   persistenceId?: string | ((yasqe: Yasqe) => string);
