@@ -1,5 +1,5 @@
 # Use the official Node.js image as the base image
-FROM node:20
+FROM node:24
 
 # Set the working directory
 WORKDIR /app
@@ -36,6 +36,7 @@ COPY docker/src/ /usr/share/nginx/html/
 
 USER root
 
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/change-default-endpoint.sh /docker-entrypoint.d/
 RUN chmod +x /docker-entrypoint.d/change-default-endpoint.sh
 RUN chown 1001:0 -R /usr/share/nginx/html/
