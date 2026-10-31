@@ -1,0 +1,36 @@
+version: 2
+updates:
+  # Monorepo packages (packages/*) and build tooling
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      codemirror:
+        patterns:
+          - "@codemirror/*"
+          - "@lezer/*"
+      matdata-plugins:
+        patterns:
+          - "@matdata/*"
+      dev-tooling:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+
+  # Documentation website
+  - package-ecosystem: npm
+    directory: /website
+    schedule:
+      interval: monthly
+    groups:
+      docusaurus:
+        patterns:
+          - "@docusaurus/*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

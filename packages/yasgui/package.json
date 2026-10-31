@@ -35,25 +35,24 @@
     "directory": "packages/yasgui"
   },
   "dependencies": {
-    "@tarekraafat/autocomplete.js": "^7.2.0",
+    "@matdata/yasgui-chart-plugin": "^1.2.0",
+    "@matdata/yasgui-explain-plugin": "^1.0.0",
+    "@matdata/yasgui-geo-plugin": "^1.3.0",
+    "@matdata/yasgui-graph-plugin": "^1.7.0",
+    "@matdata/yasgui-table-plugin": "^1.7.1",
     "@matdata/yasgui-utils": "^4.6.1",
     "@matdata/yasqe": "^4.6.1",
     "@matdata/yasr": "^4.6.1",
+    "@tarekraafat/autocomplete.js": "^7.2.0",
     "autosuggest-highlight": "^3.1.1",
-    "blueimp-md5": "^2.12.0",
-    "choices.js": "^9.0.1",
     "dompurify": "^3.4.17",
-    "es6-object-assign": "^1.1.0",
     "jsuri": "^1.3.1",
     "lodash-es": "^4.17.15",
     "n3": "^1.3.5",
-    "sortablejs": "^1.10.2",
-    "@matdata/yasgui-graph-plugin": "^1.7.0",
-    "@matdata/yasgui-table-plugin": "^1.4.0"
+    "sortablejs": "^1.10.2"
   },
   "devDependencies": {
     "@types/autosuggest-highlight": "^3.1.0",
-    "@types/blueimp-md5": "^2.7.0",
     "@types/jsuri": "^1.3.30",
     "@types/lodash-es": "^4.17.3",
     "@types/node": "^22.5.4"
