@@ -664,6 +664,13 @@ interface Config {
   // Populate config from URL parameters
   populateFromUrl: boolean | ((config: TabJson) => TabJson);  // default: true
 
+  // Whether a query opened from a share link runs on load. Update queries never do.
+  //   "safe":   runs, unless the request would carry credentials (Authorization or API key
+  //             header, or withCredentials) or the query is invalid; then a message asks first
+  //   "always": runs unless it is an update
+  //   "never":  loads the query without running it
+  autoRunSharedQueries?: "safe" | "always" | "never";  // default: "safe"
+
   // Auto-create first tab on init
   autoAddOnInit: boolean;  // default: true
 
@@ -2576,6 +2583,37 @@ yasgui.helpMenu.removeItem("contact");
 ```
 
 `yasgui.whatsNew` (unless `showWhatsNew: false`) has `open()`, `close()`, `hasUnseen()` and `getLatestVersion()`. The release entries live in `packages/yasgui/src/whatsNew/releases.ts`, newest first; add the next version there when preparing a release. The newest version a user has opened is stored as `whatsNewSeen` in the persisted config.
+
+#### Dialogs and notifications
+
+`Yasgui.dialogs` shows alerts, confirmations and toasts in the MatGUI style, inside the Yasgui root so they follow the theme. Unlike `window.alert` and `window.confirm` they don't block the page, and they keep working when MatGUI is embedded in a sandboxed iframe (where `confirm()` silently returns `false`). Plugins and embedding pages can use them too.
+
+```javascript
+const { showAlert, showConfirm, showChoice, showToast, showCopyValue } = Yasgui.dialogs;
+
+await showAlert("The query was saved.", { title: "Saved" });
+
+if (await showConfirm("Its queries stay in the repository.", { title: "Remove workspace?", confirmLabel: "Remove", danger: true })) {
+  // ...
+}
+
+const choice = await showChoice(
+  "This query has unsaved changes.",
+  [
+    { label: "Cancel", value: "cancel" },
+    { label: "Discard", value: "discard", kind: "danger" },
+    { label: "Save", value: "save", kind: "primary" },
+  ],
+  "cancel", // returned on Escape or a click outside
+);
+
+showToast("Copied", { kind: "success" }); // kind: "info" | "success" | "warning" | "error"
+showToast("Results are outdated", { action: { label: "Run again", onClick: () => yasgui.getTab().query() } });
+
+await showCopyValue("Copy the URI of this query", "https://example.org/query/1");
+```
+
+Each function takes a `host` option: an element inside the Yasgui instance the dialog belongs to. Without it, the dialog opens in the last Yasgui instance created on the page.
 
 ### Tab Class
 

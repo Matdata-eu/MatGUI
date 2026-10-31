@@ -1277,6 +1277,8 @@ _OAuth 2.0:_
 - **Be cautious on shared computers**: Clear your browser data when using Matgui on shared or public computers
 - **OAuth 2.0 tokens**: Access tokens are automatically refreshed when expired (if refresh token is available)
 - **Token security**: OAuth 2.0 uses secure PKCE flow (Proof Key for Code Exchange) for enhanced security
+- **Shared links don't use your credentials on their own**: a link that would query an endpoint with your saved credentials asks before it runs (see [Share Queries](#share-queries))
+- **When the browser storage is full**, MatGUI first stops keeping query results with the tabs; if that isn't enough it keeps working without saving and tells you. It never deletes your tabs or credentials to make room
 
 **How Authentication Works:**
 
@@ -1644,6 +1646,12 @@ Matgui supports URL-based query sharing:
 - `query`: The SPARQL query
 - `endpoint`: The endpoint URL
 - Other tab configurations
+
+**Opening a shared link:** the query of the link opens in a tab and runs straight away, except in these cases, where MatGUI shows a message and waits for you:
+
+- **Update queries** (INSERT, DELETE, LOAD, CLEAR, DROP...) never run from a link. Review the query and press **Run** yourself if you want to change the data.
+- **Queries that would use your saved credentials** for that endpoint (or cookies) wait until you click **Run query** in the message, so a link someone sends you can't run a query as you without you seeing it.
+- **Queries with syntax errors** are loaded without running.
 
 **Command-Line Formats:**
 
