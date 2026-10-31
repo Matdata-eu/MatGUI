@@ -5,7 +5,8 @@ import * as path from "path";
 import * as Mocha from "mocha";
 import _ from "lodash"; // eslint-disable-line
 const TEST_ON_DEV_BUILD = !!process.env["TEST_ON_DEV_BUILD"];
-const PORT = TEST_ON_DEV_BUILD ? 4000 : 40001;
+const PORT = Number(process.env["TEST_PORT"]) || (TEST_ON_DEV_BUILD ? 4000 : 40001);
+export const TEST_ORIGIN = `http://localhost:${PORT}`;
 const MIME_TYPES: { [ext: string]: string } = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",

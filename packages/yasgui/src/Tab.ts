@@ -1,3 +1,4 @@
+import { showAlert, showChoice } from "./dialogs";
 import { EventEmitter } from "events";
 import { addClass, removeClass, getAsValue } from "@matdata/yasgui-utils";
 import { TabListEl } from "./TabElements";
@@ -241,7 +242,7 @@ export class Tab extends EventEmitter {
 
     const workspace = this.yasgui.persistentConfig.getWorkspace(meta.workspaceId);
     if (!workspace) {
-      window.alert("Selected workspace no longer exists");
+      void showAlert("Selected workspace no longer exists", { host: this.yasgui.rootEl });
       return;
     }
 
@@ -263,35 +264,38 @@ export class Tab extends EventEmitter {
       await backend.writeQuery(queryId, this.getQueryTextForSave(), { expectedVersionTag });
     } catch (e) {
       const err = asWorkspaceBackendError(e);
-      if (err.code === "CONFLICT") {
-        if (meta.backendType === "git") {
-          // Best-effort self-heal: some providers use a file sha for optimistic concurrency.
-          // If our stored version tag is stale/incorrect but the remote content is unchanged,
-          // refresh the tag and retry once.
-          try {
-            const latest = await backend.readQuery(queryId);
-            const latestHash = hashQueryText(latest.queryText);
-            if (meta.lastSavedTextHash && meta.lastSavedTextHash === latestHash && latest.versionTag) {
-              await backend.writeQuery(queryId, this.getQueryTextForSave(), { expectedVersionTag: latest.versionTag });
-            } else {
-              window.alert(
-                "Save conflict. Resolve the conflict externally (e.g., pull/rebase/merge) and then try saving again.",
-              );
-              return;
-            }
-          } catch {
-            window.alert(
-              "Save conflict. Resolve the conflict externally (e.g., pull/rebase/merge) and then try saving again.",
-            );
-            return;
-          }
-        } else {
-          window.alert("Save conflict. Refresh the query and try again.");
+      if (err.code !== "CONFLICT") {
+        void showAlert(err.message, { host: this.yasgui.rootEl, title: "Could not save the query" });
+        return;
+      }
+      if (meta.backendType !== "git") {
+        void showAlert("Someone else changed this query since you opened it. Refresh the query and try again.", {
+          host: this.yasgui.rootEl,
+          title: "Save conflict",
+        });
+        return;
+      }
+      // Best-effort self-heal: some providers use a file sha for optimistic concurrency.
+      // If our stored version tag is stale/incorrect but the remote content is unchanged,
+      // refresh the tag and retry once.
+      const gitConflict = () =>
+        showAlert(
+          "The file changed in the repository since you opened it. Resolve the conflict there (pull, rebase or merge), then save again.",
+          { host: this.yasgui.rootEl, title: "Save conflict" },
+        );
+      try {
+        const latest = await backend.readQuery(queryId);
+        const latestHash = hashQueryText(latest.queryText);
+        if (!(meta.lastSavedTextHash && meta.lastSavedTextHash === latestHash && latest.versionTag)) {
+          void gitConflict();
           return;
         }
+        await backend.writeQuery(queryId, this.getQueryTextForSave(), { expectedVersionTag: latest.versionTag });
+        // Saved on the retry: carry on as after a normal save
+      } catch {
+        void gitConflict();
+        return;
       }
-      window.alert(err.message);
-      return;
     }
 
     const read = await backend.readQuery(queryId);
@@ -309,7 +313,9 @@ export class Tab extends EventEmitter {
 
   public async saveAsManagedQuery(): Promise<void> {
     if (getWritableWorkspaces(this.yasgui.persistentConfig.getWorkspaces()).length === 0) {
-      window.alert("There is no workspace to save to. Read-only workspaces cannot be saved to.");
+      void showAlert("There is no workspace to save to. Read-only workspaces cannot be saved to.", {
+        host: this.yasgui.rootEl,
+      });
       return;
     }
 
@@ -343,11 +349,11 @@ export class Tab extends EventEmitter {
 
     const workspace = this.yasgui.persistentConfig.getWorkspace(result.workspaceId);
     if (!workspace) {
-      window.alert("Selected workspace no longer exists");
+      void showAlert("Selected workspace no longer exists", { host: this.yasgui.rootEl });
       return;
     }
     if (isWorkspaceReadOnly(workspace)) {
-      window.alert("This workspace is read-only");
+      void showAlert("This workspace is read-only", { host: this.yasgui.rootEl });
       return;
     }
 
@@ -389,7 +395,7 @@ export class Tab extends EventEmitter {
     } catch (e) {
       modal.notifySaveComplete();
       const err = asWorkspaceBackendError(e);
-      window.alert(err.message);
+      void showAlert(err.message, { host: this.yasgui.rootEl });
     }
   }
 
@@ -547,19 +553,26 @@ export class Tab extends EventEmitter {
 
   public close() {
     if (this.isManagedQueryTab() && this.hasUnsavedManagedChanges()) {
-      const wantsSave = window.confirm("This managed query has unsaved changes. Save before closing?");
-      if (wantsSave) {
-        void this.saveManagedQueryOrSaveAsManagedQuery().then(() => {
-          // Only close if we actually saved (metadata updated so no longer dirty)
-          if (!this.hasUnsavedManagedChanges()) {
-            this.closeNow();
-          }
-        });
-        return;
-      }
-
-      const discard = window.confirm("Discard changes and close the tab?");
-      if (!discard) return;
+      void showChoice(
+        "This saved query has unsaved changes.",
+        [
+          { label: "Cancel", value: "cancel" },
+          { label: "Discard changes", value: "discard", kind: "danger" },
+          { label: "Save and close", value: "save", kind: "primary" },
+        ],
+        "cancel",
+        { host: this.yasgui.rootEl, title: `Close “${this.getName()}”?` },
+      ).then((choice) => {
+        if (choice === "discard") {
+          this.closeNow();
+        } else if (choice === "save") {
+          return this.saveManagedQueryOrSaveAsManagedQuery().then(() => {
+            // Only close if we actually saved (metadata updated so no longer dirty)
+            if (!this.hasUnsavedManagedChanges()) this.closeNow();
+          });
+        }
+      });
+      return;
     }
 
     this.closeNow();
@@ -1142,7 +1155,7 @@ export class Tab extends EventEmitter {
 
     const workspace = this.yasgui.persistentConfig.getWorkspace(meta.workspaceId);
     if (!workspace) {
-      window.alert("Selected workspace no longer exists");
+      void showAlert("Selected workspace no longer exists", { host: this.yasgui.rootEl });
       return;
     }
 
@@ -1158,7 +1171,7 @@ export class Tab extends EventEmitter {
       const queryId = this.getManagedQueryIdFromMetadata(meta);
       if (!queryId) return;
       if (!backend.renameQuery) {
-        window.alert("This workspace does not support renaming queries");
+        void showAlert("This workspace does not support renaming queries", { host: this.yasgui.rootEl });
         return;
       }
 
@@ -1169,7 +1182,7 @@ export class Tab extends EventEmitter {
         this.yasgui.queryBrowser.invalidateAndRefresh(meta.workspaceId);
       } catch (e) {
         const err = asWorkspaceBackendError(e);
-        window.alert(err.message);
+        void showAlert(err.message, { host: this.yasgui.rootEl });
       } finally {
         this.getTabListEl().setAsRenaming(false);
       }
@@ -1204,7 +1217,9 @@ export class Tab extends EventEmitter {
       });
 
       if (!backend.deleteQuery) {
-        window.alert("This workspace does not support deleting queries, so the old file could not be removed.");
+        void showAlert("This workspace does not support deleting queries, so the old file could not be removed.", {
+          host: this.yasgui.rootEl,
+        });
       } else {
         await backend.deleteQuery(oldPath);
       }
@@ -1224,7 +1239,7 @@ export class Tab extends EventEmitter {
       this.yasgui.queryBrowser.invalidateAndRefresh(meta.workspaceId);
     } catch (e) {
       const err = asWorkspaceBackendError(e);
-      window.alert(err.message);
+      void showAlert(err.message, { host: this.yasgui.rootEl });
     } finally {
       this.getTabListEl().setAsRenaming(false);
     }
@@ -1355,15 +1370,17 @@ export class Tab extends EventEmitter {
         } catch (error) {
           console.error("Failed to refresh OAuth 2.0 token:", error);
           // Token refresh failed, user needs to re-authenticate
-          alert(
-            "Your OAuth 2.0 session has expired and could not be refreshed. Please re-authenticate by clicking the Settings button (gear icon) and selecting the SPARQL Endpoints tab.",
+          void showAlert(
+            "Your OAuth 2.0 session for this endpoint has expired and could not be refreshed. Sign in again under Settings, Endpoints.",
+            { host: this.yasgui.rootEl, title: "Sign in again" },
           );
           return false;
         }
       } else {
         // No refresh token available, user needs to re-authenticate
-        alert(
-          "Your OAuth 2.0 session has expired. Please re-authenticate by clicking the Settings button (gear icon) and selecting the SPARQL Endpoints tab.",
+        void showAlert(
+          "Your OAuth 2.0 session for this endpoint has expired. Sign in again under Settings, Endpoints.",
+          { host: this.yasgui.rootEl, title: "Sign in again" },
         );
         return false;
       }

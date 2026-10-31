@@ -1,3 +1,4 @@
+import { showAlert, showConfirm, showToast } from "./dialogs";
 import { addClass, removeClass } from "@matdata/yasgui-utils";
 import "./TabSettingsModal.scss";
 import Tab from "./Tab";
@@ -473,10 +474,16 @@ export default class TabSettingsModal {
       onDeleteRequested: (workspaceId) => {
         const w = this.tab.yasgui.persistentConfig.getWorkspace(workspaceId);
         const name = w?.label || workspaceId;
-        if (confirm(`Delete workspace "${name}"? This only removes the local configuration.`)) {
+        void showConfirm("This only removes the workspace from this browser. Its queries stay where they are.", {
+          host: this.tab.yasgui.rootEl,
+          title: `Remove workspace “${name}”?`,
+          confirmLabel: "Remove",
+          danger: true,
+        }).then((confirmed) => {
+          if (!confirmed) return;
           this.tab.yasgui.persistentConfig.deleteWorkspace(workspaceId);
           form.render();
-        }
+        });
       },
     });
 
@@ -1009,11 +1016,17 @@ export default class TabSettingsModal {
       deleteButton.textContent = "Delete";
       addClass(deleteButton, "deleteEndpointButton");
       deleteButton.onclick = () => {
-        if (confirm(`Delete endpoint "${config.endpoint}"?`)) {
+        void showConfirm(config.endpoint, {
+          host: this.tab.yasgui.rootEl,
+          title: "Delete this endpoint and its saved credentials?",
+          confirmLabel: "Delete",
+          danger: true,
+        }).then((confirmed) => {
+          if (!confirmed) return;
           this.tab.yasgui.persistentConfig.deleteEndpointConfig(config.endpoint);
           this.renderEndpointsList(container);
           this.tab.refreshEndpointButtons();
-        }
+        });
       };
       actionsCell.appendChild(deleteButton);
       addClass(actionsCell, "centerCell");
@@ -1050,28 +1063,30 @@ export default class TabSettingsModal {
       const endpoint = endpointInput.value.trim();
 
       if (!endpoint) {
-        alert("Please enter an endpoint URL.");
+        void showAlert("Please enter an endpoint URL.", { host: this.tab.yasgui.rootEl });
         return;
       }
 
       // Validate URL format
       // Check for supported protocol first
       if (!/^https?:\/\//i.test(endpoint)) {
-        alert("Endpoint URL must start with http:// or https://");
+        void showAlert("Endpoint URL must start with http:// or https://", { host: this.tab.yasgui.rootEl });
         return;
       }
       try {
         new URL(endpoint);
       } catch (e) {
         // Show the error message if available, otherwise a generic one
-        alert(e instanceof Error && e.message ? "Malformed URL: " + e.message : "Please enter a valid URL.");
+        void showAlert(e instanceof Error && e.message ? "Malformed URL: " + e.message : "Please enter a valid URL.", {
+          host: this.tab.yasgui.rootEl,
+        });
         return;
       }
 
       // Check if endpoint already exists
       const existing = this.tab.yasgui.persistentConfig.getEndpointConfig(endpoint);
       if (existing) {
-        alert("This endpoint is already in the list.");
+        void showAlert("This endpoint is already in the list.", { host: this.tab.yasgui.rootEl });
         return;
       }
 
@@ -1442,7 +1457,7 @@ export default class TabSettingsModal {
           });
           closeModalAndRefresh();
         } else {
-          alert("Please enter both username and password.");
+          void showAlert("Please enter both username and password.", { host: this.tab.yasgui.rootEl });
         }
       } else if (authType === "bearer") {
         const token = tokenInput.value.trim();
@@ -1456,7 +1471,7 @@ export default class TabSettingsModal {
           });
           closeModalAndRefresh();
         } else {
-          alert("Please enter a bearer token.");
+          void showAlert("Please enter a bearer token.", { host: this.tab.yasgui.rootEl });
         }
       } else if (authType === "apiKey") {
         const headerName = headerNameInput.value.trim();
@@ -1472,7 +1487,7 @@ export default class TabSettingsModal {
           });
           closeModalAndRefresh();
         } else {
-          alert("Please enter both header name and API key.");
+          void showAlert("Please enter both header name and API key.", { host: this.tab.yasgui.rootEl });
         }
       } else if (authType === "oauth2") {
         const clientId = clientIdInput.value.trim();
@@ -1482,7 +1497,9 @@ export default class TabSettingsModal {
         const scope = scopeInput.value.trim();
 
         if (!clientId || !authorizationEndpoint || !tokenEndpoint) {
-          alert("Please enter Client ID, Authorization Endpoint, and Token Endpoint.");
+          void showAlert("Please enter Client ID, Authorization Endpoint, and Token Endpoint.", {
+            host: this.tab.yasgui.rootEl,
+          });
           return;
         }
 
@@ -1537,11 +1554,11 @@ export default class TabSettingsModal {
             });
 
             closeModalAndRefresh();
-            alert("OAuth 2.0 authentication successful!");
+            showToast("Signed in with OAuth 2.0", { host: this.tab.yasgui.rootEl, kind: "success" });
           })
           .catch((error) => {
             console.error("OAuth 2.0 authentication failed:", error);
-            alert("OAuth 2.0 authentication failed: " + error.message);
+            void showAlert(error.message, { host: this.tab.yasgui.rootEl, title: "OAuth 2.0 sign-in failed" });
             saveButton.disabled = false;
             saveButton.textContent = "Save & Authenticate";
           });
@@ -2005,8 +2022,12 @@ export default class TabSettingsModal {
       const parsedConfig = ConfigExportImport.parseFromTurtle(turtleContent);
 
       // Confirm with user before importing
-      const confirmMsg = `This will replace your current configuration with ${parsedConfig.tabs?.length || 0} tab(s). Continue?`;
-      if (!confirm(confirmMsg)) {
+      const tabCount = parsedConfig.tabs?.length || 0;
+      const confirmed = await showConfirm(
+        `Your current tabs and settings are replaced by the ${tabCount} tab${tabCount === 1 ? "" : "s"} and settings of the file.`,
+        { host: this.tab.yasgui.rootEl, title: "Import this configuration?", confirmLabel: "Import" },
+      );
+      if (!confirmed) {
         return;
       }
 
@@ -2152,7 +2173,7 @@ export default class TabSettingsModal {
     const clearStorageButton = document.createElement("button");
     clearStorageButton.textContent = "Clear Persistent Storage";
     addClass(clearStorageButton, "dangerButton");
-    clearStorageButton.onclick = () => this.clearPersistentStorage();
+    clearStorageButton.onclick = () => void this.clearPersistentStorage();
     storageSection.appendChild(clearStorageButton);
 
     container.appendChild(storageSection);
@@ -2179,16 +2200,10 @@ export default class TabSettingsModal {
     return linkContainer;
   }
 
-  private clearPersistentStorage() {
-    const confirmed = confirm(
-      "Are you sure you want to clear all persistent storage?\n\n" +
-        "This will delete:\n" +
-        "- All saved tabs and queries\n" +
-        "- Endpoint configurations and history\n" +
-        "- Authentication settings\n" +
-        "- Editor preferences\n" +
-        "- Prefixes\n\n" +
-        "This action cannot be undone and the page will reload.",
+  private async clearPersistentStorage() {
+    const confirmed = await showConfirm(
+      "This deletes all saved tabs and queries, endpoints and their credentials, endpoint history, editor preferences and prefixes from this browser, then reloads the page. It cannot be undone.",
+      { host: this.tab.yasgui.rootEl, title: "Clear all stored data?", confirmLabel: "Clear and reload", danger: true },
     );
 
     if (confirmed) {

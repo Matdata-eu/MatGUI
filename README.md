@@ -37,12 +37,12 @@
 
 The **documentation for Matgui is hosted on GitHub Pages**:
 
-- **📚 Documentation Website**: [https://matgui-doc.matdata.eu/](https://matdata-eu.github.io/Yasgui/)
+- **📚 Documentation Website**: [https://matgui-doc.matdata.eu/](https://matgui-doc.matdata.eu/)
   - User Guide, Developer Guide, API Reference
   - Built with Docusaurus
   - Version-tagged with the repository
 
-- **🚀 Development Build**: [https://matgui-doc.matdata.eu/dev/main/](https://matdata-eu.github.io/Yasgui/dev/main/)
+- **🚀 Development Build**: [https://matgui-doc.matdata.eu/dev/main/](https://matgui-doc.matdata.eu/dev/main/)
   - Live build from the main branch
   - Updated automatically with every commit
   - Test latest features before release

@@ -52,6 +52,15 @@ export interface OAuth2TokenResponse {
   token_type: string;
 }
 
+/** Origin of a URL, or of the current page for a relative one */
+export function originOf(url: string): string {
+  try {
+    return new URL(url, window.location.href).origin;
+  } catch {
+    return window.location.origin;
+  }
+}
+
 /**
  * Check if a token has expired
  */
@@ -76,9 +85,8 @@ export async function startOAuth2Flow(config: OAuth2Config): Promise<OAuth2Token
   // Generate unique flow ID to prevent collisions across multiple OAuth flows
   const flowId = generateRandomString(16);
 
-  // Store code verifier and state in sessionStorage for later retrieval with unique keys
-  sessionStorage.setItem(`oauth2_code_verifier_${flowId}`, codeVerifier);
-  sessionStorage.setItem(`oauth2_state_${flowId}`, state);
+  // The code verifier and state stay in this closure: nothing else needs them, so they aren't written to storage
+  const redirectOrigin = originOf(config.redirectUri);
 
   // Build authorization URL
   const authUrl = new URL(config.authorizationEndpoint);
@@ -116,9 +124,6 @@ export async function startOAuth2Flow(config: OAuth2Config): Promise<OAuth2Token
     const cleanup = () => {
       clearInterval(checkInterval);
       window.removeEventListener("message", messageHandler);
-      // Clean up sessionStorage
-      sessionStorage.removeItem(`oauth2_code_verifier_${flowId}`);
-      sessionStorage.removeItem(`oauth2_state_${flowId}`);
     };
 
     const checkInterval = setInterval(() => {
@@ -169,17 +174,23 @@ export async function startOAuth2Flow(config: OAuth2Config): Promise<OAuth2Token
             exchangeCodeForToken(config, code, codeVerifier).then(resolve).catch(reject);
           }
         } catch (e) {
-          // Cross-origin error is expected when on OAuth provider's domain
-          // Keep waiting
+          // Reading the location of a cross-origin popup throws while it is on the provider's domain: keep
+          // waiting. Anything else is a real error.
+          if (!(e instanceof DOMException && e.name === "SecurityError") && !flowCompleted) {
+            flowCompleted = true;
+            cleanup();
+            reject(e instanceof Error ? e : new Error(String(e)));
+          }
         }
       } catch (e) {
-        // Ignore errors while checking popup
+        // `popup.closed` itself can throw in some browsers while the popup navigates; check again next time
       }
     }, 500);
 
     // Also listen for postMessage from redirect page (alternative method)
     const messageHandler = (event: MessageEvent) => {
-      // Validate origin if needed (should match redirect URI origin)
+      // Only the redirect page, on the origin of the redirect URI, may report the result
+      if (event.origin !== redirectOrigin) return;
       if (event.data && event.data.type === "oauth2_callback" && !flowCompleted) {
         flowCompleted = true;
         cleanup();

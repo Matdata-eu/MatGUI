@@ -1,3 +1,4 @@
+import { showCopyValue } from "../dialogs";
 import type Yasgui from "../index";
 import { addClass, removeClass } from "@matdata/yasgui-utils";
 import type { WorkspaceConfig, FolderEntry } from "./types";
@@ -800,7 +801,7 @@ export default class QueryBrowser {
             try {
               await navigator.clipboard.writeText(uri);
             } catch {
-              window.prompt("Copy this URI:", uri);
+              void showCopyValue("Copy the URI of this query", uri, { host: this.yasgui.rootEl });
             }
           }),
         );

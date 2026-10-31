@@ -3,7 +3,8 @@
  * Handles serialization and deserialization of Matgui configuration to/from RDF Turtle format
  */
 
-import { PersistedJson } from "./PersistentConfig";
+import * as N3 from "n3";
+import type { PersistedJson } from "./PersistentConfig";
 
 // Matgui Configuration Ontology
 export const YASGUI_NS = "https://yasgui.matdata.eu/ontology#";
@@ -178,26 +179,8 @@ function escapeTurtleString(str: string): string {
 }
 
 /**
- * Unescape Turtle string
- */
-function unescapeTurtleString(str: string): string {
-  return str
-    .replace(/\\n/g, "\n")
-    .replace(/\\r/g, "\r")
-    .replace(/\\t/g, "\t")
-    .replace(/\\"/g, '"')
-    .replace(/\\\\/g, "\\");
-}
-
-/**
- * Parse Turtle format back to configuration
- * This is a simplified parser focused on the structure we generate.
- *
- * Note: This parser is designed to handle the specific Turtle format
- * produced by serializeToTurtle(). For production use with arbitrary
- * Turtle input, consider using a robust RDF library like N3.js.
- * The current implementation uses regex patterns that work well for
- * our serialization output but may not handle all valid Turtle syntax.
+ * Parse Turtle back to configuration, with a real Turtle parser: the export of any version, or a file edited by
+ * hand, is read by its triples rather than by the layout of the text.
  */
 export function parseFromTurtle(turtle: string): Partial<PersistedJson> {
   const config: Partial<PersistedJson> = {
@@ -207,122 +190,126 @@ export function parseFromTurtle(turtle: string): Partial<PersistedJson> {
     customEndpointButtons: [],
   };
 
+  let quads: N3.Quad[];
   try {
-    // Extract endpoint history
-    const endpointHistoryMatch = turtle.match(/yasgui:endpointHistory\s*\(([\s\S]*?)\)/);
-    if (endpointHistoryMatch) {
-      const endpoints = endpointHistoryMatch[1].match(/"([^"]*)"/g);
-      if (endpoints) {
-        config.endpointHistory = endpoints.map((e) => unescapeTurtleString(e.slice(1, -1)));
-      }
-    }
-
-    // Extract active tab
-    const activeTabMatch = turtle.match(/yasgui:activeTab\s+"([^"]*)"/);
-    if (activeTabMatch) {
-      config.active = unescapeTurtleString(activeTabMatch[1]);
-    }
-
-    // Extract prefixes
-    const prefixesMatch = turtle.match(/yasgui:prefixesValue\s+"""([\s\S]*?)"""/);
-    if (prefixesMatch) {
-      config.prefixes = unescapeTurtleString(prefixesMatch[1]);
-    }
-
-    // Extract auto capture enabled
-    const autoCaptureMatch = turtle.match(/yasgui:autoCaptureEnabled\s+"([^"]*)"/);
-    if (autoCaptureMatch) {
-      config.autoCaptureEnabled = autoCaptureMatch[1] === "true";
-    }
-
-    // Extract theme
-    const themeMatch = turtle.match(/yasgui:theme\s+"([^"]*)"/);
-    if (themeMatch && (themeMatch[1] === "light" || themeMatch[1] === "dark")) {
-      config.theme = themeMatch[1] as "light" | "dark";
-    }
-
-    // Extract orientation
-    const orientationMatch = turtle.match(/yasgui:orientation\s+"([^"]*)"/);
-    if (orientationMatch && (orientationMatch[1] === "vertical" || orientationMatch[1] === "horizontal")) {
-      config.orientation = orientationMatch[1] as "vertical" | "horizontal";
-    }
-
-    // Extract custom endpoint buttons
-    const buttonPattern =
-      /yasgui:customEndpointButton\s+\[([\s\S]*?)rdfs:label\s+"([^"]*)"\s*;\s*sd:endpoint\s+"([^"]*)"/g;
-    let buttonMatch;
-    while ((buttonMatch = buttonPattern.exec(turtle)) !== null) {
-      config.customEndpointButtons!.push({
-        label: unescapeTurtleString(buttonMatch[2]),
-        endpoint: unescapeTurtleString(buttonMatch[3]),
-      });
-    }
-
-    // Extract tabs - simplified parsing
-    const tabPattern =
-      /dcterms:identifier\s+"([^"]*)"\s*;\s*rdfs:label\s+"([^"]*)"\s*;[\s\S]*?(?=dcterms:identifier|yasgui:customEndpointButton|\]\.|\]\s*,\s*\[)/g;
-    const tabBlocks = turtle.match(/yasgui:tab\s+\[([\s\S]*)\]\s*\./);
-
-    if (tabBlocks) {
-      const tabsContent = tabBlocks[1];
-      const tabIdMatches = [...tabsContent.matchAll(/dcterms:identifier\s+"([^"]*)"/g)];
-      const tabNameMatches = [...tabsContent.matchAll(/rdfs:label\s+"([^"]*)"/g)];
-      const queryMatches = [...tabsContent.matchAll(/sp:text\s+"""([\s\S]*?)"""/g)];
-      const endpointMatches = [...tabsContent.matchAll(/sd:endpoint\s+"([^"]*)"/g)];
-      const methodMatches = [...tabsContent.matchAll(/yasgui:requestMethod\s+"([^"]*)"/g)];
-
-      // Extract tab-level orientation
-      const tabOrientationMatches = [...tabsContent.matchAll(/yasgui:orientation\s+"([^"]*)"/g)];
-
-      tabIdMatches.forEach((match, index) => {
-        const tabId = unescapeTurtleString(match[1]);
-        const tabName = tabNameMatches[index] ? unescapeTurtleString(tabNameMatches[index][1]) : "Query";
-        const query = queryMatches[index] ? unescapeTurtleString(queryMatches[index][1]) : "";
-        const endpoint = endpointMatches[index] ? unescapeTurtleString(endpointMatches[index][1]) : "";
-        const method = methodMatches[index] ? unescapeTurtleString(methodMatches[index][1]) : "POST";
-        const orientation = tabOrientationMatches[index]
-          ? (unescapeTurtleString(tabOrientationMatches[index][1]) as "vertical" | "horizontal")
-          : undefined;
-
-        config.tabs!.push(tabId);
-        config.tabConfig![tabId] = {
-          id: tabId,
-          name: tabName,
-          yasqe: {
-            value: query,
-          },
-          requestConfig: {
-            queryArgument: undefined,
-            endpoint: endpoint,
-            method: method as "GET" | "POST",
-            acceptHeaderGraph: "text/turtle",
-            acceptHeaderSelect: "application/sparql-results+json",
-            acceptHeaderUpdate: "application/sparql-results+json",
-            namedGraphs: [],
-            defaultGraphs: [],
-            args: [],
-            headers: {},
-            withCredentials: false,
-            adjustQueryBeforeRequest: false,
-            basicAuth: undefined,
-            bearerAuth: undefined,
-            apiKeyAuth: undefined,
-            oauth2Auth: undefined,
-          },
-          yasr: {
-            settings: {},
-            response: undefined,
-          },
-          orientation: orientation,
-        };
-      });
-    }
+    quads = new N3.Parser().parse(turtle);
   } catch (error) {
     console.error("Error parsing Turtle configuration:", error);
-    throw new Error("Failed to parse configuration. Please check the format.");
+    throw new Error(
+      `Failed to parse configuration. Please check the format${error instanceof Error ? ` (${error.message})` : ""}.`,
+    );
   }
 
+  const bySubject = new Map<string, N3.Quad[]>();
+  for (const quad of quads) {
+    const key = termKey(quad.subject);
+    const list = bySubject.get(key);
+    if (list) list.push(quad);
+    else bySubject.set(key, [quad]);
+  }
+  const objects = (subject: N3.Term, predicate: string): N3.Term[] =>
+    (bySubject.get(termKey(subject)) || []).filter((q) => q.predicate.value === predicate).map((q) => q.object);
+  const literal = (subject: N3.Term, predicate: string): string | undefined => {
+    const object = objects(subject, predicate)[0];
+    return object && object.termType === "Literal" ? object.value : undefined;
+  };
+  const list = (head: N3.Term | undefined): N3.Term[] => {
+    const items: N3.Term[] = [];
+    const seen = new Set<string>();
+    let node = head;
+    while (node && node.value !== RDF_NS + "nil" && !seen.has(termKey(node))) {
+      seen.add(termKey(node));
+      const first = objects(node, RDF_NS + "first")[0];
+      if (first) items.push(first);
+      node = objects(node, RDF_NS + "rest")[0];
+    }
+    return items;
+  };
+
+  const root = quads.find(
+    (q) => q.predicate.value === RDF_NS + "type" && q.object.value === YASGUI_NS + "Configuration",
+  )?.subject;
+  if (!root) {
+    throw new Error("Failed to parse configuration: no yasgui:Configuration found.");
+  }
+
+  config.endpointHistory = list(objects(root, YASGUI_NS + "endpointHistory")[0])
+    .filter((term) => term.termType === "Literal")
+    .map((term) => term.value);
+
+  const active = literal(root, YASGUI_NS + "activeTab");
+  if (active !== undefined) config.active = active;
+
+  const prefixes = literal(root, YASGUI_NS + "prefixesValue");
+  if (prefixes !== undefined) config.prefixes = prefixes;
+
+  const autoCapture = literal(root, YASGUI_NS + "autoCaptureEnabled");
+  if (autoCapture !== undefined) config.autoCaptureEnabled = autoCapture === "true";
+
+  const theme = literal(root, YASGUI_NS + "theme");
+  if (theme === "light" || theme === "dark") config.theme = theme;
+
+  const orientation = literal(root, YASGUI_NS + "orientation");
+  if (orientation === "vertical" || orientation === "horizontal") config.orientation = orientation;
+
+  for (const button of objects(root, YASGUI_NS + "customEndpointButton")) {
+    const label = literal(button, RDFS_NS + "label");
+    const endpoint = literal(button, SD_NS + "endpoint");
+    if (label !== undefined && endpoint !== undefined) config.customEndpointButtons!.push({ label, endpoint });
+  }
+
+  // Tabs are blank nodes without an order of their own: keep the order in which they appear in the file
+  objects(root, YASGUI_NS + "tab").forEach((tab, index) => {
+    const tabId = literal(tab, DCTERMS_NS + "identifier") || `imported-${index + 1}`;
+    if (config.tabConfig![tabId]) return;
+    const tabOrientation = literal(tab, YASGUI_NS + "orientation");
+    const acceptHeader = (predicate: string) => {
+      const header = objects(tab, predicate)[0];
+      return header ? literal(header, HTTP_NS + "headerValue") : undefined;
+    };
+    const method = literal(tab, YASGUI_NS + "requestMethod");
+    const editorHeight = literal(tab, SCHEMA_NS + "height");
+    const selectedPlugin = literal(tab, YASGUI_NS + "selectedPlugin");
+
+    config.tabs!.push(tabId);
+    config.tabConfig![tabId] = {
+      id: tabId,
+      name: literal(tab, RDFS_NS + "label") || "Query",
+      yasqe: {
+        value: literal(tab, SP_NS + "text") || "",
+        ...(editorHeight ? { editorHeight } : {}),
+      },
+      requestConfig: {
+        queryArgument: undefined,
+        endpoint: literal(tab, SD_NS + "endpoint") || "",
+        method: method === "GET" ? "GET" : "POST",
+        acceptHeaderGraph: acceptHeader(YASGUI_NS + "acceptHeaderGraph") || "text/turtle",
+        acceptHeaderSelect: acceptHeader(YASGUI_NS + "acceptHeaderSelect") || "application/sparql-results+json",
+        acceptHeaderUpdate: "application/sparql-results+json",
+        namedGraphs: [],
+        defaultGraphs: [],
+        args: [],
+        headers: {},
+        withCredentials: false,
+        adjustQueryBeforeRequest: false,
+        basicAuth: undefined,
+        bearerAuth: undefined,
+        apiKeyAuth: undefined,
+        oauth2Auth: undefined,
+      },
+      yasr: {
+        settings: selectedPlugin ? { selectedPlugin } : {},
+        response: undefined,
+      },
+      orientation: tabOrientation === "vertical" || tabOrientation === "horizontal" ? tabOrientation : undefined,
+    };
+  });
+
   return config;
+}
+
+function termKey(term: N3.Term): string {
+  return `${term.termType}:${term.value}`;
 }
 
 /**
