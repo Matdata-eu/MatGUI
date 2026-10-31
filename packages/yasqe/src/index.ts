@@ -1614,9 +1614,9 @@ export class Yasqe extends EditorFacade {
       addClass(this.queryBtn, "state-normal");
     }
   }
+  /** The browser storage is full: keep the query in the editor, rather than deleting every saved query */
   public handleLocalStorageQuotaFull(_e: any) {
-    console.warn("Localstorage quota exceeded. Clearing all queries");
-    Yasqe.clearStorage();
+    console.warn("Local storage quota exceeded: the query was not saved");
   }
 
   public saveQuery() {
@@ -2352,6 +2352,16 @@ export class Yasqe extends EditorFacade {
   public hasAuthenticationCredentials(config?: Sparql.YasqeAjaxConfig): boolean {
     const ajaxConfig = Sparql.getAjaxConfig(this, config);
     return ajaxConfig ? Sparql.hasAuthenticationCredentials(ajaxConfig) : false;
+  }
+
+  /**
+   * True when a request from this editor would carry credentials: an Authorization or API key header, or
+   * cookies (`withCredentials`)
+   */
+  public requestSendsCredentials(config?: Sparql.YasqeAjaxConfig): boolean {
+    const ajaxConfig = Sparql.getAjaxConfig(this, config);
+    if (!ajaxConfig) return false;
+    return Sparql.hasAuthenticationCredentials(ajaxConfig) || !!ajaxConfig.withCredentials;
   }
 
   /**

@@ -750,9 +750,9 @@ export class Yasr extends EventEmitter {
     }
   }
 
+  /** The browser storage is full: keep working without persisting, rather than deleting what was saved */
   public handleLocalStorageQuotaFull(_e: any) {
-    console.warn("Localstorage quota exceeded. Clearing all queries");
-    Yasr.clearStorage();
+    console.warn("Local storage quota exceeded: the results view settings were not saved");
   }
 
   public getResponseFromStorage() {
@@ -798,7 +798,11 @@ export class Yasr extends EventEmitter {
     if (storageId && this.results) {
       const storeObj = this.results.getAsStoreObject(this.config.maxPersistentResponseSize);
       if (storeObj && !storeObj.error) {
-        this.storage.set(storageId, storeObj, this.config.persistencyExpire, this.handleLocalStorageQuotaFull);
+        this.storage.set(storageId, storeObj, this.config.persistencyExpire, () => {
+          // Too large to keep: drop the previous stored response too, so it isn't shown for this query
+          console.warn("Local storage quota exceeded: the query response was not saved");
+          this.storage.remove(storageId);
+        });
       } else {
         //remove old string;
         this.storage.remove(storageId);

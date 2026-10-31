@@ -1,3 +1,4 @@
+import { showToast } from "./dialogs";
 import { Storage as YStorage } from "@matdata/yasgui-utils";
 import Yasgui, { EndpointButton, EndpointConfig } from "./";
 import * as Tab from "./Tab";
@@ -141,6 +142,35 @@ export default class PersistentConfig {
       this.handleLocalStorageQuotaFull,
     );
   }
+
+  /**
+   * The browser storage is full. Query results kept with the tabs are by far the largest part, so save the
+   * configuration without them; if even that doesn't fit, keep working from memory and tell the user, without
+   * deleting anything they saved.
+   */
+  private handleLocalStorageQuotaFull = (_e: any) => {
+    const tabConfig: PersistedJson["tabConfig"] = {};
+    for (const id in this.persistedJson.tabConfig) {
+      const tab = this.persistedJson.tabConfig[id];
+      tabConfig[id] = tab && tab.yasr ? { ...tab, yasr: { ...tab.yasr, response: undefined } } : tab;
+    }
+    const withoutResponses: PersistedJson = { ...this.persistedJson, lastClosedTab: undefined, tabConfig };
+    let saved = true;
+    this.storage.set(this.storageId, withoutResponses, this.yasgui.config.persistencyExpire, () => (saved = false));
+    if (saved) {
+      console.warn("Local storage is full: saved the configuration without the query results of the tabs");
+      return;
+    }
+    console.warn("Local storage is full: the configuration could not be saved");
+    if (!this.warnedStorageFull) {
+      this.warnedStorageFull = true;
+      showToast(
+        "Your browser's storage for this site is full, so changes to tabs and settings are not being saved. Close tabs you don't need, or export your configuration from the settings.",
+        { host: this.yasgui.rootEl, kind: "error", duration: 0 },
+      );
+    }
+  };
+  private warnedStorageFull = false;
   private fromStorage(): PersistedJson {
     const stored = this.storage.get<PersistedJson>(this.storageId);
     this.hadStoredConfig = !!stored;
@@ -152,11 +182,6 @@ export default class PersistentConfig {
       this.persistedJson.endpointHistory = [];
     }
     return this.persistedJson;
-  }
-
-  private handleLocalStorageQuotaFull(_e: any) {
-    console.warn("Localstorage quota exceeded. Clearing all Matgui configurations");
-    PersistentConfig.clear();
   }
 
   /** False on a first visit, before anything was stored */
