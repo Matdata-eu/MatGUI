@@ -16,6 +16,8 @@ import GeoPlugin from "@matdata/yasgui-geo-plugin";
 import GraphPlugin from "@matdata/yasgui-graph-plugin";
 import TablePlugin from "@matdata/yasgui-table-plugin";
 import { moveTabIdToFront, removeTabId } from "./tabNavigationHistory";
+import * as dialogs from "./dialogs";
+import { setDialogHost, showToast } from "./dialogs";
 import "@matdata/yasgui-chart-plugin/dist/yasgui-chart-plugin.min.css";
 import "@matdata/yasgui-explain-plugin/dist/yasgui-explain-plugin.min.css";
 import "@matdata/yasgui-graph-plugin/dist/yasgui-graph-plugin.min.css";
@@ -103,6 +105,13 @@ export interface Config<EndpointObject extends CatalogueItem = CatalogueItem> {
   endpointButtons?: EndpointButton[];
   //The function allows us to modify the config before we pass it on to a tab
   populateFromUrl: boolean | ((configFromUrl: PersistedTabJson) => PersistedTabJson);
+  /**
+   * Whether a query opened from a share link runs on load (default: "safe").
+   * "safe": runs, unless the request would carry saved credentials (auth headers or cookies) or the query is
+   * invalid; then the user is asked to review it first. "always": runs unless it is an update. "never": loads
+   * the query without running it. Update queries never run from a link.
+   */
+  autoRunSharedQueries?: shareLink.AutoRunSharedQueries;
   autoAddOnInit: boolean;
   persistenceId: ((yasr: Yasgui) => string) | string | null;
   persistenceLabelConfig: string;
@@ -245,11 +254,14 @@ export class Yasgui extends EventEmitter {
   private navigationSnapshot: string[] | null = null;
   private navigationCursor = 0;
   public static Tab = Tab;
+  /** In-app alert, confirm and toast, in the MatGUI style, for plugins and embedding pages */
+  public static dialogs = dialogs;
   constructor(parent: HTMLElement, config: PartialConfig) {
     super();
     this.rootEl = document.createElement("div");
     addClass(this.rootEl, "yasgui");
     parent.appendChild(this.rootEl);
+    setDialogHost(this.rootEl);
 
     this.config = merge({}, Yasgui.defaults, config);
 
@@ -356,7 +368,7 @@ export class Yasgui extends EventEmitter {
         this.markTabSelected(activeTabId);
         this.recordTabInRecentHistory(activeTabId);
         if (executeIdAfterInit && executeIdAfterInit === activeTabId) {
-          (this.getTab(activeTabId) as Tab).query().catch(() => {});
+          this.runSharedQuery(this.getTab(activeTabId) as Tab);
         }
         // }
       }
@@ -375,6 +387,36 @@ export class Yasgui extends EventEmitter {
         if (this.rootEl.isConnected) quickStart.open();
       }, 300);
     }
+  }
+  /**
+   * Run the query of a tab opened from a share link, unless that would be unsafe without the user reviewing it
+   */
+  private runSharedQuery(tab: Tab) {
+    const yasqe = tab.getYasqe();
+    if (!yasqe) return;
+    yasqe.checkSyntax();
+    let sendsCredentials = false;
+    try {
+      sendsCredentials = yasqe.requestSendsCredentials();
+    } catch {
+      // A failing request config is reported when the query runs; treat it as credentialed to be safe
+      sendsCredentials = true;
+    }
+    const blocker = shareLink.getSharedQueryRunBlocker(
+      { queryMode: yasqe.getQueryMode(), queryValid: yasqe.queryValid, sendsCredentials },
+      this.config.autoRunSharedQueries,
+    );
+    if (!blocker) {
+      tab.query().catch(() => {});
+      return;
+    }
+    const canRun = blocker === "credentials" || blocker === "disabled";
+    showToast(shareLink.sharedQueryBlockedMessage(blocker, tab.getEndpoint()), {
+      host: this.rootEl,
+      kind: blocker === "disabled" ? "info" : "warning",
+      duration: canRun ? 0 : 10000,
+      action: canRun ? { label: "Run query", onClick: () => tab.query().catch(() => {}) } : undefined,
+    });
   }
   public hasFullscreen(fullscreen: boolean) {
     if (fullscreen) {

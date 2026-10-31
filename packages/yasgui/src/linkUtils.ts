@@ -4,6 +4,8 @@ import { default as Tab, PersistedJson } from "./Tab";
 import Yasr from "@matdata/yasr";
 import { PlainRequestConfig } from "@matdata/yasqe";
 import { getAsValue } from "@matdata/yasgui-utils";
+import { parseJsonParam } from "./shareLinkSafety";
+export * from "./shareLinkSafety";
 var getUrlParams = function (_url?: string) {
   var urlFromWindow = false;
   if (!_url) {
@@ -127,7 +129,7 @@ export function getConfigFromUrl(defaults: PersistedJson, _url?: string): Persis
         console.warn(`Output format plugin "${value}" not found`);
       }
     } else if (key == "outputSettings") {
-      pluginsConfig = JSON.parse(value);
+      pluginsConfig = parseJsonParam("outputSettings", value);
     } else if (key == "contentTypeConstruct") {
       options.requestConfig.acceptHeaderGraph = value;
     } else if (key == "contentTypeSelect") {
@@ -145,8 +147,10 @@ export function getConfigFromUrl(defaults: PersistedJson, _url?: string): Persis
       if (!Array.isArray(options.requestConfig.defaultGraphs)) options.requestConfig.defaultGraphs = [];
       options.requestConfig.defaultGraphs.push(value);
     } else if (key == "headers") {
-      if (!options.requestConfig.headers) options.requestConfig.headers = {};
-      options.requestConfig.headers = JSON.parse(value);
+      const headers = parseJsonParam("headers", value);
+      if (headers && typeof headers === "object" && !Array.isArray(headers)) {
+        options.requestConfig.headers = headers;
+      }
     } else {
       //regular arguments. So store them as regular arguments
       if (!options.requestConfig.args) options.requestConfig.args = [];
