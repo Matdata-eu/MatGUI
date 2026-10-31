@@ -146,6 +146,9 @@ async function buildPackage(name, entryPoint, globalName) {
     },
   });
   extractCss(iifeResult, name);
+  // Bundle composition, for `npm run util:bundleSize` (kept out of build/ so it isn't distributed)
+  fs.mkdirSync("bundle-stats", { recursive: true });
+  fs.writeFileSync(`bundle-stats/${name}.json`, JSON.stringify(iifeResult.metafile));
 
   // ESM build: consumed by bundlers (vite/webpack/esbuild) and Node via `import`.
   // Uses the `.mjs` extension so it is always treated as an ES module.

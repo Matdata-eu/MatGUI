@@ -12,7 +12,7 @@ export default function tooltip(_yasqe: Yasqe, parent: HTMLElement, html: string
   // escapes the `overflow` clipping of the CodeMirror gutter/scroller, which would
   // otherwise hide the tooltip behind the editor.
   let tooltip: HTMLDivElement | undefined;
-  parent.onmouseover = function (this: HTMLElement) {
+  parent.onmouseover = function (this: GlobalEventHandlers) {
     if (!tooltip) {
       tooltip = document.createElement("div");
       tooltip.className = "yasqe_tooltip";
@@ -22,7 +22,7 @@ export default function tooltip(_yasqe: Yasqe, parent: HTMLElement, html: string
     tooltip.style.display = "block";
     // `this` is the element the handler fires on. The gutter marker is rendered as a clone of
     // `parent`, so position relative to `this` rather than the (possibly detached) `parent`.
-    const rect = this.getBoundingClientRect();
+    const rect = (this as HTMLElement).getBoundingClientRect();
     tooltip.style.position = "fixed";
     tooltip.style.left = `${rect.right + 6}px`;
     tooltip.style.top = `${rect.top}px`;
