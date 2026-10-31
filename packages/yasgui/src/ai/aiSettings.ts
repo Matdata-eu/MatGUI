@@ -57,7 +57,7 @@ function siteConnection(proxy: AiProxyConfig, index: number): AiConnection {
     label: proxy.label || hostOf(proxy.url),
     privacyUrl: proxy.privacyUrl,
     withCredentials: proxy.withCredentials,
-    getHeaders: headers ? async () => (typeof headers === "function" ? await headers() : headers) : undefined,
+    getHeaders: headers ? async () => (typeof headers === "function" ? headers() : headers) : undefined,
   };
 }
 

@@ -1,3 +1,4 @@
+import { showConfirm } from "../dialogs";
 /**
  * "AI" page of the settings: the AI services as cards (the site's, the user's own, and "No AI service") with the
  * default one picked, and a form to add or edit one of the user's own services: a provider, its base URL (filled in,
@@ -193,7 +194,7 @@ export default class AiSettingsForm {
         const remove = el("button", "yasgui-aiSettings__linkButton danger", "Remove");
         remove.type = "button";
         remove.setAttribute("aria-label", `Remove ${serviceName}`);
-        remove.addEventListener("click", () => this.removeService(service));
+        remove.addEventListener("click", () => void this.removeService(service));
         const meta = [
           service.model || config.defaultModel || "no model chosen",
           hostOf(baseUrl),
@@ -290,8 +291,13 @@ export default class AiSettingsForm {
     this.render();
   }
 
-  private removeService(service: AiServiceSettings) {
-    if (!confirm(`Remove the AI service “${this.serviceName(service)}” and its API key from this browser?`)) return;
+  private async removeService(service: AiServiceSettings) {
+    const confirmed = await showConfirm("Its API key is deleted from this browser too.", {
+      title: `Remove the AI service “${this.serviceName(service)}”?`,
+      confirmLabel: "Remove",
+      danger: true,
+    });
+    if (!confirmed) return;
     const services = (this.settings().services || []).filter((candidate) => candidate.id !== service.id);
     const changes: Parameters<AiAssistant["settings"]["update"]>[0] = {
       services: services.length ? services : undefined,

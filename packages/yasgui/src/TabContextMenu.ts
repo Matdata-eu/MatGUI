@@ -1,3 +1,4 @@
+import { showCopyValue } from "./dialogs";
 import { addClass } from "@matdata/yasgui-utils";
 import { default as Yasgui, getRandomId } from "./";
 import Tab from "./Tab";
@@ -127,7 +128,7 @@ export default class TabContextMenu {
 
     this.saveAsRqFileEl.onclick = () => {
       if (!tab) return;
-      tab.downloadAsRqFile();
+      tab.downloadAsRqFile().catch((error) => console.error("Failed to download the query", error));
       this.closeConfigMenu();
     };
 
@@ -150,7 +151,7 @@ export default class TabContextMenu {
               try {
                 await navigator.clipboard.writeText(uri);
               } catch {
-                window.prompt("Copy this URI:", uri);
+                void showCopyValue("Copy the URI of this query", uri, { host: this.yasgui.rootEl });
               }
               this.closeConfigMenu();
             };

@@ -1,3 +1,4 @@
+import { showToast } from "./dialogs";
 import { addClass } from "@matdata/yasgui-utils";
 import type { Yasgui } from "./";
 import { icon, IconName, modKeyLabel } from "./icons";
@@ -184,7 +185,7 @@ export default class CommandPalette {
     this.close(false);
     Promise.resolve()
       .then(() => item.run())
-      .catch((error) => window.alert(error?.message || String(error)));
+      .catch((error) => showToast(error?.message || String(error), { host: this.yasgui.rootEl, kind: "error" }));
   }
 
   /** List the saved queries of every workspace, at most once a minute */

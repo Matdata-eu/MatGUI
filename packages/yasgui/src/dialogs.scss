@@ -1,0 +1,228 @@
+// In-app alert/confirm dialogs and toasts (dialogs.ts)
+
+// `.yasgui > div` lays out the tab panels as a column; these layers are not part of it
+.yasgui > div.yasgui-dialog:not(.tabsList) {
+  flex: none;
+  flex-direction: row;
+  overflow: visible;
+  min-height: 0;
+}
+
+.yasgui > div.yasgui-toasts:not(.tabsList) {
+  flex: none;
+  flex-direction: column;
+  overflow: visible;
+  min-height: 0;
+}
+
+.yasgui-dialog {
+  position: fixed;
+  inset: 0;
+  // Above the settings modal, the What's new dialog and the command palette
+  z-index: 10100;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 96px 16px 16px;
+  box-sizing: border-box;
+  background: var(--yasgui-scrim, rgba(13, 20, 28, 0.32));
+  font-family: var(--yasgui-font-family, inherit);
+  font-size: 13px;
+  color: var(--yasgui-ink, #1c2633);
+
+  &__box {
+    width: 440px;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    box-sizing: border-box;
+    border-radius: 12px;
+    background: var(--yasgui-surface-raised, #ffffff);
+    box-shadow: var(--yasgui-shadow-overlay, 0 24px 48px rgba(13, 20, 28, 0.18), 0 0 0 1px rgba(13, 20, 28, 0.06));
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  &__message {
+    margin: 0;
+    line-height: 1.5;
+    color: var(--yasgui-ink-body, #3a4552);
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+
+  &__field {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 7px 10px;
+    border: 1px solid var(--yasgui-line, #dfe5ec);
+    border-radius: var(--yasgui-radius-sm, 6px);
+    background: var(--yasgui-surface, #f1f4f8);
+    color: var(--yasgui-ink, #1c2633);
+    font-family: var(--yasgui-font-mono, monospace);
+    font-size: 12px;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  &__button {
+    min-height: 32px;
+    padding: 0 14px;
+    border: 1px solid var(--yasgui-line, #dfe5ec);
+    border-radius: var(--yasgui-radius-button, 8px);
+    background: var(--yasgui-surface-raised, #ffffff);
+    color: var(--yasgui-ink, #1c2633);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--yasgui-surface-sunken, #edf0f4);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--yasgui-focus, #044a8c);
+      outline-offset: 2px;
+    }
+
+    &--primary {
+      border-color: transparent;
+      background: var(--yasgui-brand-fill, #0563bb);
+      color: var(--yasgui-on-brand, #ffffff);
+
+      &:hover {
+        background: var(--yasgui-brand-fill-strong, #044a8c);
+      }
+    }
+
+    &--danger {
+      border-color: transparent;
+      background: var(--yasgui-danger, #b42318);
+      color: #ffffff;
+
+      &:hover {
+        filter: brightness(0.92);
+        background: var(--yasgui-danger, #b42318);
+      }
+    }
+  }
+}
+
+.yasgui-toasts {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 10110;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+  font-family: var(--yasgui-font-family, inherit);
+  font-size: 13px;
+}
+
+.yasgui-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 560px;
+  padding: 8px 8px 8px 12px;
+  border-radius: 10px;
+  background: var(--yasgui-surface-raised, #ffffff);
+  color: var(--yasgui-ink, #1c2633);
+  box-shadow: var(--yasgui-shadow-overlay, 0 16px 48px rgba(28, 38, 51, 0.22), 0 0 0 1px rgba(28, 38, 51, 0.06));
+  animation: yasgui-toast-in 160ms ease-out;
+
+  &__icon {
+    display: flex;
+    flex-shrink: 0;
+    color: var(--yasgui-brand, #0563bb);
+  }
+
+  &--success &__icon {
+    color: var(--yasgui-success, #067647);
+  }
+
+  &--warning &__icon {
+    color: var(--yasgui-highlight-ink, #6e4d00);
+  }
+
+  &--error &__icon {
+    color: var(--yasgui-danger, #b42318);
+  }
+
+  &__message {
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  &__action,
+  &__close {
+    flex-shrink: 0;
+    border: none;
+    border-radius: var(--yasgui-radius-button, 8px);
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--yasgui-focus, #044a8c);
+      outline-offset: 1px;
+    }
+  }
+
+  &__action {
+    padding: 4px 10px;
+    color: var(--yasgui-brand, #0563bb);
+    font-weight: 600;
+
+    &:hover {
+      background: var(--yasgui-brand-soft, #e3eefa);
+    }
+  }
+
+  &__close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    color: var(--yasgui-ink-muted, #56606c);
+
+    &:hover {
+      background: var(--yasgui-surface-sunken, #edf0f4);
+    }
+  }
+}
+
+@keyframes yasgui-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yasgui-toast {
+    animation: none;
+  }
+}

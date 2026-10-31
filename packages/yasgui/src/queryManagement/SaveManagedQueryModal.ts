@@ -416,7 +416,7 @@ export default class SaveManagedQueryModal {
     const isSparql = workspace?.type === "sparql";
 
     if (!workspaceId) {
-      window.alert("Please select a workspace");
+      this.reportInvalid(this.workspaceSelectEl, "Select a workspace to save to");
       return;
     }
 
@@ -426,7 +426,7 @@ export default class SaveManagedQueryModal {
     if (isGit) {
       resolvedFilename = resolvedFilename.replace(/\.(rq|sparql)$/i, "");
       if (!resolvedFilename) {
-        window.alert("Please enter a filename");
+        this.reportInvalid(this.filenameEl, "Enter a filename");
         return;
       }
       // Derive a tab label for convenience.
@@ -434,18 +434,18 @@ export default class SaveManagedQueryModal {
       resolvedName = base || resolvedFilename;
     } else if (isSparql) {
       if (!resolvedName) {
-        window.alert("Please enter a name");
+        this.reportInvalid(this.nameEl, "Enter a name");
         return;
       }
       resolvedFilename = this.suggestFilenameFromName(resolvedName) || normalizeQueryFilename(resolvedName);
     } else {
       // Fallback (should not happen): require both.
       if (!resolvedFilename) {
-        window.alert("Please enter a filename");
+        this.reportInvalid(this.filenameEl, "Enter a filename");
         return;
       }
       if (!resolvedName) {
-        window.alert("Please enter a name");
+        this.reportInvalid(this.nameEl, "Enter a name");
         return;
       }
     }
@@ -521,10 +521,20 @@ export default class SaveManagedQueryModal {
       this.nameEl.focus();
     }
 
-    return await new Promise<SaveManagedQueryModalResult>((resolve, reject) => {
+    return new Promise<SaveManagedQueryModalResult>((resolve, reject) => {
       this.resolve = resolve;
       this.reject = reject;
     });
+  }
+
+  /** Show a validation message on the field itself, rather than in a separate dialog */
+  private reportInvalid(field: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement, message: string) {
+    field.setCustomValidity(message);
+    field.reportValidity();
+    field.focus();
+    const reset = () => field.setCustomValidity("");
+    field.addEventListener("input", reset, { once: true });
+    field.addEventListener("change", reset, { once: true });
   }
 
   private suggestFilenameFromName(name: string): string | undefined {
