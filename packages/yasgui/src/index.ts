@@ -17,7 +17,14 @@ import GraphPlugin from "@matdata/yasgui-graph-plugin";
 import TablePlugin from "@matdata/yasgui-table-plugin";
 import { moveTabIdToFront, removeTabId } from "./tabNavigationHistory";
 import * as dialogs from "./dialogs";
-import { setDialogHost, showToast } from "./dialogs";
+import { setDialogHost, showAlert, showConfirm, showToast } from "./dialogs";
+import HttpWorkspaceBackend from "./queryManagement/backends/HttpWorkspaceBackend";
+import { asWorkspaceBackendError } from "./queryManagement/backends/errors";
+import {
+  findWebWorkspace,
+  getWorkspaceUrlFromLink,
+  removeWorkspaceParamFromLink,
+} from "./queryManagement/workspaceLink";
 import "@matdata/yasgui-chart-plugin/dist/yasgui-chart-plugin.min.css";
 import "@matdata/yasgui-explain-plugin/dist/yasgui-explain-plugin.min.css";
 import "@matdata/yasgui-graph-plugin/dist/yasgui-graph-plugin.min.css";
@@ -319,6 +326,8 @@ export class Yasgui extends EventEmitter {
     this.rootEl.appendChild(this.queryBrowser.getElement());
     let executeIdAfterInit: string | undefined;
     let optionsFromUrl: PersistedTabJson | undefined;
+    // Read before the share link below, which clears the hash
+    const workspaceFromLink = this.config.populateFromUrl ? this.takeWorkspaceUrlFromLink() : undefined;
     if (this.config.populateFromUrl) {
       optionsFromUrl = shareLink.getConfigFromUrl(Tab.getDefaults(this));
       if (optionsFromUrl) {
@@ -379,7 +388,12 @@ export class Yasgui extends EventEmitter {
     } else {
       this.sidePanel.restore();
     }
-    if (this.quickStart && this.config.quickStartOnFirstVisit && !QuickStart.hasBeenSeen()) {
+    if (workspaceFromLink) {
+      // After the first paint, so the dialog opens over the interface
+      window.setTimeout(() => {
+        if (this.rootEl.isConnected) void this.addWebWorkspace(workspaceFromLink);
+      }, 300);
+    } else if (this.quickStart && this.config.quickStartOnFirstVisit && !QuickStart.hasBeenSeen()) {
       // After the first paint, so the tour opens over the interface it explains
       const quickStart = this.quickStart;
       QuickStart.markSeen();
@@ -388,6 +402,63 @@ export class Yasgui extends EventEmitter {
       }, 300);
     }
   }
+  /** The `?workspace=` URL of the page, removed from the address bar so a reload does not ask again */
+  private takeWorkspaceUrlFromLink(): string | undefined {
+    if (typeof window === "undefined" || !window.location) return undefined;
+    const manifestUrl = getWorkspaceUrlFromLink(window.location.href);
+    if (!manifestUrl) return undefined;
+    try {
+      window.history.replaceState(window.history.state, "", removeWorkspaceParamFromLink(window.location.href));
+    } catch {
+      // The parameter stays in the address bar; the workspace is only added once anyway
+    }
+    return manifestUrl;
+  }
+
+  /**
+   * Add a read-only web workspace from the URL of its workspace.json, after the user confirms, and show it in
+   * the query browser. A workspace that is already configured is shown without asking.
+   * Used for links with `?workspace=<url>`; embedding pages can call it too.
+   */
+  public async addWebWorkspace(manifestUrl: string): Promise<string | undefined> {
+    const existing = findWebWorkspace(this.persistentConfig.getWorkspaces(), manifestUrl);
+    if (existing) {
+      this.queryBrowser.showWorkspace(existing.id);
+      return existing.id;
+    }
+
+    let info: { label?: string; description?: string; queryCount: number };
+    try {
+      info = await new HttpWorkspaceBackend({ id: "preview", label: "", type: "http", manifestUrl }).getManifestInfo();
+    } catch (e) {
+      await showAlert(`The workspace from this link could not be loaded. ${asWorkspaceBackendError(e).message}`, {
+        host: this.rootEl,
+        title: "Workspace not added",
+      });
+      return undefined;
+    }
+
+    const label = info.label || new URL(manifestUrl).host;
+    const queries = `${info.queryCount} ${info.queryCount === 1 ? "query" : "queries"}`;
+    const ok = await showConfirm(
+      `Add the read-only workspace "${label}" (${queries}) published at ${manifestUrl}? You can browse and open its queries. A query only runs when you press Run.`,
+      { host: this.rootEl, title: "Add workspace", confirmLabel: "Add workspace", cancelLabel: "Not now" },
+    );
+    if (!ok) return undefined;
+
+    const id = `ws_web_${Date.now().toString(36)}_${Math.random().toString(16).slice(2, 8)}`;
+    this.persistentConfig.addOrUpdateWorkspace({
+      id,
+      type: "http",
+      label,
+      description: info.description,
+      manifestUrl,
+      readOnly: true,
+    });
+    this.queryBrowser.showWorkspace(id);
+    return id;
+  }
+
   /**
    * Run the query of a tab opened from a share link, unless that would be unsafe without the user reviewing it
    */

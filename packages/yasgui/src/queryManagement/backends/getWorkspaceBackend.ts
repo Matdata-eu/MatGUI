@@ -3,6 +3,7 @@ import type { WorkspaceBackend } from "./WorkspaceBackend";
 import GitWorkspaceBackend from "./GitWorkspaceBackend";
 import SparqlWorkspaceBackend from "./SparqlWorkspaceBackend";
 import ReadOnlyWorkspaceBackend from "./ReadOnlyWorkspaceBackend";
+import HttpWorkspaceBackend from "./HttpWorkspaceBackend";
 import { GithubProviderClient } from "./GithubProviderClient";
 import { GitlabProviderClient } from "./GitlabProviderClient";
 import { BitbucketProviderClient } from "./BitbucketProviderClient";
@@ -109,7 +110,8 @@ export function getWorkspaceBackend(
   },
 ): WorkspaceBackend {
   const backend = createWorkspaceBackend(config, options);
-  return config.readOnly ? new ReadOnlyWorkspaceBackend(backend) : backend;
+  // Web workspaces are always read-only, whatever the config says
+  return config.readOnly || config.type === "http" ? new ReadOnlyWorkspaceBackend(backend) : backend;
 }
 
 function createWorkspaceBackend(
@@ -120,6 +122,7 @@ function createWorkspaceBackend(
 ): WorkspaceBackend {
   const registered = registeredBackends.get(config.id);
   if (registered) return registered;
+  if (config.type === "http") return new HttpWorkspaceBackend(config);
   if (config.type === "git") {
     const client =
       (GithubProviderClient.canHandle(config) && new GithubProviderClient()) ||

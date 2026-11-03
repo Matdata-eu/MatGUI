@@ -16,6 +16,7 @@ import "./ai-assistant-browser.js";
 import "./sparql-anything-browser.js";
 import "./whats-new-browser.js";
 import "./share-link-browser.js";
+import "./web-workspace-browser.js";
 
 declare var window: Window & {
   Yasqe: typeof Yasqe;

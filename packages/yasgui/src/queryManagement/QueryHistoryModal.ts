@@ -2,6 +2,7 @@ import type Yasgui from "../index";
 import { addClass, removeClass } from "@matdata/yasgui-utils";
 import { getWorkspaceBackend } from "./backends/getWorkspaceBackend";
 import type { BackendType, ManagedTabMetadata, ReadResult, VersionInfo, VersionRef } from "./types";
+import { queryRefFromId, versionRefFromTag } from "./queryRefs";
 import { hashQueryText } from "./textHash";
 import { getEndpointToAutoSwitch } from "./openManagedQuery";
 import { asWorkspaceBackendError } from "./backends/errors";
@@ -318,24 +319,18 @@ export default class QueryHistoryModal {
 
     tab.setQuery(read.queryText);
 
-    const versionRef: VersionRef | undefined = this.versionRefFromVersionTag(backendType, read.versionTag);
+    const versionRef: VersionRef | undefined = versionRefFromTag(backendType, read.versionTag);
 
     const managedMetadata: ManagedTabMetadata = {
       workspaceId,
       backendType,
-      queryRef: backendType === "git" ? { path: queryId } : { managedQueryIri: queryId },
+      queryRef: queryRefFromId(backendType, queryId),
       lastSavedVersionRef: versionRef,
       lastSavedTextHash: hashQueryText(read.queryText),
     };
     tab.setManagedQueryMetadata(managedMetadata);
 
     this.close();
-  }
-
-  private versionRefFromVersionTag(backendType: BackendType, versionTag: string | undefined): VersionRef | undefined {
-    if (!versionTag) return undefined;
-    if (backendType === "git") return { commitSha: versionTag };
-    return { managedQueryVersionIri: versionTag };
   }
 
   private formatDate(isoDate: string): string {

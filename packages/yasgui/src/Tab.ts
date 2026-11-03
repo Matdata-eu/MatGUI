@@ -19,7 +19,8 @@ import EndpointSelect from "./endpointSelect";
 import "./tab.scss";
 import { getRandomId, default as Yasgui, YasguiRequestConfig } from "./";
 import * as OAuth2Utils from "./OAuth2Utils";
-import type { ManagedTabMetadata } from "./queryManagement/types";
+import type { BackendType, ManagedTabMetadata } from "./queryManagement/types";
+import { queryIdFromMetadata, versionRefFromTag, versionTagFromRef } from "./queryManagement/queryRefs";
 import { hashQueryText } from "./queryManagement/textHash";
 import SaveManagedQueryModal from "./queryManagement/SaveManagedQueryModal";
 import { saveManagedQuery } from "./queryManagement/saveManagedQuery";
@@ -170,14 +171,11 @@ export class Tab extends EventEmitter {
   }
 
   private getManagedQueryIdFromMetadata(meta: ManagedTabMetadata): string | undefined {
-    if (meta.backendType === "git") return (meta.queryRef as any)?.path as string | undefined;
-    return (meta.queryRef as any)?.managedQueryIri as string | undefined;
+    return queryIdFromMetadata(meta);
   }
 
-  private versionRefFromVersionTag(backendType: "git" | "sparql", versionTag: string | undefined) {
-    if (!versionTag) return undefined;
-    if (backendType === "git") return { commitSha: versionTag };
-    return { managedQueryVersionIri: versionTag };
+  private versionRefFromVersionTag(backendType: BackendType, versionTag: string | undefined) {
+    return versionRefFromTag(backendType, versionTag);
   }
 
   private getQueryTextForSave(): string {
@@ -254,11 +252,7 @@ export class Tab extends EventEmitter {
 
     const backend = getWorkspaceBackend(workspace, { persistentConfig: this.yasgui.persistentConfig });
 
-    const expectedVersionTag = (() => {
-      if (!meta?.lastSavedVersionRef) return undefined;
-      if (meta.backendType === "git") return (meta.lastSavedVersionRef as any)?.commitSha;
-      return (meta.lastSavedVersionRef as any)?.managedQueryVersionIri;
-    })();
+    const expectedVersionTag = versionTagFromRef(meta.backendType, meta.lastSavedVersionRef);
 
     try {
       await backend.writeQuery(queryId, this.getQueryTextForSave(), { expectedVersionTag });
@@ -363,9 +357,7 @@ export class Tab extends EventEmitter {
     const expectedVersionTag = (() => {
       // A version tag only applies when saving over the same query in the same workspace.
       if (meta?.workspaceId !== workspace.id) return undefined;
-      if (!meta?.lastSavedVersionRef) return undefined;
-      if (meta.backendType === "git") return (meta.lastSavedVersionRef as any)?.commitSha;
-      return (meta.lastSavedVersionRef as any)?.managedQueryVersionIri;
+      return versionTagFromRef(meta.backendType, meta.lastSavedVersionRef);
     })();
 
     try {
@@ -675,7 +667,9 @@ export class Tab extends EventEmitter {
     const workspace = this.yasgui.persistentConfig.getWorkspace(meta.workspaceId);
     const crumbs = [workspace?.label || meta.workspaceId];
     const path = (meta.queryRef as any)?.path as string | undefined;
-    if (meta.backendType === "git" && path) crumbs.push(...path.split("/").slice(0, -1).filter(Boolean));
+    if ((meta.backendType === "git" || meta.backendType === "http") && path && !/^[a-z][a-z0-9+.-]*:/i.test(path)) {
+      crumbs.push(...path.split("/").slice(0, -1).filter(Boolean));
+    }
     return crumbs;
   }
 

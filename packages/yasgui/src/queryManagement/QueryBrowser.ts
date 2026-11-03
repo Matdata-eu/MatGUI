@@ -8,6 +8,8 @@ import { asWorkspaceBackendError, isWorkspaceBackendError, WorkspaceBackendError
 import { getEndpointToAutoSwitch } from "./openManagedQuery";
 import { hashQueryText } from "./textHash";
 import type { BackendType, VersionRef, ManagedTabMetadata } from "./types";
+import { clearHttpWorkspaceCache } from "./backends/HttpWorkspaceBackend";
+import { queryIdFromMetadata, queryRefFromId, versionRefFromTag } from "./queryRefs";
 import { normalizeQueryFilename } from "./normalizeQueryFilename";
 import { isWorkspaceReadOnly } from "./readOnlyWorkspace";
 import SaveManagedQueryModal from "./SaveManagedQueryModal";
@@ -78,6 +80,7 @@ export default class QueryBrowser {
   public invalidateAndRefresh(workspaceId?: string) {
     // Clear caches so new/renamed queries show up immediately.
     if (!workspaceId || this.treeWorkspaceId === workspaceId) {
+      clearHttpWorkspaceCache();
       this.folderEntriesById.clear();
       this.folderLoadingById.clear();
       this.folderErrorById.clear();
@@ -339,6 +342,17 @@ export default class QueryBrowser {
     else this.open(openerEl);
   }
 
+  /** Open the query browser on a workspace, at its root folder */
+  public showWorkspace(workspaceId: string, openerEl?: HTMLElement) {
+    this.selectedWorkspaceId = workspaceId;
+    this.yasgui.persistentConfig.setActiveWorkspaceId(workspaceId);
+    this.currentFolderId = undefined;
+    this.resetTreeState();
+    this.searchEl.value = "";
+    this.invalidateAndRefresh();
+    this.open(openerEl);
+  }
+
   private getWorkspaces(): WorkspaceConfig[] {
     return this.yasgui.persistentConfig.getWorkspaces();
   }
@@ -425,7 +439,7 @@ export default class QueryBrowser {
         return `⚠️ Authentication failed. Please check your workspace configuration and credentials in Settings → Workspaces.`;
       }
       if (err.code === "FORBIDDEN") {
-        return `⚠️ Access forbidden. Please verify your ${workspaceType === "git" ? "token permissions" : "endpoint authentication"} in Settings → Workspaces.`;
+        return `⚠️ Access forbidden. Please verify your ${workspaceType === "git" ? "token permissions" : workspaceType === "http" ? "web server access" : "endpoint authentication"} in Settings → Workspaces.`;
       }
       if (err.code === "NETWORK_ERROR") {
         return `⚠️ Unable to connect to workspace. Please check your workspace configuration and network connection.`;
@@ -536,8 +550,7 @@ export default class QueryBrowser {
   }
 
   private getManagedQueryIdFromMetadata(meta: ManagedTabMetadata): string | undefined {
-    if (meta.backendType === "git") return (meta.queryRef as any)?.path as string | undefined;
-    return (meta.queryRef as any)?.managedQueryIri as string | undefined;
+    return queryIdFromMetadata(meta);
   }
 
   private findOpenManagedTabId(workspaceId: string, backendType: BackendType, queryId: string): string | undefined {
@@ -616,9 +629,7 @@ export default class QueryBrowser {
   }
 
   private versionRefFromVersionTag(backendType: BackendType, versionTag: string | undefined): VersionRef | undefined {
-    if (!versionTag) return undefined;
-    if (backendType === "git") return { commitSha: versionTag };
-    return { managedQueryVersionIri: versionTag };
+    return versionRefFromTag(backendType, versionTag);
   }
 
   /**
@@ -657,7 +668,7 @@ export default class QueryBrowser {
     const managedMetadata: ManagedTabMetadata = {
       workspaceId,
       backendType,
-      queryRef: backendType === "git" ? { path: queryId } : { managedQueryIri: queryId },
+      queryRef: queryRefFromId(backendType, queryId),
       lastSavedVersionRef: this.versionRefFromVersionTag(backendType, read.versionTag),
       lastSavedTextHash: hashQueryText(read.queryText),
     };
@@ -808,13 +819,14 @@ export default class QueryBrowser {
       }
     }
 
-    // History
-    menu.appendChild(
-      makeItem("History", async () => {
-        if (!this.queryHistoryModal) this.queryHistoryModal = new QueryHistoryModal(this.yasgui);
-        await this.queryHistoryModal.show(this.selectedWorkspaceId!, backend, backend.type, entry.id, entry.label);
-      }),
-    );
+    // History (plain files on a web server have none)
+    if (backend.type !== "http")
+      menu.appendChild(
+        makeItem("History", async () => {
+          if (!this.queryHistoryModal) this.queryHistoryModal = new QueryHistoryModal(this.yasgui);
+          await this.queryHistoryModal.show(this.selectedWorkspaceId!, backend, backend.type, entry.id, entry.label);
+        }),
+      );
 
     // Rename
     if (backend.renameQuery) {
