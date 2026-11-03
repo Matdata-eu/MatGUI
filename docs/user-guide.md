@@ -58,6 +58,7 @@
     - [Workspaces](#workspaces)
       - [SPARQL workspaces](#sparql-workspaces)
       - [Git based workspaces](#git-based-workspaces)
+      - [Web workspaces](#web-workspaces)
     - [Managed queries](#managed-queries)
   - [Query History and Persistence](#query-history-and-persistence)
   - [Share Queries](#share-queries)
@@ -1362,6 +1363,7 @@ This feature is designed for **power users** who want to:
 
 **Not for new user onboarding:** This is not primarily intended as a way to distribute sample queries to help new users get started with an endpoint. If you need to provide example queries for onboarding, consider:
 
+- Publishing them as a read-only [web workspace](#web-workspaces): plain `.rq` files plus a `workspace.json` on any web server, shared with one link
 - Using the developer configuration to embed queries in your Matgui instance
 - Using the snippets functionality for quick templates
 - Implementing a custom wrapper that loads example queries programmatically
@@ -1372,7 +1374,7 @@ This feature is designed for **power users** who want to:
 
 1. Open **Settings** (gear icon in the top bar)
 2. Go to the **Workspaces** tab
-3. Add one or more workspaces (Git or SPARQL) and choose a **Default workspace**
+3. Add one or more workspaces (SPARQL, Git or Web) and choose a **Default workspace**
 4. (Optional) Click **Validate access** to test the configuration and show how many managed queries are already saved in that workspace
 
 **Read-only workspaces:** tick **Read-only** in a workspace's settings (or set `readOnly: true` when adding it through `persistentConfig.addOrUpdateWorkspace`) to protect a shared or published set of queries. Queries in a read-only workspace can be browsed and opened, but:
@@ -1564,6 +1566,58 @@ The token must have access to the specific repository you're configuring as a wo
 - **File format**: Queries are stored as plain text files containing only the SPARQL query text. Files with `.rq` extension (W3C recommended) or `.sparql` extension are recognized and displayed in the query browser.
 - The repository can contain other files; only `.rq` and `.sparql` files will be shown in the query browser.
 - Authentication/permission errors may not always display clear error messages - check browser console if saves fail silently.
+
+##### Web workspaces
+
+A web workspace is a read-only set of queries published as plain files on a web server, such as GitHub Pages, a university web space or any static file host. Nothing has to be loaded into a SPARQL store and no Git token is needed. MatGUI reads one `workspace.json` file that lists the query files.
+
+**Add one:** in **Settings → Workspaces**, click **Add workspace**, pick the type **Web (read-only)** and enter the URL of the `workspace.json`. The label and description are filled in from the file when you leave them empty. Web workspaces are always read-only (see [Read-only workspaces](#workspaces)), and have no version history.
+
+**Share one with a link:** add `?workspace=<URL of workspace.json>` to the address of MatGUI, for example `https://matgui.matdata.eu/?workspace=https://example.org/queries/workspace.json`. Whoever opens the link is asked whether to add the workspace, and then sees its queries in the query browser. Nothing runs until they open a query and press Run. If the workspace is already configured, the link just shows it. The **Copy link** button next to a web workspace in the settings copies such a link for the current page. Embedding pages can do the same with `yasgui.addWebWorkspace(url)`.
+
+**Publish one:** put the query files and a `workspace.json` in a folder on the web server:
+
+```json
+{
+  "label": "Example queries",
+  "description": "Optional description of the workspace",
+  "endpoints": {
+    "era": "https://graph.data.era.europa.eu/repositories/rinf-plus"
+  },
+  "folders": {
+    "era": { "label": "Railway infrastructure", "endpoint": "era" }
+  },
+  "queries": [
+    "era/operational-points.rq",
+    {
+      "url": "./other/example.rq",
+      "name": "Name shown in the query browser",
+      "description": "Shown in the query preview",
+      "endpoint": "era",
+      "folder": "era"
+    }
+  ]
+}
+```
+
+- `queries` (required) lists the query files, because a web server cannot list a folder. An entry is a URL, or an object with a `url` and optional `name`, `description`, `endpoint` and `folder`. URLs are relative to `workspace.json`; absolute URLs work too.
+- The folder of a query in the query browser is the folder of its file, unless the entry sets `folder`. `folders` gives a folder a readable `label` and a default `endpoint` for the queries in it and its sub-folders.
+- `endpoints` defines short aliases that `endpoint` values can use. An `endpoint` can also be a full URL. Opening a query switches the tab to its endpoint.
+- `label` and `description` are used as the workspace's label and description when it is added.
+- Other keys are ignored.
+
+A query file can start with header lines in the `#+ key: value` form that [grlc](https://grlc.io) uses. MatGUI reads `name`, `description` and `endpoint` from them and removes them from the query text it shows:
+
+```sparql
+#+ name: Operational points per country
+#+ description: Counts the operational points in RINF per member state.
+#+ endpoint: era
+SELECT ?country (COUNT(?op) AS ?ops) WHERE { ... }
+```
+
+A value in `workspace.json` wins over the file header; without either, the file name is used as the name (`operational-points.rq` becomes "operational points").
+
+**Web server requirements:** MatGUI fetches the files from the browser, so the server must allow cross-origin requests (send `Access-Control-Allow-Origin: *`). GitHub Pages and `raw.githubusercontent.com` do this. On an `https` page the files must be served over `https` too. Files are fetched without cookies or credentials, so they must be public. Changes on the server show up after reloading MatGUI.
 
 #### Managed queries
 
