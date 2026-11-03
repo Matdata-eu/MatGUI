@@ -16,3 +16,6 @@ export { default as InMemoryWorkspaceBackend } from "./backends/InMemoryWorkspac
 export { default as GitWorkspaceBackend } from "./backends/GitWorkspaceBackend";
 export { default as SparqlWorkspaceBackend } from "./backends/SparqlWorkspaceBackend";
 export { default as ReadOnlyWorkspaceBackend } from "./backends/ReadOnlyWorkspaceBackend";
+export { default as HttpWorkspaceBackend, clearHttpWorkspaceCache } from "./backends/HttpWorkspaceBackend";
+export * from "./backends/httpWorkspaceManifest";
+export * from "./queryRefs";

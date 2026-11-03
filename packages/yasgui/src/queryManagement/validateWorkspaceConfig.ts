@@ -31,6 +31,19 @@ export function validateWorkspaceConfig(config: WorkspaceConfig): WorkspaceValid
     }
   }
 
+  if (config.type === "http") {
+    if (!isNonEmpty(config.manifestUrl)) {
+      errors.push("Web workspace URL (workspace.json) is required");
+    } else {
+      try {
+        const url = new URL(config.manifestUrl.trim());
+        if (url.protocol !== "https:" && url.protocol !== "http:") errors.push("Web workspace URL must be http(s)");
+      } catch {
+        errors.push("Web workspace URL is not a valid URL");
+      }
+    }
+  }
+
   if (config.type === "sparql") {
     if (!isNonEmpty(config.endpoint)) errors.push("SPARQL endpoint is required");
     if (!isNonEmpty(config.workspaceIri)) errors.push("Workspace IRI is required");

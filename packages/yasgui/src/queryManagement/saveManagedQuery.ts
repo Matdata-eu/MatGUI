@@ -1,5 +1,6 @@
 import type { WorkspaceBackend } from "./backends/WorkspaceBackend";
-import type { BackendType, ManagedTabMetadata, VersionRef } from "./types";
+import type { BackendType, ManagedTabMetadata } from "./types";
+import { queryRefFromId, versionRefFromTag } from "./queryRefs";
 import { asWorkspaceBackendError } from "./backends/errors";
 import { hashQueryText } from "./textHash";
 import { normalizeQueryFilename } from "./normalizeQueryFilename";
@@ -59,14 +60,11 @@ function mintSparqlManagedQueryIri(workspaceIri: string): string {
   return `${workspaceIri.trim()}_mq_${uuidV4()}`;
 }
 
-function versionRefFromVersionTag(backendType: BackendType, versionTag: string | undefined): VersionRef | undefined {
-  if (!versionTag) return undefined;
-  if (backendType === "git") return { commitSha: versionTag };
-  return { managedQueryVersionIri: versionTag };
-}
-
 export async function saveManagedQuery(input: SaveManagedQueryInput): Promise<SaveManagedQueryResult> {
   const folderId = normalizeFolderPath(input.folderPath);
+  if (input.backendType === "http") {
+    throw new Error("Web workspaces are read-only");
+  }
   const queryId = input.backendType === "git" ? buildQueryId(input.folderPath, input.filename) : "";
 
   if (input.backendType === "sparql" && !input.workspaceIri?.trim()) {
@@ -126,8 +124,8 @@ export async function saveManagedQuery(input: SaveManagedQueryInput): Promise<Sa
   const managedMetadata: ManagedTabMetadata = {
     workspaceId: input.workspaceId,
     backendType: input.backendType,
-    queryRef: input.backendType === "git" ? { path: resolvedQueryId } : { managedQueryIri: resolvedQueryId },
-    lastSavedVersionRef: versionRefFromVersionTag(input.backendType, read.versionTag),
+    queryRef: queryRefFromId(input.backendType, resolvedQueryId),
+    lastSavedVersionRef: versionRefFromTag(input.backendType, read.versionTag),
     lastSavedTextHash,
   };
 

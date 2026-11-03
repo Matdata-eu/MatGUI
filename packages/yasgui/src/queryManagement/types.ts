@@ -1,4 +1,4 @@
-export type BackendType = "git" | "sparql";
+export type BackendType = "git" | "sparql" | "http";
 
 export interface WorkspaceConfigBase {
   id: string;
@@ -39,7 +39,17 @@ export interface SparqlWorkspaceConfig extends WorkspaceConfigBase {
   defaultGraph?: string;
 }
 
-export type WorkspaceConfig = GitWorkspaceConfig | SparqlWorkspaceConfig;
+/**
+ * A read-only workspace published as plain files on a web server: a `workspace.json` manifest
+ * that lists `.rq` files. Shown as "Web" in the settings.
+ */
+export interface HttpWorkspaceConfig extends WorkspaceConfigBase {
+  type: "http";
+  /** URL of the `workspace.json` manifest. Query URLs in it are resolved relative to this URL. */
+  manifestUrl: string;
+}
+
+export type WorkspaceConfig = GitWorkspaceConfig | SparqlWorkspaceConfig | HttpWorkspaceConfig;
 
 export interface FolderEntry {
   kind: "folder" | "query";
@@ -73,6 +83,7 @@ export interface WriteQueryOptions {
   associatedEndpoint?: string;
 }
 
+/** Git and web workspaces: the path of the query file (for a web workspace, relative to the manifest, or an absolute URL) */
 export type GitQueryRef = { path: string };
 export type SparqlQueryRef = { managedQueryIri: string };
 export type QueryRef = GitQueryRef | SparqlQueryRef;

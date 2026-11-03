@@ -5,7 +5,7 @@ import Tab from "./Tab";
 import { TabListEl } from "./TabElements";
 import { cloneDeep } from "lodash-es";
 import { getWorkspaceBackend } from "./queryManagement/backends/getWorkspaceBackend";
-import type { GitQueryRef, SparqlQueryRef } from "./queryManagement/types";
+import { queryIdFromMetadata } from "./queryManagement/queryRefs";
 import "./TabContextMenu.scss";
 export interface TabContextConfig {
   name: string;
@@ -137,10 +137,7 @@ export default class TabContextMenu {
     if (meta) {
       const workspaceConfig = this.yasgui.persistentConfig?.getWorkspaces().find((w) => w.id === meta.workspaceId);
       if (workspaceConfig) {
-        const queryId =
-          meta.backendType === "git"
-            ? (meta.queryRef as GitQueryRef).path
-            : (meta.queryRef as SparqlQueryRef).managedQueryIri;
+        const queryId = queryIdFromMetadata(meta);
         if (queryId) {
           const backend = getWorkspaceBackend(workspaceConfig, {
             persistentConfig: this.yasgui.persistentConfig,

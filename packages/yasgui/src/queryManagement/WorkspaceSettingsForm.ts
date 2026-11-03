@@ -5,6 +5,10 @@ import { validateWorkspaceConfig } from "./validateWorkspaceConfig";
 import { getWorkspaceBackend } from "./backends/getWorkspaceBackend";
 import { asWorkspaceBackendError } from "./backends/errors";
 import { countManagedQueries } from "./countManagedQueries";
+import HttpWorkspaceBackend from "./backends/HttpWorkspaceBackend";
+import { isWorkspaceReadOnly } from "./readOnlyWorkspace";
+import { createWorkspaceLink } from "./workspaceLink";
+import { showCopyValue } from "../dialogs";
 
 export interface WorkspaceSettingsFormOptions {
   persistentConfig: PersistentConfig;
@@ -101,7 +105,7 @@ ORDER BY ?workspace`;
 
     const help = document.createElement("div");
     help.textContent =
-      "Configure managed-query workspaces (Git or SPARQL). Credentials are stored locally and are never shown again after entry.";
+      "Configure managed-query workspaces (SPARQL, Git, or read-only Web). Credentials are stored locally and are never shown again after entry.";
     addClass(help, "settingsHelp");
 
     header.appendChild(label);
@@ -176,7 +180,7 @@ ORDER BY ?workspace`;
 
       const nameEl = document.createElement("div");
       addClass(nameEl, "workspaceListLabel");
-      nameEl.textContent = (workspace.label || workspace.id) + (workspace.readOnly ? " (read-only)" : "");
+      nameEl.textContent = (workspace.label || workspace.id) + (isWorkspaceReadOnly(workspace) ? " (read-only)" : "");
       row.appendChild(nameEl);
 
       const actions = document.createElement("div");
@@ -223,6 +227,24 @@ ORDER BY ?workspace`;
 
       actions.appendChild(editBtn);
       actions.appendChild(validateBtn);
+      if (workspace.type === "http" && typeof window !== "undefined") {
+        // A link that adds this workspace for whoever opens it
+        const linkBtn = document.createElement("button");
+        linkBtn.type = "button";
+        linkBtn.textContent = "Copy link";
+        linkBtn.title = "Copy a link that adds this workspace for whoever opens it";
+        addClass(linkBtn, "secondaryButton");
+        linkBtn.onclick = async () => {
+          const link = createWorkspaceLink(window.location.href, workspace.manifestUrl);
+          try {
+            await navigator.clipboard.writeText(link);
+            status.textContent = "✓ Link copied";
+          } catch {
+            void showCopyValue("Copy the link to this workspace", link);
+          }
+        };
+        actions.appendChild(linkBtn);
+      }
       actions.appendChild(removeBtn);
       row.appendChild(actions);
       row.appendChild(status);
@@ -368,8 +390,12 @@ ORDER BY ?workspace`;
     const optGit = document.createElement("option");
     optGit.value = "git";
     optGit.textContent = "Git";
+    const optHttp = document.createElement("option");
+    optHttp.value = "http";
+    optHttp.textContent = "Web (read-only)";
     typeSelect.appendChild(optSparql);
     typeSelect.appendChild(optGit);
+    typeSelect.appendChild(optHttp);
 
     if (existing) {
       typeSelect.value = existing.type;
@@ -407,6 +433,58 @@ ORDER BY ?workspace`;
       status.textContent = "";
 
       const typeValue = existing?.type ?? (typeSelect.value as WorkspaceConfig["type"]);
+
+      // Web workspaces are always read-only
+      readOnlyInput.disabled = typeValue === "http";
+      if (typeValue === "http") readOnlyInput.checked = true;
+      else if (!existing) readOnlyInput.checked = false;
+
+      if (typeValue === "http") {
+        const httpHelp = document.createElement("div");
+        addClass(httpHelp, "settingsHelp");
+        httpHelp.textContent =
+          "Queries published as files on a web server (for example GitHub Pages). Enter the URL of the workspace.json that lists them. The server must allow cross-origin requests (CORS).";
+
+        const manifestUrlInput = document.createElement("input");
+        manifestUrlInput.type = "url";
+        manifestUrlInput.placeholder = "https://example.org/queries/workspace.json";
+        manifestUrlInput.value = existing && existing.type === "http" ? existing.manifestUrl : "";
+        addClass(manifestUrlInput, "settingsInput");
+
+        // Fill an empty label/description from the manifest, and show how many queries it lists
+        manifestUrlInput.onchange = async () => {
+          const manifestUrl = manifestUrlInput.value.trim();
+          if (!manifestUrl) return;
+          status.textContent = "Loading workspace.json…";
+          try {
+            const info = await new HttpWorkspaceBackend({
+              id: "preview",
+              label: "",
+              type: "http",
+              manifestUrl,
+            }).getManifestInfo();
+            if (manifestUrlInput.value.trim() !== manifestUrl) return;
+            if (!labelInput.value.trim() && info.label) labelInput.value = info.label;
+            if (!descriptionInput.value.trim() && info.description) descriptionInput.value = info.description;
+            status.textContent = `✓ Found ${info.queryCount} ${info.queryCount === 1 ? "query" : "queries"}`;
+          } catch (e) {
+            if (manifestUrlInput.value.trim() !== manifestUrl) return;
+            status.textContent = asWorkspaceBackendError(e).message;
+          }
+        };
+
+        dynamic.appendChild(httpHelp);
+        dynamic.appendChild(this.wrapField("workspace.json URL", manifestUrlInput));
+
+        (dynamic as any).__getConfig = (): WorkspaceConfig => ({
+          id: existing?.id || newWorkspaceId(),
+          type: "http",
+          label: labelInput.value.trim(),
+          description: descriptionInput.value.trim() || undefined,
+          manifestUrl: manifestUrlInput.value.trim(),
+        });
+        return;
+      }
 
       if (typeValue === "git") {
         const gitHelp = document.createElement("div");
@@ -712,7 +790,8 @@ ORDER BY ?workspace`;
       status.textContent = "";
       const getConfig = (dynamic as any).__getConfig as undefined | (() => WorkspaceConfig);
       if (!getConfig) return;
-      const config: WorkspaceConfig = { ...getConfig(), readOnly: readOnlyInput.checked || undefined };
+      const base = getConfig();
+      const config: WorkspaceConfig = { ...base, readOnly: base.type === "http" || readOnlyInput.checked || undefined };
 
       if (config.type === "git" && !isNonEmpty(config.auth.token)) {
         status.textContent = "Git token is required.";
