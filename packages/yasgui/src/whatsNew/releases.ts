@@ -25,6 +25,21 @@ const f = (text: string): ReleaseChange => ({ kind: "fixed", text });
 
 export const releases: Release[] = [
   {
+    version: "6.13.0",
+    date: "2026-11-03",
+    summary: "Open example queries from any web server, and safer share links.",
+    changes: [
+      n("Web workspaces: read-only queries published as .rq files and a workspace.json on any web server"),
+      n(
+        "Open MatGUI with ?workspace=<url> to add a web workspace, and Copy link in Settings > Workspaces to share one",
+      ),
+      i("Share links no longer run an update, a query with errors, or a query that would send your saved credentials"),
+      i("Dialogs and messages are now part of MatGUI instead of browser pop-ups, and follow the theme"),
+      f("A full browser storage no longer deletes your tabs, endpoints and credentials"),
+      f("Importing a configuration handles tabs without an endpoint or with quotes in their name"),
+    ],
+  },
+  {
     version: "6.12.0",
     date: "2026-10-29",
     summary: "Redesigned settings, a quick start tour and this What's new.",
