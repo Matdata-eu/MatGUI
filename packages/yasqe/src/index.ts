@@ -33,11 +33,8 @@ import { spfmt } from "@matdata/sparql-formatter";
 import * as L from "leaflet";
 import { coordinatesToWkt, wrapWktLiteral, WktCoordinate, WktGeometryType } from "./mapWidget";
 
-// Toast notification timing constants
-const TOAST_DEFAULT_DURATION = 3000; // 3 seconds
-const TOAST_WARNING_DURATION = 4000; // 4 seconds for warnings
-const TOAST_WARNING_DELAY = 500; // Delay before showing auth warning
-const TOAST_FADEOUT_DURATION = 300; // Fade out animation duration
+import { showSharePopup as openSharePopup, ShareLinkOptions } from "./sharePopup";
+export type { ShareLinkOptions } from "./sharePopup";
 
 export interface Yasqe {
   on(eventName: "query", handler: (instance: Yasqe, req: Request, abortController?: AbortController) => void): void;
@@ -397,251 +394,14 @@ export class Yasqe extends EditorFacade {
       shareLinkWrapper.appendChild(shareIcon);
       buttons.appendChild(shareLinkWrapper);
       this.shareBtn = shareLinkWrapper;
-      shareLinkWrapper.addEventListener("click", (event: MouseEvent) => showSharePopup(event));
-      shareLinkWrapper.addEventListener("keydown", (event: KeyboardEvent) => {
-        if (event.code === "Enter") {
-          showSharePopup(event);
-        }
-      });
-
-      const showSharePopup = (event: MouseEvent | KeyboardEvent) => {
+      shareLinkWrapper.type = "button";
+      shareLinkWrapper.setAttribute("aria-haspopup", "dialog");
+      shareLinkWrapper.setAttribute("aria-expanded", "false");
+      // A button also fires click on Enter and Space
+      shareLinkWrapper.addEventListener("click", (event: MouseEvent) => {
         event.stopPropagation();
-        let popup: HTMLDivElement | undefined = document.createElement("div");
-        popup.className = "yasqe_sharePopup";
-        buttons.appendChild(popup);
-
-        // Toast notification element for warnings
-        let toastElement: HTMLDivElement | undefined;
-        let toastTimeout: number | undefined;
-
-        const showToast = (
-          message: string,
-          duration: number = TOAST_DEFAULT_DURATION,
-          type: "info" | "warning" = "info",
-        ) => {
-          // Remove existing toast if any
-          if (toastElement) {
-            toastElement.remove();
-          }
-          // Clear existing timeout
-          if (toastTimeout !== undefined) {
-            clearTimeout(toastTimeout);
-          }
-
-          toastElement = document.createElement("div");
-          toastElement.className = type === "warning" ? "yasqe_toast yasqe_toast-warning" : "yasqe_toast";
-
-          // Add warning icon for warning toasts
-          if (type === "warning") {
-            const iconWrapper = document.createElement("span");
-            iconWrapper.className = "yasqe_toast-icon";
-            const icon = document.createElement("i");
-            addClass(icon, "fas");
-            addClass(icon, "fa-exclamation-triangle");
-            icon.setAttribute("aria-hidden", "true");
-            iconWrapper.appendChild(icon);
-            toastElement.appendChild(iconWrapper);
-          }
-
-          const messageSpan = document.createElement("span");
-          messageSpan.className = "yasqe_toast-message";
-          messageSpan.textContent = message;
-          toastElement.appendChild(messageSpan);
-
-          document.body.appendChild(toastElement);
-
-          // Auto-remove after duration
-          toastTimeout = window.setTimeout(() => {
-            if (toastElement) {
-              toastElement.classList.add("yasqe_toast-fadeout");
-              setTimeout(() => {
-                toastElement?.remove();
-                toastElement = undefined;
-              }, TOAST_FADEOUT_DURATION);
-            }
-          }, duration);
-        };
-
-        // Create event listener that can be removed
-        const closePopupHandler = (event: MouseEvent) => {
-          if (popup && event.target !== popup && !popup.contains(<any>event.target)) {
-            popup.remove();
-            popup = undefined;
-            // Clean up toast when popup closes
-            if (toastElement) {
-              toastElement.remove();
-              toastElement = undefined;
-            }
-            if (toastTimeout !== undefined) {
-              clearTimeout(toastTimeout);
-            }
-            // Remove this event listener to prevent memory leak
-            document.body.removeEventListener("click", closePopupHandler, true);
-          }
-        };
-
-        document.body.addEventListener("click", closePopupHandler, true);
-
-        popup.innerHTML = "";
-
-        // Helper function to copy text to clipboard
-        const copyToClipboard = async (text: string, buttonText: string, hasAuth: boolean = false) => {
-          try {
-            // Check if Clipboard API is available
-            if (!navigator.clipboard || !navigator.clipboard.writeText) {
-              // Fallback for older browsers or non-secure contexts
-              const textArea = document.createElement("textarea");
-              textArea.value = text;
-              textArea.style.position = "fixed";
-              textArea.style.left = "-999999px";
-              document.body.appendChild(textArea);
-              textArea.select();
-              try {
-                document.execCommand("copy");
-                document.body.removeChild(textArea);
-                showToast(`${buttonText} copied to clipboard!`);
-              } catch (err) {
-                document.body.removeChild(textArea);
-                throw new Error("Copy command not supported");
-              }
-            } else {
-              await navigator.clipboard.writeText(text);
-              showToast(`${buttonText} copied to clipboard!`);
-            }
-
-            // Show warning if credentials are included
-            if (hasAuth) {
-              setTimeout(() => {
-                showToast(
-                  "Warning: Authentication credentials included in copied content",
-                  TOAST_WARNING_DURATION,
-                  "warning",
-                );
-              }, TOAST_WARNING_DELAY);
-            }
-          } catch (err) {
-            console.error("Failed to copy to clipboard:", err);
-            showToast("Failed to copy to clipboard. Please copy manually.", 2000);
-          }
-        };
-
-        // Create title
-        const title = document.createElement("div");
-        title.className = "yasqe_sharePopup_title";
-        title.textContent = "Share Query";
-        popup.appendChild(title);
-
-        // Create button container
-        const buttonContainer = document.createElement("div");
-        buttonContainer.className = "yasqe_sharePopup_buttons";
-        popup.appendChild(buttonContainer);
-
-        // URL button
-        const urlBtn = document.createElement("button");
-        urlBtn.innerText = "Copy URL";
-        urlBtn.className = "yasqe_btn yasqe_btn-sm yasqe_shareBtn";
-        buttonContainer.appendChild(urlBtn);
-        urlBtn.onclick = async () => {
-          if (!this.config.createShareableLink) return;
-          const url = this.config.createShareableLink(this);
-          await copyToClipboard(url, "URL");
-        };
-
-        // URL Shorten button (if configured)
-        const createShortLink = this.config.createShortLink;
-        if (createShortLink) {
-          const shortenBtn = document.createElement("button");
-          shortenBtn.innerText = "Shorten URL";
-          shortenBtn.className = "yasqe_btn yasqe_btn-sm yasqe_shareBtn";
-          buttonContainer.appendChild(shortenBtn);
-          shortenBtn.onclick = async () => {
-            shortenBtn.disabled = true;
-            shortenBtn.innerText = "Shortening...";
-            try {
-              if (!this.config.createShareableLink) return;
-              const longUrl = this.config.createShareableLink(this);
-              const shortUrl = await createShortLink(this, longUrl);
-              await copyToClipboard(shortUrl, "Shortened URL");
-              shortenBtn.innerText = "Shorten URL";
-              shortenBtn.disabled = false;
-            } catch (err) {
-              shortenBtn.innerText = "Shorten URL";
-              shortenBtn.disabled = false;
-              let errorMsg = "Failed to shorten URL";
-              if (typeof err === "string" && err.length !== 0) {
-                errorMsg = err;
-              } else if ((err as any).message && (err as any).message.length !== 0) {
-                errorMsg = (err as any).message;
-              }
-              showToast(errorMsg, 3000);
-            }
-          };
-        }
-
-        // cURL button
-        const curlBtn = document.createElement("button");
-        curlBtn.innerText = "Copy cURL";
-        curlBtn.className = "yasqe_btn yasqe_btn-sm yasqe_shareBtn";
-        buttonContainer.appendChild(curlBtn);
-        curlBtn.onclick = async () => {
-          const curlString = this.getAsCurlString();
-          const hasAuth = this.hasAuthenticationCredentials();
-          await copyToClipboard(curlString, "cURL command", hasAuth);
-        };
-
-        // PowerShell button
-        const psBtn = document.createElement("button");
-        psBtn.innerText = "Copy PowerShell";
-        psBtn.className = "yasqe_btn yasqe_btn-sm yasqe_shareBtn";
-        buttonContainer.appendChild(psBtn);
-        psBtn.onclick = async () => {
-          const psString = this.getAsPowerShellString();
-          const hasAuth = this.hasAuthenticationCredentials();
-          await copyToClipboard(psString, "PowerShell command", hasAuth);
-        };
-
-        // wget button
-        const wgetBtn = document.createElement("button");
-        wgetBtn.innerText = "Copy wget";
-        wgetBtn.className = "yasqe_btn yasqe_btn-sm yasqe_shareBtn";
-        buttonContainer.appendChild(wgetBtn);
-        wgetBtn.onclick = async () => {
-          const wgetString = this.getAsWgetString();
-          const hasAuth = this.hasAuthenticationCredentials();
-          await copyToClipboard(wgetString, "wget command", hasAuth);
-        };
-
-        // Position popup after layout is complete
-        const positionPopup = () => {
-          if (!popup) return;
-          const buttonsRect = buttons.getBoundingClientRect();
-          const popupHeight = popup.offsetHeight || 300; // Estimated height
-          const viewportHeight = window.innerHeight;
-          const spaceAbove = buttonsRect.top;
-          const spaceBelow = viewportHeight - buttonsRect.bottom;
-
-          // If there's enough space above (with some padding), position above
-          // Otherwise position below (will use scrolling if needed)
-          if (spaceAbove >= popupHeight + 20) {
-            popup.style.bottom = (buttons.clientHeight || 46) + "px";
-            popup.style.top = "auto";
-            popup.style.right = "0px";
-          } else {
-            // Not enough space above, use fixed positioning at top of viewport
-            popup.style.position = "fixed";
-            popup.style.bottom = "auto";
-            popup.style.top = "20px";
-            popup.style.right = "20px";
-          }
-        };
-
-        if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
-          window.requestAnimationFrame(positionPopup);
-        } else {
-          // Fallback for environments without requestAnimationFrame
-          setTimeout(positionPopup, 0);
-        }
-      };
+        openSharePopup(this, buttons, shareLinkWrapper);
+      });
     }
 
     /**
@@ -2519,7 +2279,13 @@ export interface Config extends Omit<EditorOptions, "extraKeys"> {
    * By default, this feature is enabled, and the only the query value is appended to the link.
    * ps. This function should return an object which is parseable by jQuery.param (http://api.jquery.com/jQuery.param/)
    */
-  createShareableLink: ((yasqe: Yasqe) => string) | undefined | null;
+  createShareableLink: ((yasqe: Yasqe, options?: ShareLinkOptions) => string) | undefined | null;
+  /**
+   * When set, the share popup offers "Show only the results", which passes `hideQuery` to
+   * `createShareableLink`. The function gives the initial state of the option (e.g. whether
+   * the query is hidden now). Undefined or null hides the option.
+   */
+  shareHideQueryOption?: ((yasqe: Yasqe) => boolean) | null;
   createShortLink: ((yasqe: Yasqe, longLink: string) => Promise<string>) | undefined;
   consumeShareLink: ((yasqe: Yasqe) => void) | undefined | null;
   /**

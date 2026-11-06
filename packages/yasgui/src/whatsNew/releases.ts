@@ -25,6 +25,15 @@ const f = (text: string): ReleaseChange => ({ kind: "fixed", text });
 
 export const releases: Release[] = [
   {
+    version: "6.14.0",
+    summary: "Show only the results, and a redesigned share popup.",
+    changes: [
+      n("Hide query folds the editor away so the results take the whole card (also with Ctrl+K)"),
+      n("Share links can open with the query hidden: tick Show only the results in the share popup"),
+      i("The share popup has the new look, shows the link with a Copy button and confirms each copy"),
+    ],
+  },
+  {
     version: "6.13.0",
     date: "2026-11-03",
     summary: "Open example queries from any web server, and safer share links.",

@@ -35,6 +35,7 @@ export default function initialize(): Config<CatalogueItem> {
     showQuickStart: true,
     quickStartOnFirstVisit: true,
     orientation: "vertical",
+    hideQuery: false,
     showSnippetsBar: false,
     iriHover: true,
     iriHoverLovFallback: true,
