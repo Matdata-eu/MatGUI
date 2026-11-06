@@ -38,6 +38,7 @@
 - [Features](#features)
   - [Themes](#themes)
   - [Layout Orientation](#layout-orientation)
+  - [Hide the Query](#hide-the-query)
   - [Query Formatting](#query-formatting)
   - [CONSTRUCT Query Validation](#construct-query-validation)
   - [Code Snippets](#code-snippets)
@@ -584,6 +585,16 @@ MAtGUI offers two layout options to optimize screen space:
 - Vertical layout: drag the bottom edge of the editor to make it taller or shorter; double-click it to show the whole query
 - Horizontal layout: drag the line between the editor and the results; double-click it to go back to a 50/50 split
 - Like the side panel's edge, the handle shows a blue line when you hover or drag it
+
+### Hide the Query
+
+When you only care about the results, for example to look at a result someone sent you, you can fold the query editor away so the results take the whole card.
+
+- Click **Hide query** at the right end of the editor toolbar, or search for "Hide query" with `Ctrl+K`
+- The editor folds to one line that says "The query is hidden". **Share**, the save buttons and **Run** stay available
+- Click **Show query** (or the "The query is hidden" line) to bring the editor back
+- Each tab remembers whether its query is hidden
+- To share a link that opens with the query hidden, tick **Show only the results** in the share popup (see [Share Queries](#share-queries))
 
 ### Query Formatting
 
@@ -1677,28 +1688,20 @@ Share your queries with colleagues using multiple formats including URL paramete
 
 **Share Button:**
 
-YASQE provides a share button (when `createShareableLink` is configured) that offers multiple sharing options:
+The share button in the editor toolbar opens the share popup, with two parts:
 
-1. **Copy URL** - Copies the shareable URL to your clipboard
-2. **Shorten URL** - Creates a shortened URL (if URL shortener is configured)
-3. **Copy cURL** - Generates and copies a cURL command for command-line execution
-4. **Copy PowerShell** - Generates and copies a PowerShell command using `Invoke-WebRequest`
-5. **Copy wget** - Generates and copies a wget command
+- **Link**: the link to the query, with a **Copy** button
+  - **Show only the results**: the link opens with the query hidden, so the reader sees the results straight away (see [Hide the Query](#hide-the-query)). The option starts ticked when the query of your tab is hidden
+  - **Shorten link**: creates and copies a short link (only when a URL shortener is configured)
+- **Command line**: click **cURL**, **PowerShell** (`Invoke-WebRequest`) or **wget** to copy the query as a command
 
-**How to Share:**
-
-Matgui supports URL-based query sharing:
-
-1. Craft your query in MatGUI
-2. Click the share button (sharing icon in the top-right corner)
-3. Select your preferred format
-4. The content is automatically copied to your clipboard
-5. Share with others or execute in your terminal
+The button you clicked shows **Copied** for a moment. Press `Esc` or click outside the popup to close it.
 
 **URL Parameters:**
 
 - `query`: The SPARQL query
 - `endpoint`: The endpoint URL
+- `hideQuery=true`: open the link with the query editor hidden
 - Other tab configurations
 
 **Opening a shared link:** the query of the link opens in a tab and runs straight away, except in these cases, where MatGUI shows a message and waits for you:
@@ -1716,7 +1719,7 @@ All command-line formats (cURL, PowerShell, wget) include:
 - Authentication credentials (if configured)
 - Proper HTTP method (GET or POST)
 
-⚠️ **Security Notice:** When copying commands with authentication credentials, a warning notification will appear. Be cautious about sharing these commands as they contain sensitive authentication information.
+⚠️ **Security Notice:** When the endpoint has authentication credentials, the share popup says that the commands include them. Be cautious about sharing these commands as they contain sensitive authentication information.
 
 **Example Formats:**
 
