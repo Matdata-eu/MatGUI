@@ -718,6 +718,10 @@ interface Config {
   // Layout orientation: 'vertical' or 'horizontal'
   orientation?: 'vertical' | 'horizontal';  // default: 'vertical'
 
+  // Open new tabs with the query editor hidden, showing only the results. Users can show it
+  // with "Show query"; share links can set it with hideQuery=true
+  hideQuery?: boolean;  // default: false
+
   // "Describe endpoint" panel (see Endpoint Describe Configuration)
   endpointDescribe: EndpointDescribeConfig;
 
@@ -1101,8 +1105,13 @@ Configure how users can share their SPARQL queries with multiple output formats 
 interface YasqeConfig {
   // ... other config options
   
-  // Function to create a shareable link (required to show share button)
-  createShareableLink?: (yasqe: Yasqe) => string;
+  // Function to create a shareable link (required to show share button).
+  // options.hideQuery is set when the user picked "Show only the results"
+  createShareableLink?: (yasqe: Yasqe, options?: { hideQuery?: boolean }) => string;
+
+  // Offer "Show only the results" in the share popup; returns the initial state of the option.
+  // Yasgui sets this to whether the query of the tab is hidden
+  shareHideQueryOption?: ((yasqe: Yasqe) => boolean) | null;
   
   // Optional URL shortener function
   createShortLink?: (yasqe: Yasqe, longUrl: string) => Promise<string>;
@@ -1364,11 +1373,10 @@ createShortLink: async (yasqe, longUrl) => {
 
 When the share button is enabled (by configuring `createShareableLink`), users can:
 
-1. **Copy URL** - Copies the shareable URL to clipboard
-2. **Shorten URL** - Creates and copies a shortened URL (only shown if `createShortLink` is configured)
-3. **Copy cURL** - Generates a cURL command with all headers and authentication
-4. **Copy PowerShell** - Generates a PowerShell `Invoke-WebRequest` command
-5. **Copy wget** - Generates a wget command
+1. **Link** - Shows the shareable URL with a **Copy** button
+2. **Show only the results** - Adds `hideQuery=true` to the link (only shown if `shareHideQueryOption` is configured, as Yasgui does)
+3. **Shorten link** - Creates and copies a shortened URL (only shown if `createShortLink` is configured)
+4. **cURL**, **PowerShell** (`Invoke-WebRequest`) and **wget** - Copy the query as a command
 
 All command formats include:
 - Complete SPARQL query
@@ -1381,7 +1389,7 @@ All command formats include:
 
 **Security Considerations:**
 
-⚠️ When users copy command-line formats (cURL, PowerShell, wget) that include authentication credentials, YASQE displays a warning toast notification. This helps prevent accidental sharing of sensitive credentials.
+⚠️ When the request includes authentication credentials, the share popup shows a note that the command-line formats (cURL, PowerShell, wget) include them. This helps prevent accidental sharing of sensitive credentials.
 
 **Best Practices:**
 
@@ -1394,7 +1402,7 @@ All command formats include:
 **Troubleshooting:**
 
 - If the share button doesn't appear, ensure `createShareableLink` is configured
-- If "Shorten URL" doesn't appear, check that `createShortLink` is configured
+- If "Shorten link" doesn't appear, check that `createShortLink` is configured
 - Check browser console for API errors when shortening fails
 - Verify API keys and endpoints are correct
 - Ensure CORS is properly configured for your URL shortener API
