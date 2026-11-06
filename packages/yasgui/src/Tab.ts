@@ -51,6 +51,8 @@ export interface PersistedJson {
   requestConfig: YasguiRequestConfig;
   orientation?: "vertical" | "horizontal";
   managedQuery?: ManagedTabMetadata;
+  /** The query editor is hidden, so the results take the whole card (e.g. a link to a result) */
+  queryHidden?: boolean;
 }
 
 export interface Tab {
@@ -94,6 +96,7 @@ export class Tab extends EventEmitter {
   private titleEl?: HTMLDivElement;
   private currentOrientation: "vertical" | "horizontal";
   private orientationToggleButton?: HTMLButtonElement;
+  private queryToggleButton?: HTMLButtonElement;
   private editorToolsEl?: HTMLDivElement;
   private verticalResizerEl?: HTMLDivElement;
   private editorWrapperEl?: HTMLDivElement;
@@ -401,6 +404,7 @@ export class Tab extends EventEmitter {
 
     // Apply orientation class
     addClass(this.rootEl, `orientation-${this.currentOrientation}`);
+    if (this.isQueryHidden()) addClass(this.rootEl, "queryHidden");
 
     // We group controlbar and Yasqe, so that users can easily .appendChild() to the .editorwrapper div
     // to add a div that goes alongside the controlbar and editor, while YASR still goes full width
@@ -759,7 +763,73 @@ export class Tab extends EventEmitter {
     }
 
     this.initOrientationToggle();
+    this.initQueryToggle();
     this.yasqeWrapperEl.appendChild(toolbar);
+
+    // Shown instead of the editor while the query is hidden
+    const note = document.createElement("button");
+    note.type = "button";
+    addClass(note, "yasgui-queryHiddenNote");
+    note.innerHTML = `${icon("code", 14)}<span>The query is hidden</span>`;
+    note.title = "Show the query";
+    note.addEventListener("click", () => this.setQueryHidden(false));
+    this.yasqeWrapperEl.appendChild(note);
+  }
+
+  /** Button at the end of the editor toolbar that hides or shows the query editor */
+  private initQueryToggle() {
+    if (!this.editorToolbarEl) return;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "yasgui-editorToolbar__button yasgui-queryToggle";
+    button.addEventListener("click", () => this.toggleQueryHidden());
+    this.queryToggleButton = button;
+    this.updateQueryToggle();
+    this.editorToolbarEl.appendChild(button);
+  }
+
+  private updateQueryToggle() {
+    const button = this.queryToggleButton;
+    if (!button) return;
+    const hidden = this.isQueryHidden();
+    const label = hidden ? "Show query" : "Hide query";
+    button.innerHTML = `${icon(hidden ? "chevronDown" : "chevronUp")}<span class="yasgui-btnLabel">${label}</span>`;
+    button.title = hidden ? "Show the query editor" : "Hide the query editor and show only the results";
+    button.setAttribute("aria-label", label);
+    button.setAttribute("aria-expanded", hidden ? "false" : "true");
+  }
+
+  /** Whether the query editor of this tab is hidden, showing only the results */
+  public isQueryHidden(): boolean {
+    return !!this.persistentJson.queryHidden;
+  }
+
+  /** Hide the query editor so the results take the whole card, or show it again */
+  public setQueryHidden(hidden: boolean) {
+    if (this.isQueryHidden() === hidden) return;
+    if (hidden) {
+      this.persistentJson.queryHidden = true;
+      if (this.yasqe?.getIsFullscreen()) this.yasqe.toggleFullscreen();
+    } else {
+      delete this.persistentJson.queryHidden;
+    }
+    if (this.rootEl) {
+      if (hidden) addClass(this.rootEl, "queryHidden");
+      else removeClass(this.rootEl, "queryHidden");
+    }
+    this.updateQueryToggle();
+    if (!hidden) {
+      this.yasqe?.refresh();
+      this.yasqe?.focus();
+    } else {
+      this.queryToggleButton?.focus();
+    }
+    this.yasr?.refresh();
+    this.emit("change", this, this.persistentJson);
+  }
+
+  public toggleQueryHidden() {
+    this.setQueryHidden(!this.isQueryHidden());
   }
 
   /** The panel of this tab, holding the query card */
@@ -1107,12 +1177,13 @@ export class Tab extends EventEmitter {
     this.getTabListEl().redrawContextMenu();
   }
 
-  public getShareableLink(baseURL?: string): string {
-    return shareLink.createShareLink(baseURL || window.location.href, this);
+  /** Link that opens this query; `hideQuery` opens it with the query editor hidden */
+  public getShareableLink(baseURL?: string, options?: shareLink.ShareLinkOptions): string {
+    return shareLink.createShareLink(baseURL || window.location.href, this, options);
   }
 
-  public getShareObject() {
-    return shareLink.createShareConfig(this);
+  public getShareObject(options?: shareLink.ShareLinkOptions) {
+    return shareLink.createShareConfig(this, options);
   }
 
   private getTabListEl(): TabListEl {
@@ -1423,7 +1494,8 @@ export class Tab extends EventEmitter {
       editorHeight: this.persistentJson.yasqe.editorHeight ? this.persistentJson.yasqe.editorHeight : undefined,
       persistenceId: null, //yasgui handles persistent storing
       consumeShareLink: null, //not handled by this tab, but by parent Matgui instance
-      createShareableLink: () => this.getShareableLink(),
+      createShareableLink: (_yasqe, options) => this.getShareableLink(undefined, options),
+      shareHideQueryOption: () => this.isQueryHidden(),
       // The snippets bar is off unless enabled (config or settings); the snippets are in the Insert menu
       showSnippetsBar: this.yasgui.config.showSnippetsBar === true,
       // Yasgui shows its own Run button in the query bar
@@ -2074,6 +2146,7 @@ export class Tab extends EventEmitter {
       requestConfig: yasgui ? yasgui.config.requestConfig : { ...Yasgui.defaults.requestConfig },
       id: getRandomId(),
       name: yasgui ? yasgui.createTabName() : Yasgui.defaults.tabName,
+      ...(yasgui?.config.hideQuery ? { queryHidden: true } : {}),
     };
   }
 }

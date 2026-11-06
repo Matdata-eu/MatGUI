@@ -364,6 +364,13 @@ export default class CommandPalette {
         keywords: "orientation stacked horizontal vertical",
         run: () => tab()?.toggleOrientation(),
       },
+      {
+        section: "commands",
+        label: tab()?.isQueryHidden() ? "Show query" : "Hide query",
+        icon: "code",
+        keywords: "editor collapse expand results only toggle",
+        run: () => tab()?.toggleQueryHidden(),
+      },
     );
     const tools: Array<[string, string, IconName, string]> = [
       [".yasqe_formatButton", "Format query", "alignLeft", "beautify indent"],

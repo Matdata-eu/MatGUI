@@ -154,6 +154,11 @@ export interface Config<EndpointObject extends CatalogueItem = CatalogueItem> {
    */
   orientation?: "vertical" | "horizontal";
   /**
+   * Open new tabs with the query editor hidden, so only the results show (default: false). Users can
+   * show the query with the "Show query" button. Share links can also set this with `hideQuery=true`.
+   */
+  hideQuery?: boolean;
+  /**
    * Show the code snippets bar above the editor in all tabs (global setting).
    * Off by default: the snippets are available from the Insert menu of the query bar.
    */
@@ -335,6 +340,9 @@ export class Yasgui extends EventEmitter {
         if (tabId) {
           // when a config is already present,
           const persistentYasr = this.persistentConfig.getTab(tabId).yasr;
+          const existingTab = this.persistentConfig.getTab(tabId);
+          if (optionsFromUrl.queryHidden) existingTab.queryHidden = true;
+          else delete existingTab.queryHidden;
           this.persistentConfig.getTab(tabId).yasr = {
             // Override the settings
             settings: optionsFromUrl.yasr.settings,
@@ -481,6 +489,8 @@ export class Yasgui extends EventEmitter {
       tab.query().catch(() => {});
       return;
     }
+    // An update or invalid query is not run, so the reader needs to see it
+    if ((blocker === "update" || blocker === "invalid") && tab.isQueryHidden()) tab.setQueryHidden(false);
     const canRun = blocker === "credentials" || blocker === "disabled";
     showToast(shareLink.sharedQueryBlockedMessage(blocker, tab.getEndpoint()), {
       host: this.rootEl,

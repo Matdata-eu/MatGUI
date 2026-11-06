@@ -3,9 +3,12 @@ import JsUri from "jsuri";
 import { default as Tab, PersistedJson } from "./Tab";
 import Yasr from "@matdata/yasr";
 import { PlainRequestConfig } from "@matdata/yasqe";
+import type { ShareLinkOptions } from "@matdata/yasqe";
 import { getAsValue } from "@matdata/yasgui-utils";
 import { parseJsonParam } from "./shareLinkSafety";
 export * from "./shareLinkSafety";
+/** Options of a share link, picked in the share popup */
+export type { ShareLinkOptions } from "@matdata/yasqe";
 var getUrlParams = function (_url?: string) {
   var urlFromWindow = false;
   if (!_url) {
@@ -37,10 +40,10 @@ export function appendArgsToUrl(_url: string, args: RequestArgs): string {
   }
   return url.toString();
 }
-export function createShareLink(forUrl: string, tab: Tab) {
+export function createShareLink(forUrl: string, tab: Tab, options?: ShareLinkOptions) {
   const currentUrl = new JsUri(forUrl);
   const tmpUrl = new JsUri();
-  const configObject = createShareConfig(tab);
+  const configObject = createShareConfig(tab, options);
   let key: keyof ShareConfigObject; // Need to specify here because left hand side of a for..in cannot be typed
   for (key in configObject) {
     if (!configObject.hasOwnProperty(key)) continue;
@@ -85,9 +88,11 @@ export type ShareConfigObject = {
   defaultGraphs: PlainRequestConfig["defaultGraphs"];
   outputFormat?: string;
   outputSettings: any;
+  /** Open the link with the query editor hidden */
+  hideQuery?: boolean;
 };
 
-export function createShareConfig(tab: Tab): ShareConfigObject {
+export function createShareConfig(tab: Tab, options?: ShareLinkOptions): ShareConfigObject {
   const yasgui = tab.yasgui;
   const requestConfig = tab.getRequestConfig();
   const yasrPersistentSetting = tab.getPersistedJson().yasr.settings;
@@ -108,6 +113,7 @@ export function createShareConfig(tab: Tab): ShareConfigObject {
       yasrPersistentSetting.pluginsConfig && yasrPersistentSetting.selectedPlugin
         ? yasrPersistentSetting.pluginsConfig[yasrPersistentSetting.selectedPlugin]
         : undefined,
+    ...(options?.hideQuery ? { hideQuery: true } : {}),
   };
 }
 
@@ -140,6 +146,9 @@ export function getConfigFromUrl(defaults: PersistedJson, _url?: string): Persis
       options.requestConfig.method = <any>value;
     } else if (key == "tabTitle") {
       options.name = value;
+    } else if (key == "hideQuery") {
+      if (value === "false" || value === "0") delete options.queryHidden;
+      else options.queryHidden = true;
     } else if (key == "namedGraph") {
       if (!Array.isArray(options.requestConfig.namedGraphs)) options.requestConfig.namedGraphs = [];
       options.requestConfig.namedGraphs.push(value);

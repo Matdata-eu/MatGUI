@@ -94,82 +94,295 @@
       vertical-align: middle;
       margin-left: 8px;
     }
+    // Popup of the Share button: the link with its options, then the query as a command
     .yasqe_sharePopup {
       position: absolute;
-      padding: 12px;
-      margin-left: 0px;
-      background-color: var(--yasgui-bg-primary, #fff);
-      border: 1px solid var(--yasgui-border-color, #e3e3e3);
-      border-radius: 4px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      width: auto;
-      min-width: 300px;
-      max-width: 400px;
+      top: calc(100% + 6px);
+      right: 0;
+      z-index: 10001;
+      width: 360px;
+      max-width: calc(100vw - 24px);
       max-height: calc(100vh - 100px);
       overflow-y: auto;
-      height: auto;
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      z-index: 10001;
+      gap: 14px;
+      padding: 14px 14px 12px;
+      border-radius: 12px;
+      background: var(--yasgui-surface-raised, #ffffff);
+      box-shadow: var(--yasgui-shadow-overlay, 0 24px 48px rgba(13, 20, 28, 0.18), 0 0 0 1px rgba(13, 20, 28, 0.06));
+      color: var(--yasgui-ink, #1c2633);
+      font-family: var(--yasgui-font-family, inherit);
+      font-size: 13px;
+      line-height: 1.4;
+      text-align: left;
+      cursor: default;
 
-      .yasqe_sharePopup_title {
-        font-weight: 600;
-        font-size: 14px;
-        color: var(--yasgui-text-primary, #333);
-        margin-bottom: 4px;
-      }
-
-      .yasqe_sharePopup_buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-
-      .yasqe_shareBtn {
-        width: 100%;
-        text-align: left;
-        justify-content: flex-start;
-        padding: 8px 12px;
-        font-size: 13px;
-      }
-
-      .inputWrapper {
-        flex-grow: 100;
-      }
-
-      input {
-        float: left;
-        width: 100%;
-        border: 0px;
-        -ms-box-sizing: border-box;
-        /* ie8 */
-        -khtml-box-sizing: border-box;
-        /* konqueror */
-        -webkit-box-sizing: border-box;
-        /* Safari/Chrome, other WebKit */
-        -moz-box-sizing: border-box;
-        /* Firefox, other Gecko */
-        box-sizing: border-box;
-        /* Opera/IE 8+ */
-        box-sizing: border-box;
-        /* css3 rec */
+      &.above {
+        top: auto;
+        bottom: calc(100% + 6px);
       }
 
       button {
-        float: right;
-        margin-left: 5px;
+        margin: 0;
+        font: inherit;
+        vertical-align: initial;
       }
 
-      textarea {
-        width: 100%;
+      .yasqe_shareIcon {
+        flex-shrink: 0;
       }
 
-      .shortlinkErr {
-        color: #d32f2f;
+      .yasqe_sharePopup_header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .yasqe_sharePopup_title {
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .yasqe_sharePopup_close {
+        width: 26px;
+        height: 26px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        border-radius: var(--yasgui-radius-sm, 6px);
+        background: transparent;
+        color: var(--yasgui-ink-subtle, #6a7380);
+        cursor: pointer;
+
+        &:hover {
+          background: var(--yasgui-surface-sunken, #edf0f4);
+          color: var(--yasgui-ink, #1c2633);
+        }
+      }
+
+      .yasqe_sharePopup_section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .yasqe_sharePopup_label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--yasgui-ink-subtle, #6a7380);
+      }
+
+      // Link field with its Copy button
+      .yasqe_sharePopup_linkRow {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 34px;
+        padding: 0 3px 0 10px;
+        border-radius: var(--yasgui-radius-button, 8px);
+        background: var(--yasgui-surface-sunken, #edf0f4);
+        color: var(--yasgui-ink-subtle, #6a7380);
+
+        &:has(.yasqe_sharePopup_url:focus) {
+          box-shadow: 0 0 0 2px var(--yasgui-focus, #044a8c);
+        }
+      }
+
+      .yasqe_sharePopup_linkIcon {
+        display: inline-flex;
+      }
+
+      .yasqe_sharePopup_url {
+        flex: 1;
+        min-width: 0;
+        height: 100%;
+        padding: 0;
+        border: none;
+        outline: none;
+        background: transparent;
+        color: var(--yasgui-ink, #1c2633);
+        font-family: var(--yasgui-font-mono, ui-monospace, monospace);
         font-size: 12px;
-        padding: 8px;
-        display: block;
+        text-overflow: ellipsis;
+      }
+
+      .yasqe_sharePopup_copy {
+        height: 28px;
+        flex-shrink: 0;
+        padding: 0 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: none;
+        border-radius: var(--yasgui-radius-sm, 6px);
+        background: var(--yasgui-brand-fill, var(--yasgui-brand, #0563bb));
+        color: var(--yasgui-on-brand, #ffffff);
+        font-weight: 600;
+        font-size: 12px;
+        cursor: pointer;
+        white-space: nowrap;
+
+        &:hover {
+          background: var(--yasgui-brand-fill-strong, var(--yasgui-brand-strong, #044a8c));
+        }
+
+        &.copied {
+          background: var(--yasgui-success, #067647);
+        }
+      }
+
+      // "Show only the results"
+      .yasqe_sharePopup_option {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: var(--yasgui-radius-button, 8px);
+        box-shadow: inset 0 0 0 1px var(--yasgui-line, #dfe5ec);
+        cursor: pointer;
+
+        &:hover {
+          background: var(--yasgui-surface-sunken, #edf0f4);
+        }
+
+        input {
+          width: 15px;
+          height: 15px;
+          margin: 2px 0 0;
+          flex-shrink: 0;
+          accent-color: var(--yasgui-brand, #0563bb);
+          cursor: pointer;
+        }
+
+        > span {
+          display: flex;
+          flex-direction: column;
+          gap: 1px;
+        }
+      }
+
+      .yasqe_sharePopup_optionTitle {
+        font-weight: 500;
+      }
+
+      .yasqe_sharePopup_optionHint {
+        font-size: 12px;
+        color: var(--yasgui-ink-subtle, #6a7380);
+      }
+
+      .yasqe_sharePopup_action {
+        align-self: flex-start;
+        height: 28px;
+        padding: 0 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: none;
+        border-radius: var(--yasgui-radius-sm, 6px);
+        background: transparent;
+        color: var(--yasgui-ink-muted, #56606c);
+        font-weight: 500;
+        font-size: 12px;
+        cursor: pointer;
+
+        &:hover:not(:disabled) {
+          background: var(--yasgui-surface-sunken, #edf0f4);
+          color: var(--yasgui-ink, #1c2633);
+        }
+
+        &:disabled {
+          cursor: default;
+          opacity: 0.7;
+        }
+      }
+
+      // cURL, PowerShell and wget
+      .yasqe_sharePopup_commands {
+        display: flex;
+        flex-direction: column;
+        margin: 0 -6px;
+      }
+
+      .yasqe_sharePopup_command {
+        height: 32px;
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: none;
+        border-radius: var(--yasgui-radius-sm, 6px);
+        background: transparent;
+        color: var(--yasgui-ink, #1c2633);
+        text-align: left;
+        cursor: pointer;
+
+        > .yasqe_shareIcon {
+          color: var(--yasgui-ink-subtle, #6a7380);
+        }
+
+        .yasqe_sharePopup_commandName {
+          flex: 1;
+        }
+
+        .yasqe_sharePopup_copyHint {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 12px;
+          color: var(--yasgui-ink-subtle, #6a7380);
+          opacity: 0;
+          transition: opacity 0.1s ease;
+        }
+
+        &:hover,
+        &:focus-visible {
+          outline: none;
+          background: var(--yasgui-surface-sunken, #edf0f4);
+
+          .yasqe_sharePopup_copyHint {
+            opacity: 1;
+          }
+        }
+
+        &.copied .yasqe_sharePopup_copyHint {
+          opacity: 1;
+          color: var(--yasgui-success, #067647);
+        }
+      }
+
+      .yasqe_sharePopup_warning,
+      .yasqe_sharePopup_status {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 8px 10px;
+        border-radius: var(--yasgui-radius-button, 8px);
+        font-size: 12px;
+      }
+
+      .yasqe_sharePopup_warning {
+        background: color-mix(in srgb, var(--yasgui-highlight, #f2b300) 16%, transparent);
+        color: var(--yasgui-highlight-ink, #6e4d00);
+
+        .yasqe_shareIcon {
+          margin-top: 1px;
+        }
+      }
+
+      .yasqe_sharePopup_status {
+        background: color-mix(in srgb, var(--yasgui-danger, #b42318) 12%, transparent);
+        color: var(--yasgui-danger, #b42318);
+
+        &[hidden] {
+          display: none;
+        }
       }
     }
     .yasqe_queryButton {
@@ -769,74 +982,5 @@
         right: 0;
       }
     }
-  }
-}
-
-// Toast notification styles - scoped with yasqe_ prefix
-// These are appended to document.body and must be outside .yasqe selector
-// The yasqe_ prefix prevents naming conflicts with other components
-.yasqe_toast {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background-color: #323232;
-  color: #fff;
-  padding: 12px 20px;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  z-index: 10000;
-  font-size: 14px;
-  max-width: 400px;
-  animation: yasqe_toast-fadein 0.3s ease-in;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  &.yasqe_toast-warning {
-    background-color: #ffc107;
-    color: #000;
-    padding: 14px 20px;
-    box-shadow: 0 3px 10px rgba(255, 193, 7, 0.4);
-
-    .yasqe_toast-icon {
-      display: flex;
-      align-items: center;
-      flex-shrink: 0;
-
-      i {
-        font-size: 24px;
-      }
-    }
-  }
-
-  .yasqe_toast-message {
-    flex: 1;
-  }
-
-  &.yasqe_toast-fadeout {
-    animation: yasqe_toast-fadeout 0.3s ease-out;
-    opacity: 0;
-  }
-}
-
-@keyframes yasqe_toast-fadein {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes yasqe_toast-fadeout {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(20px);
   }
 }

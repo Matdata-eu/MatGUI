@@ -554,7 +554,6 @@
       }
 
       // Popups open below the toolbar instead of above the floating buttons
-      .yasqe_sharePopup,
       .yasqe_hamburgerMenu {
         position: absolute !important;
         top: calc(100% + 6px) !important;
@@ -1004,6 +1003,106 @@
       // Results header on the line of the query title
       .yasr .yasr_header {
         padding-top: 18px;
+      }
+    }
+  }
+}
+
+// Query hidden (issue #258): the editor folds to one line with the editor toolbar, so the results
+// take the card. Share and save stay in the toolbar; the editing tools are hidden.
+.yasgui .tabPanel {
+  .yasgui-queryHiddenNote {
+    display: none;
+  }
+
+  &.queryHidden {
+    .yasgui-editorArea {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 40px;
+      padding: 0 0 4px 20px;
+      border-bottom: 1px solid var(--yasgui-line-soft, #edf0f4);
+
+      > .yasqe {
+        display: none !important;
+      }
+    }
+
+    .yasgui-queryHiddenNote {
+      order: -1;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      height: 28px;
+      padding: 0 8px;
+      margin-left: -8px;
+      border: none;
+      border-radius: var(--yasgui-radius-sm, 6px);
+      background: transparent;
+      color: var(--yasgui-ink-subtle, #6a7380);
+      font: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+
+      &:hover {
+        background: var(--yasgui-surface-sunken, #edf1f6);
+        color: var(--yasgui-ink, #1c2633);
+      }
+    }
+
+    .yasgui-editorToolbar {
+      position: static;
+      flex-shrink: 0;
+
+      > :not(.yasgui-editorTools):not(.yasgui-queryToggle) {
+        display: none;
+      }
+
+      .yasqe_formatButton,
+      .yasqe_fullscreenButton {
+        display: none !important;
+      }
+    }
+
+    // Side-by-side layout: the folded editor goes above the results
+    &.orientation-horizontal {
+      &.active {
+        flex-direction: column;
+      }
+
+      .editorwrapper {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: 0;
+        max-width: none;
+        height: auto;
+        overflow: visible;
+
+        > div,
+        > div > .yasgui-editorArea {
+          flex: 0 0 auto;
+          overflow: visible;
+        }
+
+        > div > .yasgui-editorArea {
+          flex-direction: row;
+        }
+      }
+
+      .verticalResizeWrapper {
+        display: none;
+      }
+
+      .yasr {
+        border-radius: 0 0 var(--yasgui-radius-md, 10px) var(--yasgui-radius-md, 10px);
+      }
+
+      .yasr .yasr_header {
+        padding-top: 0;
       }
     }
   }

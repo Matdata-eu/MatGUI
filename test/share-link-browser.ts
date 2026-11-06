@@ -87,6 +87,35 @@ describe("Share links", function () {
     expect(endpointRequests).to.be.greaterThan(0);
   });
 
+  it("opens a link with hideQuery with the query editor hidden", async function () {
+    await open({ query: "SELECT * WHERE { ?s ?p ?o } LIMIT 1", endpoint: ENDPOINT, hideQuery: "true" });
+    expect(await page.evaluate(() => (window as any).yasgui.getTab().isQueryHidden())).to.equal(true);
+    expect(await page.$(".tabPanel.active.queryHidden")).to.not.equal(null);
+    // The query still runs, and the link of the share popup keeps the option
+    expect(endpointRequests).to.be.greaterThan(0);
+    await page.click(".yasqe_share");
+    await page.waitForSelector(".yasqe_sharePopup");
+    expect(await page.$eval(".yasqe_sharePopup_hideQuery", (el) => (el as HTMLInputElement).checked)).to.equal(true);
+    expect(await page.$eval(".yasqe_sharePopup_url", (el) => (el as HTMLInputElement).value)).to.contain(
+      "hideQuery=true",
+    );
+    // Unticking the option drops it from the link
+    await page.click(".yasqe_sharePopup_hideQuery");
+    expect(await page.$eval(".yasqe_sharePopup_url", (el) => (el as HTMLInputElement).value)).to.not.contain(
+      "hideQuery",
+    );
+    // Show query brings the editor back
+    await page.keyboard.press("Escape");
+    await page.click(".yasgui-queryToggle");
+    expect(await page.evaluate(() => (window as any).yasgui.getTab().isQueryHidden())).to.equal(false);
+  });
+
+  it("shows a hidden update query, as it is not run", async function () {
+    await open({ query: "INSERT DATA { <http://a> <http://b> <http://c> }", endpoint: ENDPOINT, hideQuery: "true" });
+    expect(endpointRequests).to.equal(0);
+    expect(await page.evaluate(() => (window as any).yasgui.getTab().isQueryHidden())).to.equal(false);
+  });
+
   it("loads a link with malformed JSON parameters", async function () {
     await open({ query: "SELECT * WHERE { ?s ?p ?o } LIMIT 1", endpoint: ENDPOINT, headers: '{"X-Broken":' });
     const value = await page.evaluate(() => (window as any).yasgui.getTab().getQuery());
