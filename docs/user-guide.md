@@ -590,9 +590,9 @@ MAtGUI offers two layout options to optimize screen space:
 
 When you only care about the results, for example to look at a result someone sent you, you can fold the query editor away so the results take the whole card.
 
-- Click **Hide query** at the right end of the editor toolbar, or search for "Hide query" with `Ctrl+K`
+- Click the **Hide query** button (an upward chevron) at the right end of the editor toolbar, or search for "Hide query" with `Ctrl+K`
 - The editor folds to one line that says "The query is hidden". **Share**, the save buttons and **Run** stay available
-- Click **Show query** (or the "The query is hidden" line) to bring the editor back
+- Click **Show query** (the downward chevron), or the "The query is hidden" line, to bring the editor back
 - Each tab remembers whether its query is hidden
 - To share a link that opens with the query hidden, tick **Show only the results** in the share popup (see [Share Queries](#share-queries))
 
