@@ -781,7 +781,7 @@ export class Tab extends EventEmitter {
     if (!this.editorToolbarEl) return;
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "yasgui-editorToolbar__button yasgui-queryToggle";
+    button.className = "yasgui-editorToolbar__iconButton tabContextButton yasgui-queryToggle";
     button.addEventListener("click", () => this.toggleQueryHidden());
     this.queryToggleButton = button;
     this.updateQueryToggle();
@@ -793,7 +793,7 @@ export class Tab extends EventEmitter {
     if (!button) return;
     const hidden = this.isQueryHidden();
     const label = hidden ? "Show query" : "Hide query";
-    button.innerHTML = `${icon(hidden ? "chevronDown" : "chevronUp")}<span class="yasgui-btnLabel">${label}</span>`;
+    button.innerHTML = icon(hidden ? "chevronDown" : "chevronUp");
     button.title = hidden ? "Show the query editor" : "Hide the query editor and show only the results";
     button.setAttribute("aria-label", label);
     button.setAttribute("aria-expanded", hidden ? "false" : "true");
