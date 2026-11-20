@@ -2108,6 +2108,17 @@ Click any feature on the map to open an information popup. The popup shows:
 
 You can override the popup content by including a `?wktLabel` binding in your query (plain text or Markdown), or add a `?wktTooltip` binding for hover-only tooltips.
 
+**Overlapping features:**
+
+When several features lie under your click (two rows with the same point, a point on a line, anything inside a polygon), the map shows a popup listing all of them instead of only the one drawn on top:
+
+- Each row shows the feature's label (or the name of its IRI), its geometry column and its geometry type.
+- Hover a row to highlight that feature on the map.
+- Click a row to open that feature's popup; **← All N features here** brings you back to the list.
+- Ctrl+click (Cmd+click on macOS) a row to describe that feature, Ctrl+Shift+click for the triples where it is the object.
+
+A click on a single feature opens its popup directly, as before. Embedders can switch the list off with the geo plugin option `pickOverlapping: false`.
+
 ---
 
 **Describing Entities:**
