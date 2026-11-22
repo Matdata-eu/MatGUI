@@ -2343,6 +2343,7 @@ Shows how your query is executed. The **Explain** tab has two parts:
 | Stardog | The profiled plan with rows, wall time and memory per operator |
 | Blazegraph | Blazegraph's explain page (syntax tree, operator plan, statistics) |
 | Amazon Neptune | Neptune's explain table, one row per operator |
+| TripleTrail | The operation tree with time and rows per step, the planning time and the spatial index decisions |
 
 Virtuoso, Jena Fuseki, Oxigraph, RDF4J and Comunica publish no plan over the SPARQL protocol; for those endpoints only the algebra is shown.
 
@@ -2352,7 +2353,7 @@ Virtuoso, Jena Fuseki, Oxigraph, RDF4J and Comunica publish no plan over the SPA
 
 1. Run your query.
 2. Open the **Explain** tab. The algebra appears at once.
-3. MatGUI recognises the engine from the endpoint URL (QLever, GraphDB, Blazegraph, Stardog and Neptune have recognisable URLs). When it does not, pick the engine in the **Engine** list; the choice is remembered for that endpoint. **No plan** switches the request off for an endpoint.
+3. MatGUI recognises the engine from the endpoint URL (QLever, GraphDB, Blazegraph, Stardog and Neptune have recognisable URLs; TripleTrail is recognised from the `Server` header of its answers). When it does not, pick the engine in the **Engine** list; the choice is remembered for that endpoint. **No plan** switches the request off for an endpoint.
 4. **Refresh plan** asks the engine again, for example after the endpoint's cache warmed up.
 
 Each operation of the plan can be folded. **Expand all**, **Collapse all** and **Copy** act on the whole tree; **Download** in the results header saves the plan and the algebra as a text file. The algebra's **Copy** gives the s-expression notation used by Apache Jena ARQ and the SPARQL specification, handy for issues and documentation.
