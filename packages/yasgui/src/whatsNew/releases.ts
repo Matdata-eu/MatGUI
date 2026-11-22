@@ -25,6 +25,17 @@ const f = (text: string): ReleaseChange => ({ kind: "fixed", text });
 
 export const releases: Release[] = [
   {
+    version: "6.15.0",
+    date: "2026-11-22",
+    summary: "Pick overlapping features on the map, and execution plans from TripleTrail.",
+    changes: [
+      n(
+        "Map: when several features lie under a click, a list shows all of them so you can pick the one to open (hover a row to highlight it, Ctrl+click to describe it)",
+      ),
+      n("Explain: execution plans from TripleTrail endpoints, with the time and rows of each step"),
+    ],
+  },
+  {
     version: "6.14.0",
     date: "2026-11-07",
     summary: "Show only the results, and a redesigned share popup.",
