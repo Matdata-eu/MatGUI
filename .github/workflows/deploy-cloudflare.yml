@@ -84,7 +84,9 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          preCommands: wrangler pages project create ${{ steps.project.outputs.name }} --production-branch=main || true
+          # Create the project on the first run. The Cloudflare API sometimes fails
+          # this call (code 8000000), so retry, and accept "already exists".
+          preCommands: for i in 1 2 3; do out=$(npx wrangler pages project create ${{ steps.project.outputs.name }} --production-branch=main 2>&1) && break; echo "$out"; echo "$out" | grep -qi "already exists" && break; sleep 15; done
           command: pages deploy deployment --project-name=${{ steps.project.outputs.name }} --branch=${{ github.ref_name }} --commit-hash=${{ github.sha }} --commit-dirty=true
 
       - name: Preview URLs
