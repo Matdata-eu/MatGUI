@@ -1952,6 +1952,22 @@ Click the **⚙ Settings** button to access these options:
 | **Show node labels** | on / off | on | Display labels inside nodes |
 | **Enable physics** | on / off | on | Keep force-directed layout simulation running |
 | **Node size** | Small / Medium / Large | Medium | Set the radius of all nodes |
+| **Label from** | Automatic / a predicate from the results | Automatic | Predicate whose value labels the nodes |
+| **Group objects** | Off / 3 / 5 / 10 / 20 / 50 or more | 10 or more | Show many objects of one predicate as a single group node |
+
+**Node labels:**
+
+A resource node shows its prefixed IRI unless it has a label. With **Label from: Automatic** the first of these predicates that the node has is used: `rdfs:label`, `skos:prefLabel`, `dcterms:title`, `dc:title`, `schema:name`, `foaf:name`, `skos:notation`. If there are labels in several languages, your browser's language wins, then a label without language, then English.
+
+**Label from** lists every predicate with literal values in the current results, so you can label the nodes with, for example, `skos:notation` or a code. The values of the chosen predicate are then no longer drawn as separate literal nodes. The label and the predicate it came from are shown in the node's tooltip.
+
+**Grouping objects:**
+
+When a resource has many objects for the same predicate (for example a line with 40 sections), they are drawn as one lavender **group node** showing their number. Hover it to see the predicate and a few of the objects, and **double-click** it to show the objects themselves (this runs no query). Only objects without other links in the graph are grouped, so grouping never hides a connection. Opened groups stay open when you change a setting and close again when you run a new query. Set **Group objects** to *Off* to turn grouping off.
+
+**Long predicate names:**
+
+Edge labels longer than 30 characters are shortened with an ellipsis; hover the edge to see the full IRI. Edges with a long label are drawn longer so the label fits between the nodes.
 
 **Predicate Icons:**
 
@@ -1962,6 +1978,8 @@ When *Predicate display* is set to **Icon**, edges show compact symbols for comm
 - **SKOS**: `★` (skos:prefLabel), `☆` (skos:altLabel), `↑` (skos:broader), `↓` (skos:narrower), `↔` (skos:related)
 - **Dublin Core**: `ttl` (dcterms:title), `dsc` (dcterms:description), `crt` (dcterms:created), `by` (dcterms:creator)
 - **FOAF/Schema.org**: `nm` (name), `⟷` (foaf:knows), and more
+
+Sites that embed MatGUI can add or change these icons and the predicates used for automatic labels; see the `predicateIcons` and `labelPredicates` options in the [Graph Plugin Repository](https://github.com/Matdata-eu/yasgui-graph-plugin#integrator-configuration).
 
 **Node Icons and Images:**
 
