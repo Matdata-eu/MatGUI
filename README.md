@@ -35,7 +35,7 @@
 
 ## Documentation
 
-The **documentation for Matgui is hosted on GitHub Pages**:
+The **documentation for Matgui is hosted on Cloudflare Pages**:
 
 - **📚 Documentation Website**: [https://matgui-doc.matdata.eu/](https://matgui-doc.matdata.eu/)
   - User Guide, Developer Guide, API Reference
