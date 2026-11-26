@@ -38,7 +38,7 @@
     "@matdata/yasgui-chart-plugin": "^1.2.0",
     "@matdata/yasgui-explain-plugin": "^1.1.0",
     "@matdata/yasgui-geo-plugin": "^1.4.0",
-    "@matdata/yasgui-graph-plugin": "^1.7.0",
+    "@matdata/yasgui-graph-plugin": "^1.8.0",
     "@matdata/yasgui-table-plugin": "^1.7.1",
     "@matdata/yasgui-utils": "^4.6.1",
     "@matdata/yasqe": "^4.6.1",
