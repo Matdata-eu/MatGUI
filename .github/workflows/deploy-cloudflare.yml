@@ -1,8 +1,8 @@
 name: Deploy to Cloudflare Pages
 
 # Every branch gets its own preview at https://<branch>.<project>.pages.dev,
-# main is the production deployment. The Cloudflare Pages project is named
-# after the repository and is created on the first run.
+# main is the production deployment. The Cloudflare Pages project is called
+# matgui-doc (it serves matgui-doc.matdata.eu) and is created on the first run.
 on:
   push:
     branches: ["**"]
@@ -75,7 +75,7 @@ jobs:
 
       - name: Project name
         id: project
-        run: echo "name=$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+        run: echo "name=matgui-doc" >> "$GITHUB_OUTPUT"
 
       - name: Deploy to Cloudflare Pages
         id: deploy
