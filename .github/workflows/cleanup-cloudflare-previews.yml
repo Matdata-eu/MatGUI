@@ -1,0 +1,58 @@
+name: Clean up Cloudflare Pages previews
+
+# When a branch is deleted, remove that branch's preview deployments from the
+# Cloudflare Pages project (named after the repository), so old previews stop
+# being reachable. Production deployments of main are never touched.
+on:
+  delete:
+
+permissions: {}
+
+jobs:
+  cleanup:
+    if: github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete the branch's preview deployments
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BRANCH: ${{ github.event.ref }}
+          REPOSITORY: ${{ github.event.repository.name }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::notice::Cloudflare secrets are not available; nothing to clean up."
+            exit 0
+          fi
+          project=$(echo "$REPOSITORY" | tr '[:upper:]' '[:lower:]')
+          api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$project/deployments"
+          auth="Authorization: Bearer $CLOUDFLARE_API_TOKEN"
+
+          # Collect first, delete after: deleting while paging would shift the pages.
+          : > ids.txt
+          page=1
+          while :; do
+            body=$(curl -sS -H "$auth" "$api?env=preview&per_page=25&page=$page")
+            if [ "$(echo "$body" | jq -r '.success')" != "true" ]; then
+              if echo "$body" | jq -r '.errors[].message' | grep -qiE 'not found|does not exist'; then
+                echo "::notice::Cloudflare Pages project '$project' does not exist; nothing to clean up."
+                exit 0
+              fi
+              echo "$body" | jq '.errors'
+              exit 1
+            fi
+            count=$(echo "$body" | jq '.result | length')
+            [ "$count" -eq 0 ] && break
+            echo "$body" | jq -r --arg b "$BRANCH" \
+              '.result[] | select(.deployment_trigger.metadata.branch == $b) | .id' >> ids.txt
+            page=$((page + 1))
+          done
+
+          total=$(wc -l < ids.txt)
+          echo "Found $total preview deployment(s) of '$BRANCH' in '$project'."
+          while read -r id; do
+            curl -fsS -X DELETE -H "$auth" "$api/$id?force=true" > /dev/null
+            echo "Deleted $id"
+          done < ids.txt
+          echo "### Cloudflare Pages cleanup" >> "$GITHUB_STEP_SUMMARY"
+          echo "Deleted $total preview deployment(s) of \`$BRANCH\` from \`$project\`." >> "$GITHUB_STEP_SUMMARY"
