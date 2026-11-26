@@ -25,6 +25,21 @@ const f = (text: string): ReleaseChange => ({ kind: "fixed", text });
 
 export const releases: Release[] = [
   {
+    version: "6.16.0",
+    date: "2026-11-26",
+    summary: "Easier to read graphs: grouped objects, your own node labels and shorter edge labels.",
+    changes: [
+      n(
+        "Graph: many objects of one predicate fold into a single group node with their number; double-click it to show them (threshold in the Group objects setting)",
+      ),
+      n(
+        "Graph: the Label from setting picks the predicate whose value labels the nodes, e.g. skos:prefLabel or skos:notation",
+      ),
+      i("Graph: long predicate names on edges are shortened, hover the edge for the full name"),
+      f("Graph: hovered toolbar buttons use the right colour in light and dark theme"),
+    ],
+  },
+  {
     version: "6.15.0",
     date: "2026-11-22",
     summary: "Pick overlapping features on the map, and execution plans from TripleTrail.",
